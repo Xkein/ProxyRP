@@ -28,3 +28,6 @@
 [submodule "3rdparty/taskflow"]
 	path = 3rdparty/taskflow
 	url = https://github.com/taskflow/taskflow.git
+[submodule "3rdparty/llvm-project"]
+	path = 3rdparty/llvm-project
+	url = https://github.com/llvm/llvm-project.git

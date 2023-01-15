@@ -71,8 +71,7 @@ if(NOT TARGET ShaderConductor)
     #option(LLVM_INCLUDE_DOCS "" OFF)
     #add_subdirectory(ShaderConductor)
     #set_target_properties(ShaderConductor PROPERTIES FOLDER 3rdparty/ShaderConductor)
-
-    #target_compile_definitions(LLVMSupport PRIVATE _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
+    #set_target_properties(ShaderConductor PROPERTIES CXX_STANDARD 17)
 
     add_library(ShaderConductor INTERFACE)
     target_include_directories(ShaderConductor INTERFACE ${THIRD_PARTY_DIR}/ShaderConductor/Include/)

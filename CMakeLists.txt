@@ -23,5 +23,11 @@ set(ENGINE_ROOT_DIR "${PROXYRP_ROOT_DIR}")
 
 add_subdirectory(3rdparty)
 add_subdirectory(src/shaders)
-add_subdirectory(src)
+add_subdirectory(src/runtime)
+add_subdirectory(src/header_tool)
 
+include(src/precompile/precompile.cmake)
+set_target_properties(PreCompile PROPERTIES FOLDER "Engine")
+
+add_dependencies(ProxyRP PreCompile)
+add_dependencies(PreCompile HeaderTool)
