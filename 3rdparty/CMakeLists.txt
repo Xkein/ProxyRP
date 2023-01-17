@@ -20,7 +20,7 @@ if(NOT TARGET Vulkan)
     
     if(WIN32)
         set(vulkan_libs
-            ${vulkan_lib_dir}/vulkan-1.lib CACHE STRINGS "")
+            ${vulkan_lib_dir}/vulkan-1.lib CACHE STRING "")
     else()
     endif()
     
@@ -54,28 +54,6 @@ if(NOT TARGET glm)
         GLM_FORCE_DEPTH_ZERO_TO_ONE)
     target_include_directories(glm INTERFACE ${vulkan_include})
     # set_target_properties(glm PROPERTIES FOLDER 3rdparty)
-endif()
-
-if(NOT TARGET ShaderConductor)
-    #function(RESET_SC_WITH_CSHARP)
-    #    if(SC_WITH_CSHARP)
-    #        message("reset SC_WITH_CSHARP to OFF")
-    #        set(SC_WITH_CSHARP OFF PARENT_SCOPE)
-    #    endif()
-    #endfunction()
-    #set(SC_WITH_CSHARP OFF)
-    #variable_watch(SC_WITH_CSHARP RESET_SC_WITH_CSHARP)
-    
-    #option(LLVM_INCLUDE_EXAMPLES "" OFF)
-    #option(LLVM_INCLUDE_TESTS "" OFF)
-    #option(LLVM_INCLUDE_DOCS "" OFF)
-    #add_subdirectory(ShaderConductor)
-    #set_target_properties(ShaderConductor PROPERTIES FOLDER 3rdparty/ShaderConductor)
-    #set_target_properties(ShaderConductor PROPERTIES CXX_STANDARD 17)
-
-    add_library(ShaderConductor INTERFACE)
-    target_include_directories(ShaderConductor INTERFACE ${THIRD_PARTY_DIR}/ShaderConductor/Include/)
-    #target_link_libraries(ShaderConductor INTERFACE ${vulkan_libs})
 endif()
 
 if(NOT TARGET imgui)
@@ -182,3 +160,69 @@ if(NOT TARGET taskflow)
     target_include_directories(taskflow INTERFACE ${THIRD_PARTY_DIR}/taskflow/)
 endif()
 
+if(NOT TARGET mustache)
+    add_library(mustache INTERFACE)
+    target_include_directories(mustache INTERFACE ${THIRD_PARTY_DIR}/Mustache/)
+endif()
+
+if(NOT TARGET llvm)
+    add_library(llvm INTERFACE)
+    target_include_directories(llvm INTERFACE
+        ${THIRD_PARTY_DIR}/llvm-project/clang/include
+        ${THIRD_PARTY_DIR}/llvm-project/llvm/include)
+    if (COMPILE_LLVM)
+        ExternalProject_Add(llvm-project
+            PREFIX llvm-project
+            SOURCE_DIR ${THIRD_PARTY_DIR}/llvm-project/llvm
+            BINARY_DIR ${THIRD_PARTY_DIR}/llvm-project/build
+            CMAKE_ARGS
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+            -DCMAKE_INSTALL_PREFIX=${STAGING_DIR}
+            -DLLVM_ENABLE_PROJECTS=clang
+            -DLLVM_TARGETS_TO_BUILD=host
+            -DLLVM_BUILD_BENCHMARKS=OFF
+            -DLLVM_BUILD_EXAMPLES=OFF
+            -DLLVM_BUILD_INSTRUMENTED_COVERAGE=OFF
+            -DLLVM_BUILD_TESTS=OFF
+            -DLLVM_BUILD_TOOLS=OFF
+            -DLLVM_INCLUDE_BENCHMARKS=OFF
+            -DLLVM_INCLUDE_EXAMPLES=OFF
+            -DLLVM_INCLUDE_TESTS=OFF
+            -DCLANG_BUILD_TOOLS=OFF
+            #BUILD_IN_SOURCE ON
+        )
+        add_dependencies(llvm llvm-project)
+    endif()
+endif()
+
+if(NOT TARGET shader_conductor)
+    add_library(shader_conductor INTERFACE)
+    target_include_directories(shader_conductor INTERFACE ${THIRD_PARTY_DIR}/ShaderConductor/Include/)
+    if (COMPILE_SHADER_CONDUCTOR)
+        ExternalProject_Add(ShaderConductor
+            PREFIX ShaderConductor
+            SOURCE_DIR ${THIRD_PARTY_DIR}/ShaderConductor
+            BINARY_DIR ${THIRD_PARTY_DIR}/ShaderConductor/build
+            CMAKE_ARGS
+            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+            -DCMAKE_INSTALL_PREFIX=${STAGING_DIR}
+            -DLLVM_BUILD_BENCHMARKS=OFF
+            -DLLVM_BUILD_EXAMPLES=OFF
+            -DLLVM_BUILD_INSTRUMENTED_COVERAGE=OFF
+            -DLLVM_BUILD_TESTS=OFF
+            -DLLVM_BUILD_TOOLS=OFF
+            -DLLVM_INCLUDE_BENCHMARKS=OFF
+            -DLLVM_INCLUDE_EXAMPLES=OFF
+            -DLLVM_INCLUDE_TESTS=OFF
+            -DCMAKE_CXX_FLAGS=/wd4189
+            #BUILD_IN_SOURCE ON
+        )
+        add_dependencies(shader_conductor ShaderConductor)
+    endif()
+endif()

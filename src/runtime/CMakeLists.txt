@@ -43,7 +43,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC RTTR::Core_Lib)
 target_link_libraries(${TARGET_NAME} PUBLIC eigen)
 target_link_libraries(${TARGET_NAME} PUBLIC glm)
 
-target_link_libraries(${TARGET_NAME} PUBLIC ShaderConductor)
+target_link_libraries(${TARGET_NAME} PUBLIC shader_conductor)
 
 target_link_libraries(${TARGET_NAME} PUBLIC taskflow)
 

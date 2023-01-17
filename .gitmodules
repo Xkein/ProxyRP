@@ -31,3 +31,6 @@
 [submodule "3rdparty/llvm-project"]
 	path = 3rdparty/llvm-project
 	url = https://github.com/llvm/llvm-project.git
+[submodule "3rdparty/Mustache"]
+	path = 3rdparty/Mustache
+	url = https://github.com/kainjow/Mustache.git

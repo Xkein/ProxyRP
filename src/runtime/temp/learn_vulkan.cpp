@@ -1749,6 +1749,7 @@ void InitVulkan()
     CreateWindow();
 
     CreateInstance();
+    SetupDebugMessenger();
 
     CreateWindowSurface();
 

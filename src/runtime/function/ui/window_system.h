@@ -28,6 +28,7 @@ public:
 
     void SetTitle(const String& title);
 
+    GLFWwindow*        GetWindow() const { return Window; }
     std::array<int, 2> GetWindowSize() const;
 
     bool IsMouseButtonDown(int button) const;
