@@ -8,12 +8,12 @@
 class Engine
 {
 public:
-    void Start(const String& config_dir);
+    void Start();
     void Shutdown();
 
     void Run();
 private:
-    void StartSystems(const String& config_dir);
+    void StartSystems();
     void ShutdownSystems();
 
     void Tick(float delta_time);

@@ -9,11 +9,10 @@ int main(int argc, char** argv)
 {
     getchar();
     std::filesystem::path exe_path   = argv[0];
-    std::filesystem::path config_dir = exe_path.parent_path() / ENGINE_NAME;
 
     std::shared_ptr<Engine> engine = std::make_shared<Engine>();
 
-    engine->Start(config_dir.string());
+    engine->Start();
 
     engine->Run();
 

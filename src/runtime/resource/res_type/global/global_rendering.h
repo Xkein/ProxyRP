@@ -7,6 +7,4 @@ STRUCT(GlobalRenderingResource)
 {
     REFLECTION_STRUCT_BODY(GlobalRenderingResource);
 
-    PROPERTY()
-    bool EnableFxaa {false};
 };

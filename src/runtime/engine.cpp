@@ -12,11 +12,11 @@
 
 #include <filesystem>
 
-void Engine::Start(const String& config_dir)
+void Engine::Start()
 {
     TypeMetaRegister::Register();
 
-    StartSystems(config_dir);
+    StartSystems();
 
 	LOG_INFO("engine start.");
 }
@@ -38,12 +38,12 @@ void Engine::Run()
     }
 }
 
-void Engine::StartSystems(const String& config_dir)
+void Engine::StartSystems()
 {
     GLogSystem = std::make_shared<LogSystem>();
 
     GConfigManager = std::make_shared<ConfigManager>();
-    GConfigManager->Initialize(config_dir);
+    GConfigManager->Initialize();
 
     GAssetManager = std::make_shared<AssetManager>();
 
@@ -63,6 +63,7 @@ void Engine::StartSystems(const String& config_dir)
     GRenderSystem->Initialize(render_init_info);
 
     ASSERT(GLogSystem);
+    ASSERT(GConfigManager);
     ASSERT(GInputSystem);
     ASSERT(GWindowSystem);
     ASSERT(GRenderSystem);

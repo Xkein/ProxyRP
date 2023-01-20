@@ -4,6 +4,7 @@
 
 class RHI;
 class RenderScene;
+class RenderCamera;
 
 class Renderer
 {
@@ -13,6 +14,7 @@ public:
 
 
 public:
-    std::shared_ptr<RHI>         RHI;
-    std::shared_ptr<RenderScene> Scene;
+    std::shared_ptr<RHI>          RHI;
+    std::shared_ptr<RenderCamera> Camera;
+    std::shared_ptr<RenderScene>  Scene;
 };

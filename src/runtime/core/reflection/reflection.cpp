@@ -5,7 +5,7 @@ rttr::type Type::InvalidType = rttr::type::get<void>();
 
 std::map<StringView, std::shared_ptr<rttr::type>> ReflectionTypeMap;
 
-rttr::type GetReflectionType(rttr::type type) {
+rttr::type GetReflectionType(const rttr::type& type) {
     StringView name(type.get_name().begin(), type.get_name().end());
     if (auto iter = ReflectionTypeMap.find(name); iter != ReflectionTypeMap.end())
         return *iter->second;
@@ -32,5 +32,14 @@ ReflectionInstance Type::New(const rttr::type& type, const json& context)
 
 bool Type::Write(const ReflectionInstance& instance, json& context)
 {
-    return false;
+    auto& type = instance.GetType();
+    if (!type.is_valid())
+    {
+        return false;
+    }
+
+    auto  reflection_type = GetReflectionType(type);
+    auto  method          = reflection_type.get_method("WriteJson");
+    void* ptr             = method.invoke({}, (void*)(const void*)instance, context).get_value<void*>();
+    return ReflectionInstance(type, ptr);
 }
