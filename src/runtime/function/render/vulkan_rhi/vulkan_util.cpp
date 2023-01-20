@@ -17,6 +17,77 @@ VulkanUtil::FindMemoryType(vk::PhysicalDevice physical_device, uint32_t type_fil
     return 0;
 }
 
+vk::SampleCountFlagBits VulkanUtil::GetMaxUsableSampleCount(vk::PhysicalDevice physical_device)
+{
+    vk::PhysicalDeviceProperties physical_device_properties = physical_device.getProperties();
+
+    vk::SampleCountFlags counts = physical_device_properties.limits.framebufferColorSampleCounts &
+                                  physical_device_properties.limits.framebufferDepthSampleCounts;
+
+    if (counts & vk::SampleCountFlagBits::e64)
+        return vk::SampleCountFlagBits::e64;
+    if (counts & vk::SampleCountFlagBits::e32)
+        return vk::SampleCountFlagBits::e32;
+    if (counts & vk::SampleCountFlagBits::e16)
+        return vk::SampleCountFlagBits::e16;
+    if (counts & vk::SampleCountFlagBits::e8)
+        return vk::SampleCountFlagBits::e8;
+    if (counts & vk::SampleCountFlagBits::e4)
+        return vk::SampleCountFlagBits::e4;
+    if (counts & vk::SampleCountFlagBits::e2)
+        return vk::SampleCountFlagBits::e2;
+
+    return vk::SampleCountFlagBits::e1;
+}
+
+vk::Format VulkanUtil::FindSupportedFormat(vk::PhysicalDevice             physical_device,
+                                           const std::vector<vk::Format>& candidates,
+                                           vk::ImageTiling                tiling,
+                                           vk::FormatFeatureFlags         features)
+{
+
+    for (vk::Format format : candidates)
+    {
+        vk::FormatProperties properties = physical_device.getFormatProperties(format);
+
+        if (tiling == vk::ImageTiling::eLinear && (properties.linearTilingFeatures & features) == features)
+        {
+            return format;
+        }
+
+        if (tiling == vk::ImageTiling::eOptimal && (properties.optimalTilingFeatures & features) == features)
+        {
+            return format;
+        }
+    }
+
+    LOG_ERROR("failed to find supported format");
+    return vk::Format();
+}
+
+vk::Format VulkanUtil::FindDepthFormat(vk::PhysicalDevice physical_device)
+{
+    return FindSupportedFormat(physical_device,
+                               {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
+                               vk::ImageTiling::eOptimal,
+                               vk::FormatFeatureFlagBits::eDepthStencilAttachment);
+}
+
+bool VulkanUtil::HasStencilComponent(vk::Format format)
+{
+    return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
+}
+
+vk::ShaderModule VulkanUtil::CreateShaderModule(vk::Device device, const std::vector<byte>& shader_code)
+{
+    vk::ShaderModuleCreateInfo create_info {
+        .codeSize = shader_code.size(),
+        .pCode    = (const uint32_t*)shader_code.data(),
+    };
+
+    vk::ShaderModule shader_module = device.createShaderModule(create_info);
+    return shader_module;
+}
 
 void VulkanUtil::CreateImage(vk::PhysicalDevice      physical_device,
                              vk::Device              device,

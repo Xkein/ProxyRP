@@ -1,13 +1,35 @@
 #include "level.h"
 #include "core/macro.h"
 #include "core/log/log_system.h"
+#include "function/global/global_context.h"
+#include "resource/asset/asset_manager.h"
 #include "resource/res_type/common/object.h"
+#include "resource/res_type/common/level.h"
 
 Level::~Level() {}
 
 bool Level::Load(const String& level_res_url)
 {
-    LOG_INFO("load level: ", level_res_url);
+    LOG_INFO("load level: {}", level_res_url);
+
+    LevelResourceUrl = level_res_url;
+
+    LevelResource level_res;
+    const bool    is_load_success = GAssetManager->LoadAsset(level_res_url, level_res);
+    if (!is_load_success)
+    {
+        return false;
+    }
+
+    for (const ObjectInstanceResource& object_instance_res : level_res.Objects)
+    {
+        CreateGObject(object_instance_res);
+    }
+
+    IsLoaded = true;
+
+    LOG_INFO("{} loaded.", level_res_url);
+
     return true;
 }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "render_swap_context.h"
+
 #include <memory>
 
 class RHI;
@@ -20,9 +22,14 @@ public:
 
     void Initialize(RenderSystemInitInfo init_info);
     void Clear();
+
 	void Tick(float delta_time);
 
 private:
+    void ProcessSwapData();
+
+    RenderSwapContext SwapContext;
+
     std::shared_ptr<RHI>         RHI;
     std::shared_ptr<RenderScene> RenderScene;
     std::shared_ptr<Renderer>    Renderer;

@@ -12,9 +12,10 @@ struct RHIInitInfo
 class RHI
 {
 public:
-    virtual ~RHI() = 0;
+    virtual ~RHI() {};
 
     virtual void Initialize(RHIInitInfo init_info) = 0;
+    virtual void PrepareContext()                  = 0;
     
     // allocate and create
 

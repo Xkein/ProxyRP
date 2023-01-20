@@ -7,23 +7,22 @@
 
 class Component;
 
-STRUCT()
-struct ObjectDefinitionResource
+STRUCT(ObjectDefinitionResource)
 {
-    REFLECTION_STRUCT_BODY(ObjectDefinitionResource)
+    REFLECTION_STRUCT_BODY(ObjectDefinitionResource);
 
     PROPERTY()
     std::vector<Instance<Component>> Components;
 };
 
-STRUCT()
-struct ObjectInstanceResource
+STRUCT(ObjectInstanceResource)
 {
-    REFLECTION_STRUCT_BODY(ObjectInstanceResource)
+    REFLECTION_STRUCT_BODY(ObjectInstanceResource);
 
+    PROPERTY()
     String Name;
+    PROPERTY()
     String DefinitionUrl;
-
     PROPERTY()
     std::vector<Instance<Component>> InstancedComponents;
 };

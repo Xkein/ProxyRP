@@ -1,0 +1,18 @@
+#pragma once
+{{#include_headfiles}}
+#include "{{headfile_name}}"
+{{/include_headfiles}}
+
+void TypeMetaRegister::Register()
+{
+{{#class_defines}}
+    __ReflectionType{{class_name}}::Register();
+{{/class_defines}}
+}
+
+void TypeMetaRegister::Unregister()
+{
+{{#class_defines}}
+    __ReflectionType{{class_name}}::Unregister();
+{{/class_defines}}
+}

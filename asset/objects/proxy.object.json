@@ -1,0 +1,12 @@
+{
+  "Components": [
+    {
+      "$type_name": "ProxyManagerComponent",
+      "$context": {
+        "Manager": {
+          "PipeName": "114514"
+        }
+      }
+    }
+  ]
+}

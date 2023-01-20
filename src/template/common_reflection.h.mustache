@@ -1,0 +1,41 @@
+#pragma once
+{{#include_headfiles}}
+#include "{{headfile_name}}"
+{{/include_headfiles}}
+
+#include "runtime/core/serializer/serializer.h"
+
+{{#class_defines}}
+class __ReflectionType{{class_name}}
+{
+public:
+	static void* ConstructWithJson(const json& context)
+	{
+		{{class_name}}* instance = new {{class_name}}();
+		Serializer::Read(context, *instance);
+		return instance;
+	}
+	static bool WriteJson(void* instance, json& context)
+	{
+		return Serializer::Write(*(const {{class_name}}*)instance, context);
+	}
+	
+	static void Register()
+	{
+		using namespace rttr;
+
+		registration::class_<__ReflectionType{{class_name}}>("__ReflectionType{{class_name}}")
+			.method("ConstructWithJson", &__ReflectionType{{class_name}}::ConstructWithJson)
+			.method("WriteJson", &__ReflectionType{{class_name}}::WriteJson);
+
+		registration::class_<{{class_name}}>("{{class_name}}")
+			.constructor<>()
+		{{#class_field_defines}}
+			.property("{{class_field_name}}", &{{class_name}}::{{class_field_name}})
+		{{/class_field_defines}};
+	}
+	static void Unregister()
+	{}
+};
+
+{{/class_defines}}

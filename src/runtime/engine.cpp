@@ -1,22 +1,20 @@
 #include "engine.h"
 #include "core/log/log_system.h"
+#include "core/reflection/reflection_register.h"
 #include "function/framework/world/world_manager.h"
 #include "function/global/global_context.h"
 #include "function/render/render_system.h"
 #include "function/input/input_system.h"
 #include "function/ui/window_system.h"
 #include "platform/platform.h"
-#include "resource/config/engine_config.h"
+#include "resource/asset/asset_manager.h"
+#include "resource/config/config_manager.h"
 
 #include <filesystem>
 
-EngineConfig g_engine_config;
-
 void Engine::Start(const String& config_dir)
 {
-    std::filesystem::path dir = config_dir;
-
-    g_engine_config.Load(dir / "engine_config.json");
+    TypeMetaRegister::Register();
 
     StartSystems(config_dir);
 
@@ -27,13 +25,12 @@ void Engine::Shutdown() {
 	LOG_INFO("engine shutdown.");
 
     ShutdownSystems();
+
+    TypeMetaRegister::Unregister();
 }
 
 void Engine::Run()
 {
-    //extern void test_vulkan();
-    //test_vulkan();
-
     while (!GWindowSystem->ShouldClose())
     {
         float delta_time = CalculateDeltaTime();
@@ -43,15 +40,54 @@ void Engine::Run()
 
 void Engine::StartSystems(const String& config_dir)
 {
+    GLogSystem = std::make_shared<LogSystem>();
+
+    GConfigManager = std::make_shared<ConfigManager>();
+    GConfigManager->Initialize(config_dir);
+
+    GAssetManager = std::make_shared<AssetManager>();
+
+    GWorldManager = std::make_shared<WorldManager>();
+    GWorldManager->Initialize();
+
+    GInputSystem = std::make_shared<InputSystem>();
+    GInputSystem->Initialize();
+
     GWindowSystem = std::make_shared<WindowSystem>();
     WindowCreateInfo window_create_info {.Width = 1024, .Height = 960, .Title = "Proxy Rendering Process", .IsFullScreen = false};
     GWindowSystem->Initialize(window_create_info);
 
+    GRenderSystem = std::make_shared<RenderSystem>();
+    RenderSystemInitInfo render_init_info;
+    render_init_info.WindowSystem = GWindowSystem;
+    GRenderSystem->Initialize(render_init_info);
+
+    ASSERT(GLogSystem);
+    ASSERT(GInputSystem);
+    ASSERT(GWindowSystem);
+    ASSERT(GRenderSystem);
+    ASSERT(GAssetManager);
+    ASSERT(GWorldManager);
 }
 
 void Engine::ShutdownSystems()
 {
+    GRenderSystem->Clear();
+    GRenderSystem.reset();
+
     GWindowSystem.reset();
+
+    GWorldManager->Clear();
+    GWorldManager.reset();
+
+    GInputSystem->Clear();
+    GInputSystem.reset();
+
+    GAssetManager.reset();
+
+    GConfigManager.reset();
+
+    GLogSystem.reset();
 }
 
 void Engine::Tick(float delta_time)

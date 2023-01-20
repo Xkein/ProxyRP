@@ -39,7 +39,6 @@ bool GameObject::Load(const ObjectInstanceResource& object_instance_res)
     DefinitionUrl = object_instance_res.DefinitionUrl;
 
     ObjectDefinitionResource definition_res;
-
     if (const bool is_loaded_success = GAssetManager->LoadAsset(DefinitionUrl, definition_res); !is_loaded_success)
     {
         return false;
@@ -51,6 +50,7 @@ bool GameObject::Load(const ObjectInstanceResource& object_instance_res)
             continue;
 
         loaded_component->PostLoadResource(weak_from_this());
+
         Components.push_back(loaded_component);
     }
 

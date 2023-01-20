@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/reflection/macro.h"
+#include "core/reflection/reflection.h"
 #include "platform/platform.h"
 #include "platform/string.h"
 
@@ -24,9 +24,10 @@ private:
     byte* Data;
 };
 
-STRUCT()
-struct TextureResource
+STRUCT(TextureResource)
 {
+    REFLECTION_STRUCT_BODY(TextureResource);
+
     PROPERTY()
     String Path;
 };

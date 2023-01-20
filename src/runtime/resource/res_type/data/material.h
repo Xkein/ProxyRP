@@ -1,11 +1,12 @@
-#pragma
+#pragma once
 
-#include "core/reflection/macro.h"
+#include "core/reflection/reflection.h"
 #include "platform/string.h"
 
-STRUCT()
-struct MaterialResource
+STRUCT(MaterialResource)
 {
+    REFLECTION_STRUCT_BODY(MaterialResource);
+
     PROPERTY()
     String BaseColorTexture;
     PROPERTY()

@@ -64,15 +64,15 @@ private:
 
 extern std::shared_ptr<LogSystem> GLogSystem;
 
-#define LOG_HELPER(Verbosity, ...) \
+#define __LOG_HELPER(Verbosity, ...) \
     GLogSystem->Log(LogSystem::LogVerbosity::Verbosity, __VA_ARGS__)
 
-#define LOG_DEBUG(...) LOG_HELPER(Debug, __VA_ARGS__)
+#define LOG_DEBUG(...) __LOG_HELPER(Debug, __VA_ARGS__)
 
-#define LOG_INFO(...) LOG_HELPER(Info, __VA_ARGS__)
+#define LOG_INFO(...) __LOG_HELPER(Info, __VA_ARGS__)
 
-#define LOG_WARN(...) LOG_HELPER(Warning, __VA_ARGS__)
+#define LOG_WARN(...) __LOG_HELPER(Warning, __VA_ARGS__)
 
-#define LOG_ERROR(...) LOG_HELPER(Error, __VA_ARGS__)
+#define LOG_ERROR(...) __LOG_HELPER(Error, __VA_ARGS__)
 
-#define LOG_FATAL(...) LOG_HELPER(Fatal, __VA_ARGS__)
+#define LOG_FATAL(...) __LOG_HELPER(Fatal, __VA_ARGS__)

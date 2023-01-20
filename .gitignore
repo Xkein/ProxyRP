@@ -1,5 +1,6 @@
 
 build/
+_generated/
 
 # Visual Studio
 CMakeSettings.json

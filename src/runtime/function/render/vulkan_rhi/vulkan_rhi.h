@@ -12,7 +12,10 @@ class GLFWwindow;
 class VulkanRHI final : public RHI
 {
 public:
+    virtual ~VulkanRHI() override;
+
     virtual void Initialize(RHIInitInfo init_info) override;
+    virtual void PrepareContext() override;
 
     virtual void CreateSwapChain() override;
     virtual void RecreateSwapChain() override;
@@ -127,15 +130,10 @@ private:
     bool                     CheckValidationLayerSupport();
     std::vector<const char*> GetRequiredExtensions();
     bool                     IsDeviceSuitable(vk::PhysicalDevice device);
-    vk::SampleCountFlagBits  GetMaxUsableSampleCount();
     QueueFamilyIndices       FindQueueFamilies(vk::PhysicalDevice physical_device);
     bool                     IsDeviceExtensionSupport(vk::PhysicalDevice device);
     SwapChainSupportDetails  QuerySwapChainSupport(vk::PhysicalDevice device);
-    vk::Format               FindDepthFormat();
 
-    vk::Format FindSupportedFormat(const std::vector<vk::Format>& candidates,
-                                   vk::ImageTiling                tiling,
-                                   vk::FormatFeatureFlags         features);
 
     vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& available_formats);
     vk::PresentModeKHR   ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& available_present_modes);

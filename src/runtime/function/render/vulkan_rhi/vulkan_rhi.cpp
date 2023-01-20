@@ -7,6 +7,8 @@
 #include <GLFW/glfw3.h>
 #include <set>
 
+VulkanRHI::~VulkanRHI() {}
+
 void VulkanRHI::Initialize(RHIInitInfo init_info)
 {
     Window = init_info.WindowSystem->GetWindow();
@@ -48,6 +50,8 @@ void VulkanRHI::Initialize(RHIInitInfo init_info)
 
     CreateAllocator();
 }
+
+void VulkanRHI::PrepareContext() {}
 
 void VulkanRHI::CreateSwapChain()
 {
@@ -111,7 +115,7 @@ void VulkanRHI::RecreateSwapChain()
         glfwGetFramebufferSize(Window, &width, &height);
         glfwWaitEvents();
     }
-
+    
     vk::Result result_wait = Device.waitForFences(InFlightFences, VK_TRUE, UINT64_MAX);
     if (result_wait != vk::Result::eSuccess)
     {
@@ -166,6 +170,8 @@ bool VulkanRHI::CreateFramebuffer(const vk::FramebufferCreateInfo* pCreateInfo, 
     create_info.layers          = pCreateInfo->layers;
 
     pFramebuffer = Device.createFramebuffer(create_info);
+
+    return true;
 }
 
 void VulkanRHI::CreateImage(uint32_t                width,
@@ -243,11 +249,30 @@ void VulkanRHI::EndSingleTimeCommands(vk::CommandBuffer command_buffer)
     Device.freeCommandBuffers(CommandPool, {command_buffer});
 }
 
-void VulkanRHI::Clear() {}
+void VulkanRHI::Clear()
+{
+    if (EnableValidationLayers)
+    {
+        Instance.destroyDebugUtilsMessengerEXT(DebugMessenger, nullptr, DispatchDynamic);
+    }
+}
 
+void VulkanRHI::ClearSwapChain()
+{
+    Device.destroyImageView(ColorImageView);
+    Device.destroyImage(ColorImage);
+    Device.freeMemory(ColorImageMemory);
 
-void VulkanRHI::ClearSwapChain() {}
+    Device.destroyImageView(DepthImageView);
+    Device.destroyImage(DepthImage);
+    Device.freeMemory(DepthImageMemory);
 
+    for (auto& image_view : SwapChainImageViews)
+    {
+        Device.destroyImageView(image_view);
+    }
+    Device.destroySwapchainKHR(SwapChain);
+}
 
 
 void VulkanRHI::CreateInstance() {
@@ -286,7 +311,14 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(vk::DebugUtilsMessageSeverityFlag
                                                const vk::DebugUtilsMessengerCallbackDataEXT* callback_data,
                                                void*                                         user_data)
 {
-    LOG_ERROR("validation layer: {}", callback_data->pMessage);
+    if (message_serverity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
+    {
+        LOG_WARN("validation layer: {}", callback_data->pMessage);
+    }
+    else if (message_serverity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
+    {
+        LOG_ERROR("validation layer: {}", callback_data->pMessage);
+    }
     return VK_FALSE;
 }
 void VulkanRHI::SetupDebugMessenger()
@@ -347,7 +379,7 @@ void VulkanRHI::SelectPhysicalDevice()
         if (IsDeviceSuitable(device))
         {
             PhysicalDevice = device;
-            MsaaSamples    = GetMaxUsableSampleCount();
+            MsaaSamples    = VulkanUtil::GetMaxUsableSampleCount(PhysicalDevice);
             break;
         }
     }
@@ -401,7 +433,7 @@ void VulkanRHI::CreateLogicalDevice()
 
     DispatchDynamic.init(Device);
 
-    DepthImageFormat = FindDepthFormat();
+    DepthImageFormat = VulkanUtil::FindDepthFormat(PhysicalDevice);
 }
 
 void VulkanRHI::CreateCommandPool()
@@ -562,29 +594,6 @@ bool VulkanRHI::IsDeviceSuitable(vk::PhysicalDevice device)
            indices.isComplete() && is_extensions_supported && is_swapchain_adequate && features.samplerAnisotropy;
 }
 
-vk::SampleCountFlagBits VulkanRHI::GetMaxUsableSampleCount()
-{
-    vk::PhysicalDeviceProperties physical_device_properties = PhysicalDevice.getProperties();
-
-    vk::SampleCountFlags counts = physical_device_properties.limits.framebufferColorSampleCounts &
-                                  physical_device_properties.limits.framebufferDepthSampleCounts;
-
-    if (counts & vk::SampleCountFlagBits::e64)
-        return vk::SampleCountFlagBits::e64;
-    if (counts & vk::SampleCountFlagBits::e32)
-        return vk::SampleCountFlagBits::e32;
-    if (counts & vk::SampleCountFlagBits::e16)
-        return vk::SampleCountFlagBits::e16;
-    if (counts & vk::SampleCountFlagBits::e8)
-        return vk::SampleCountFlagBits::e8;
-    if (counts & vk::SampleCountFlagBits::e4)
-        return vk::SampleCountFlagBits::e4;
-    if (counts & vk::SampleCountFlagBits::e2)
-        return vk::SampleCountFlagBits::e2;
-
-    return vk::SampleCountFlagBits::e1;
-}
-
 QueueFamilyIndices VulkanRHI::FindQueueFamilies(vk::PhysicalDevice physical_device)
 {
     QueueFamilyIndices indices;
@@ -642,36 +651,6 @@ SwapChainSupportDetails VulkanRHI::QuerySwapChainSupport(vk::PhysicalDevice devi
     details.Formats      = device.getSurfaceFormatsKHR(Surface);
 
     return details;
-}
-
-vk::Format VulkanRHI::FindDepthFormat()
-{
-    return FindSupportedFormat({vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
-                               vk::ImageTiling::eOptimal,
-                               vk::FormatFeatureFlagBits::eDepthStencilAttachment);
-}
-
-vk::Format VulkanRHI::FindSupportedFormat(const std::vector<vk::Format>& candidates,
-                                          vk::ImageTiling                tiling,
-                                          vk::FormatFeatureFlags         features)
-{
-    for (vk::Format format : candidates)
-    {
-        vk::FormatProperties properties = PhysicalDevice.getFormatProperties(format);
-
-        if (tiling == vk::ImageTiling::eLinear && (properties.linearTilingFeatures & features) == features)
-        {
-            return format;
-        }
-
-        if (tiling == vk::ImageTiling::eOptimal && (properties.optimalTilingFeatures & features) == features)
-        {
-            return format;
-        }
-    }
-
-    LOG_ERROR("failed to find supported format");
-    return vk::Format();
 }
 
 vk::SurfaceFormatKHR VulkanRHI::ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& available_formats)

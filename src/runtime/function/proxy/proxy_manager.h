@@ -1,9 +1,15 @@
 #pragma once
 
+#include "core/reflection/reflection.h"
+#include "platform/string.h"
 
-class ProxyManager
+CLASS(ProxyManager)
 {
+    REFLECTION_CLASS_BODY(ProxyManager);
+
 public:
 
+    PROPERTY()
+    String PipeName;
 };
 

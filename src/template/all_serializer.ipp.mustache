@@ -1,0 +1,69 @@
+#pragma once
+{{#include_headfiles}}
+#include "{{headfile_name}}"
+{{/include_headfiles}}
+
+{{#class_defines}}
+template<>
+bool Serializer::Read(const json& context, {{class_name}}& instance) {
+    assert(context.is_object());
+    bool ret = true;
+{{#class_base_class_defines}}
+    ret &= Serializer::Read(context, *({{class_base_class_name}}*)&instance);
+{{/class_base_class_defines}}
+{{#class_field_defines}}
+    if(!context["{{class_field_display_name}}"].is_null()) {
+{{#class_field_is_vector}}
+        assert(context["{{class_field_display_name}}"].is_array());
+        const json& array_{{class_field_name}} = context["{{class_field_display_name}}"];
+        instance.{{class_field_name}}.resize(array_{{class_field_name}}.size());
+        for (size_t index = 0; index < array_{{class_field_name}}.size(); ++index) {
+            ret &= Serializer::Read(array_{{class_field_name}}[index], instance.{{class_field_name}}[index]);
+        }
+{{/class_field_is_vector}}
+{{^class_field_is_vector}}
+        ret &= Serializer::Read(context["{{class_field_display_name}}"], instance.{{class_field_name}});
+{{/class_field_is_vector}}
+    }
+{{/class_field_defines}}
+    return ret;
+}
+template<>
+bool Serializer::Write(const {{class_name}}& instance, json& context) {
+    bool ret = true;
+{{#class_base_class_defines}}
+    json json_context_{{class_base_class_index}};
+    ret &= Serializer::Write(*({{class_base_class_name}}*)&instance, json_context_{{class_base_class_index}});
+    assert(json_context_{{class_base_class_index}}.is_object());
+    auto& json_context_map_{{class_base_class_index}} = json_context_{{class_base_class_index}};
+    context.insert(json_context_map_{{class_base_class_index}}.begin() , json_context_map_{{class_base_class_index}}.end());
+{{/class_base_class_defines}}
+{{#class_field_defines}}
+{{#class_field_is_vector}}
+    json {{class_field_name}}_json;
+    for (auto& item : instance.{{class_field_name}}) {
+        json item_json;
+        ret &= Serializer::Write(item, item_json);
+        {{class_field_name}}_json.emplace_back(item_json);
+    }
+    context["{{class_field_display_name}}"] = {{class_field_name}}_json;
+{{/class_field_is_vector}}
+{{^class_field_is_vector}}
+    json {{class_field_name}}_json;
+    ret &= Serializer::Write(instance.{{class_field_name}}, {{class_field_name}}_json);
+    context["{{class_field_display_name}}"] = {{class_field_name}}_json;
+{{/class_field_is_vector}}
+{{/class_field_defines}}
+    return ret;
+}
+
+{{/class_defines}}
+
+// results of reflection
+
+{{#class_defines}}
+// class {{class_name}} { {{#class_field_defines}}
+//  {{class_field_type}} {{class_field_name}}; {{/class_field_defines}}
+// }
+
+{{/class_defines}}

@@ -1,0 +1,9 @@
+{
+  "Objects": [
+    {
+      "Name": "ProxyManager",
+      "DefinitionUrl": "asset/objects/proxy.object.json",
+      "InstancedComponents": []
+    }
+  ]
+}

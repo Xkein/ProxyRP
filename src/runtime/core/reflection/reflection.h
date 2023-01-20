@@ -1,8 +1,33 @@
 #pragma once
 
-#include "macro.h"
+#if defined(__REFLECTION_HEADER_TOOL__)
+#define __ANNOTATE__(...) __attribute__((annotate(#__VA_ARGS__)))
+#define META(...) __ANNOTATE__(Reflected, __VA_ARGS__)
+#else
+#define META(...)
+#endif
+
+#define CLASS(name, ...) class META(__VA_ARGS__) name
+#define STRUCT(name, ...) struct META(__VA_ARGS__) name
+#define INTERFACE(name, ...) class META(__VA_ARGS__) name
+#define PROPERTY(...) META(__VA_ARGS__)
+#define ENUM(...) META(__VA_ARGS__)
+#define FUNCTION(...) META(__VA_ARGS__)
+#define PARAM(...) META(__VA_ARGS__)
+
+#define __REFLECTION_BODY(type_name) \
+    friend class Serializer; \
+    friend class __ReflectionType##type_name; \
+    RTTR_REGISTRATION_FRIEND;
+
+#define REFLECTION_CLASS_BODY(type_name) __REFLECTION_BODY(type_name)
+#define REFLECTION_STRUCT_BODY(type_name) __REFLECTION_BODY(type_name)
+#define REFLECTION_INTERFACE_BODY(type_name) __REFLECTION_BODY(type_name)
+
+#include "platform/string.h"
 
 #include <rttr/type>
+#include <rttr/registration_friend.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -11,9 +36,12 @@ class Type;
 template<typename T>
 class Instance
 {
+    friend class Serializer;
+    friend class ReflectionInstance;
+
 public:
     Instance() : m_type(Type::InvalidType), m_instance(nullptr) {}
-    Instance(rttr::type type, T* ptr) : m_type(type), m_instance(ptr) {}
+    Instance(const rttr::type& type, T* ptr) : m_type(type), m_instance(ptr) {}
     Instance(const Instance& other) : m_type(other.m_type), m_instance(other.m_instance) {}
 
     template<typename U /*, typename = typename std::enable_if<std::is_safely_castable<T*, U*>::value>::type */>
@@ -31,12 +59,18 @@ public:
         return *this;
     }
 
-    rttr::type GetType() const {
+    const rttr::type& GetType() const {
         return m_type;
     }
 
-    void SetType(rttr::type type) {
+    void SetType(const rttr::type& type) {
         m_type = type;
+    }
+
+    StringView GetTypeName() const
+    {
+        auto view = m_type.get_name();
+        return StringView(view.begin(), view.end());
     }
 
     T* GetPtr() {
@@ -123,6 +157,13 @@ private:
 
 class ReflectionInstance : public Instance<void*>
 {
+public:
+    ReflectionInstance() : Instance() {}
+    ReflectionInstance(const rttr::type& type, void* ptr) : Instance(type, (void**)ptr) {}
+    ReflectionInstance(const Instance& other) : Instance(other) {}
+    template<typename T>
+    ReflectionInstance(const Instance<T>& other) : Instance(other.m_type, (void**)other.m_instance)
+    {}
 };
 
 class Type
@@ -130,6 +171,12 @@ class Type
 public:
     static rttr::type InvalidType;
 
-    static ReflectionInstance New(rttr::type type, const json& context);
-    static json               Write(const ReflectionInstance& instance);
+    static ReflectionInstance New(const rttr::type& type, const json& context);
+    static bool               Write(const ReflectionInstance& instance, json& context);
+};
+
+class TypeMeta
+{
+public:
+
 };

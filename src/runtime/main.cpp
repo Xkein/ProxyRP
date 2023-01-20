@@ -7,6 +7,7 @@
 
 int main(int argc, char** argv)
 {
+    getchar();
     std::filesystem::path exe_path   = argv[0];
     std::filesystem::path config_dir = exe_path.parent_path() / ENGINE_NAME;
 

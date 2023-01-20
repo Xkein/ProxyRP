@@ -39,3 +39,18 @@ String FileManager::ReadString(const Char* path)
 
     return text;
 }
+
+bool FileManager::WriteString(const Char* path, const String& str)
+{
+    std::ofstream file(path);
+    if (!file)
+    {
+        LOG_ERROR("failed to open {}", path);
+        return false;
+    }
+
+    file << str;
+    file.flush();
+
+    return true;
+}

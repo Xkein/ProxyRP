@@ -12,16 +12,23 @@ public:
     bool LoadAsset(const String& asset_url, AssetType& out_asset)
     {
         String asset_path = GetFullPath(asset_url);
-        auto text = FileManager::ReadString(asset_path.c_str());
+        auto   text       = FileManager::ReadString(asset_path.c_str());
 
-        json config = json::parse(text);
+        json asset_json = json::parse(text);
 
-        return false;
+        return Serializer::Read(asset_json, out_asset);
     }
     template<typename AssetType>
     bool SaveAsset(const AssetType& asset, const String& asset_url)
     {
-        return false;
+        String asset_path = GetFullPath(asset_url);
+
+        json asset_json;
+        Serializer::Write(asset, asset_json);
+
+        FileManager::WriteString(asset_url, asset_json.dump());
+
+        return true;
     }
 
 private:

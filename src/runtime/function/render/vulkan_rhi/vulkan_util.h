@@ -1,5 +1,7 @@
 #pragma once
 
+#include "platform/platform.h"
+
 #include <vulkan/vulkan.hpp>
 
 class VulkanRHI;
@@ -9,6 +11,19 @@ class VulkanUtil
 public:
     static uint32_t
     FindMemoryType(vk::PhysicalDevice physical_device, uint32_t type_filter, vk::MemoryPropertyFlags properties);
+
+    static vk::SampleCountFlagBits GetMaxUsableSampleCount(vk::PhysicalDevice physical_device);
+
+    static vk::Format FindSupportedFormat(vk::PhysicalDevice             physical_device,
+                                          const std::vector<vk::Format>& candidates,
+                                          vk::ImageTiling                tiling,
+                                          vk::FormatFeatureFlags         features);
+
+    static vk::Format FindDepthFormat(vk::PhysicalDevice physical_device);
+
+    static bool HasStencilComponent(vk::Format format);
+
+    static vk::ShaderModule CreateShaderModule(vk::Device device, const std::vector<byte>& shader_code);
 
     static void CreateImage(vk::PhysicalDevice      physical_device,
                             vk::Device              device,

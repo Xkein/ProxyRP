@@ -1,0 +1,13 @@
+#pragma once
+{{#include_headfiles}}
+#include "{{headfile_name}}"
+{{/include_headfiles}}
+
+
+{{#class_defines}}
+template<>
+bool Serializer::Read(const json& context, {{class_name}}& instance);
+template<>
+bool Serializer::Write(const {{class_name}}& instance, json& context);
+
+{{/class_defines}}

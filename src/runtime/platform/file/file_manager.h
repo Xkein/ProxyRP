@@ -10,4 +10,6 @@ class FileManager
 public:
     static std::vector<byte> Read(const Char* path);
     static String            ReadString(const Char* path);
+
+    static bool WriteString(const Char* path, const String& str);
 };
