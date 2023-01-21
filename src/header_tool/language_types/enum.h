@@ -4,12 +4,12 @@
 
 class Class;
 
-class Method : public TypeInfo
+class Enum : public TypeInfo
 {
 public:
-    Method(const Cursor& cursor, const Namespace& current_namespace, Class* parent = nullptr);
+    Enum(const Cursor& cursor, const Namespace& current_namespace);
 
-    virtual ~Method() {}
+    virtual ~Enum() {}
 
     bool ShouldCompile() const;
 
@@ -18,6 +18,6 @@ public:
 
     std::string Name;
     std::string DisplayName;
-    std::string Type;
+    std::string EnumBase;
 
 };

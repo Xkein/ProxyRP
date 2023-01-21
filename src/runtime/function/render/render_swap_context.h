@@ -9,6 +9,7 @@ struct RenderSwapData
 
 class RenderSwapContext
 {
+public:
     RenderSwapData& GetLogicSwapData();
     RenderSwapData& GetRenderSwapData();
 

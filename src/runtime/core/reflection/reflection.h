@@ -11,7 +11,8 @@
 #define STRUCT(name, ...) struct META(__VA_ARGS__) name
 #define INTERFACE(name, ...) class META(__VA_ARGS__) name
 #define PROPERTY(...) META(__VA_ARGS__)
-#define ENUM(...) META(__VA_ARGS__)
+#define ENUM(name, ...) enum META(__VA_ARGS__) name
+#define ENUM_CLASS(name, ...) enum class META(__VA_ARGS__) name
 #define FUNCTION(...) META(__VA_ARGS__)
 #define PARAM(...) META(__VA_ARGS__)
 

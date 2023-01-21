@@ -2,7 +2,7 @@
 
 #include <memory>
 
-class RHI;
+class VulkanRHI;
 class RenderScene;
 class RenderCamera;
 
@@ -12,9 +12,10 @@ public:
 
     virtual void Render() = 0;
 
+    virtual void Clear() = 0;
 
 public:
-    std::shared_ptr<RHI>          RHI;
+    std::shared_ptr<VulkanRHI>    RHI;
     std::shared_ptr<RenderCamera> Camera;
     std::shared_ptr<RenderScene>  Scene;
 };

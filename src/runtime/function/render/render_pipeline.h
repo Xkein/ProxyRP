@@ -2,14 +2,27 @@
 
 #include "render_pass.h"
 
+enum ERenderPass
+{
+
+    Num
+};
+
+struct RenderPipelineInitInfo
+{
+};
+
 class RenderPipeline
 {
 public:
-    std::shared_ptr<RHI> RHI;
+    virtual ~RenderPipeline() {}
 
-    std::shared_ptr<RenderPass> DirectionalLightPass;
-    std::shared_ptr<RenderPass> PointLightShadowPass;
+    virtual void Initialize(RenderPipelineInitInfo* init_info) = 0;
+    virtual void Clear() {};
 
+    virtual void PreparePassData()                  = 0;
+    virtual void PassUpdateAfterRecreateSwapchain() = 0;
 
-    std::shared_ptr<RenderPass> UIPass;
+public:
+    std::shared_ptr<VulkanRHI> RHI;
 };

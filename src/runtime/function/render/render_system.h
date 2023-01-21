@@ -4,9 +4,10 @@
 
 #include <memory>
 
-class RHI;
+class VulkanRHI;
 class RenderScene;
 class Renderer;
+class RenderPipeline;
 class WindowSystem;
 
 struct RenderSystemInitInfo
@@ -23,14 +24,15 @@ public:
     void Initialize(RenderSystemInitInfo init_info);
     void Clear();
 
-	void Tick(float delta_time);
+    void Tick(float delta_time);
 
 private:
     void ProcessSwapData();
 
     RenderSwapContext SwapContext;
 
-    std::shared_ptr<RHI>         RHI;
-    std::shared_ptr<RenderScene> RenderScene;
-    std::shared_ptr<Renderer>    Renderer;
+    std::shared_ptr<VulkanRHI>      RHI;
+    std::shared_ptr<RenderScene>    RenderScene;
+    std::shared_ptr<Renderer>       Renderer;
+    std::shared_ptr<RenderPipeline> RenderPipeline;
 };

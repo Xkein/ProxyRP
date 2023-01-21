@@ -14,7 +14,11 @@ STRUCT(GraphicsConfig)
     REFLECTION_STRUCT_BODY(GraphicsConfig);
 
     PROPERTY()
-    bool EnableFxaa {false};
+    String AntiAliasing {"None"};
+    PROPERTY()
+    int MsaaSampleCount {1};
+    PROPERTY()
+    int ShadowQuality {2};
 };
 
 STRUCT(GlobalConfig)
