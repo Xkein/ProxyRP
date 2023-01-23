@@ -8,6 +8,17 @@ ENUM(ERenderPipelineType : uint8_t, AsInteger) {
     Deferred,
 };
 
+STRUCT(CameraProperties)
+{
+    REFLECTION_STRUCT_BODY(CameraProperties);
+
+    PROPERTY()
+    float ZFar;
+    PROPERTY()
+    float ZNear;
+
+};
+
 STRUCT(GlobalRenderingResource)
 {
     REFLECTION_STRUCT_BODY(GlobalRenderingResource);

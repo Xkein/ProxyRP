@@ -165,6 +165,21 @@ public:
     template<typename T>
     ReflectionInstance(const Instance<T>& other) : Instance(other.m_type, (void**)other.m_instance)
     {}
+
+    void* GetPtr()
+    {
+        return m_instance;
+    }
+
+    const void* GetPtr() const
+    {
+        return m_instance;
+    }
+
+    void SetInstancePtr(void* ptr)
+    {
+        m_instance = (void**)ptr;
+    }
 };
 
 class Type

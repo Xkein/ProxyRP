@@ -3,8 +3,6 @@
 #include "{{headfile_name}}"
 {{/include_headfiles}}
 
-#include "runtime/core/serializer/serializer.h"
-
 {{#class_defines}}
 class __ReflectionType{{class_name}}
 {
@@ -24,9 +22,10 @@ public:
 	{
 		using namespace rttr;
 
-		registration::class_<__ReflectionType{{class_name}}>("__ReflectionType{{class_name}}")
-			.method("ConstructWithJson", &__ReflectionType{{class_name}}::ConstructWithJson)
-			.method("WriteJson", &__ReflectionType{{class_name}}::WriteJson);
+		//registration::class_<__ReflectionType{{class_name}}>("__ReflectionType{{class_name}}")
+		//	.method("ConstructWithJson", &__ReflectionType{{class_name}}::ConstructWithJson)
+		//	.method("WriteJson", &__ReflectionType{{class_name}}::WriteJson);
+		TypeMetaRegister::__RegisterSerializerMethods("{{class_name}}", {ConstructWithJson, WriteJson});
 
 		registration::class_<{{class_name}}>("{{class_name}}")
 			.constructor<>()

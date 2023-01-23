@@ -6,6 +6,7 @@
 
 class VulkanRHI;
 class RenderScene;
+class RenderCamera;
 class Renderer;
 class RenderPipeline;
 class WindowSystem;
@@ -32,7 +33,8 @@ private:
     RenderSwapContext SwapContext;
 
     std::shared_ptr<VulkanRHI>      RHI;
-    std::shared_ptr<RenderScene>    RenderScene;
+    std::shared_ptr<RenderScene>    Scene;
+    std::shared_ptr<RenderCamera>   Camera;
     std::shared_ptr<Renderer>       Renderer;
-    std::shared_ptr<RenderPipeline> RenderPipeline;
+    std::shared_ptr<RenderPipeline> Pipeline;
 };

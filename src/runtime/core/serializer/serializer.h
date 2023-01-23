@@ -135,4 +135,3 @@ bool Serializer::Write(const String& instance, json& context);
 #ifndef __REFLECTION_HEADER_TOOL__
 #include "_generated/serializer/all_serializer.h"
 #endif // !__REFLECTION_HEADER_TOOL__
-

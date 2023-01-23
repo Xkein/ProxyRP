@@ -17,5 +17,11 @@ public:
     RHITextureRef RHITexture;
 };
 
+class VertexBuffer : RenderResource
+{
+
+
+};
+
 typedef std::shared_ptr<Texture> TextureRef;
 

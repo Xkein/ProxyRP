@@ -1,20 +1,14 @@
 #include "reflection.h"
+#include "reflection_register.h"
 #include "core/serializer/serializer.h"
 
 rttr::type Type::InvalidType = rttr::type::get<void>();
 
-std::map<StringView, std::shared_ptr<rttr::type>> ReflectionTypeMap;
+std::map<StringView, __SerializerMethods> SerializerMethods;
 
-rttr::type GetReflectionType(const rttr::type& type) {
-    StringView name(type.get_name().begin(), type.get_name().end());
-    if (auto iter = ReflectionTypeMap.find(name); iter != ReflectionTypeMap.end())
-        return *iter->second;
-
-    String     reflection_type_name = "__ReflectionType";
-    reflection_type_name += name;
-    rttr::type reflection_type = rttr::type::get_by_name(reflection_type_name);
-    ReflectionTypeMap[name]    = std::make_shared<rttr::type>(reflection_type);
-    return reflection_type;
+void TypeMetaRegister::__RegisterSerializerMethods(const StringView& name, __SerializerMethods methods)
+{
+    SerializerMethods[name] = methods;
 }
 
 ReflectionInstance Type::New(const rttr::type& type, const json& context)
@@ -24,9 +18,12 @@ ReflectionInstance Type::New(const rttr::type& type, const json& context)
         return ReflectionInstance();
     }
 
-    auto reflection_type = GetReflectionType(type);
-    auto  method = reflection_type.get_method("ConstructWithJson");
-    void* ptr    = method.invoke({}, context).get_value<void*>();
+    //auto reflection_type = GetReflectionType(type);
+    //auto  method = reflection_type.get_method("ConstructWithJson");
+    //void* ptr    = method.invoke({}, context).get_value<void*>();
+
+    StringView name(type.get_name().begin(), type.get_name().end());
+    void*      ptr = SerializerMethods[name].ConstructWithJson(context);
     return ReflectionInstance(type, ptr);
 }
 
@@ -38,8 +35,10 @@ bool Type::Write(const ReflectionInstance& instance, json& context)
         return false;
     }
 
-    auto  reflection_type = GetReflectionType(type);
-    auto  method          = reflection_type.get_method("WriteJson");
-    void* ptr             = method.invoke({}, (void*)(const void*)instance, context).get_value<void*>();
-    return ReflectionInstance(type, ptr);
+    //auto  reflection_type = GetReflectionType(type);
+    //auto  method          = reflection_type.get_method("WriteJson");
+    //return method.invoke({}, (void*)(const void*)instance, context).get_value<bool>();
+
+    StringView name(type.get_name().begin(), type.get_name().end());
+    return SerializerMethods[name].WriteJson((void*)instance.GetPtr(), context);
 }

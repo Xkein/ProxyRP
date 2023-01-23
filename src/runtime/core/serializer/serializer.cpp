@@ -89,3 +89,6 @@ bool Serializer::Write(const String& instance, json& context)
 {
     return WritePrimitive(instance, context);
 }
+
+
+#include "_generated/serializer/all_serializer.ipp"

@@ -2,9 +2,9 @@
 
 #include "function/render/render_pipeline.h"
 
-class ForwardPipeline : RenderPipeline
+class ForwardPipeline : public RenderPipeline
 {
-    // Inherited via RenderPipeline
+public:
     virtual void Initialize(RenderPipelineInitInfo* init_info) override;
     virtual void PreparePassData() override;
     virtual void PassUpdateAfterRecreateSwapchain() override;

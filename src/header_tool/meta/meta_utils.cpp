@@ -69,6 +69,11 @@ std::string utils::load_file(const std::string& path)
 
 void utils::save_file(const std::string& content, const std::string& output_file)
 {
+    constexpr auto insignificant = " \t\r\n";
+    std::string old_content = load_file(output_file);
+    if (trim(content, insignificant) == trim(old_content, insignificant))
+        return;
+
     std::filesystem::path out_path(output_file);
     if (std::filesystem::exists(out_path.parent_path()))
     {

@@ -1,8 +1,9 @@
 #include "render_system.h"
 #include "function/render/vulkan_rhi/vulkan_rhi.h"
 #include "function/render/render_camera.h"
-#include "function/render/forward_renderer.h"
-#include "function/render/deferred_renderer.h"
+#include "function/render/render_scene.h"
+#include "function/render/pipeline/forward_pipeline.h"
+#include "function/render/renderer/forward_renderer.h"
 #include "function/global/global_context.h"
 #include "resource/asset/asset_manager.h"
 #include "resource/config/config_manager.h"
@@ -21,7 +22,20 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     GlobalRenderingResource global_rendering_res;
     GAssetManager->LoadAsset(GConfigManager->Global.GlobalRenderingResourceUrl, global_rendering_res);
 
+    Camera = std::make_shared<RenderCamera>();
+
+    Scene = std::make_shared<RenderScene>();
+
     Renderer = std::make_shared<ForwardRenderer>();
+    Renderer->RHI    = RHI;
+    Renderer->Scene  = Scene;
+    Renderer->Camera = Camera;
+
+    RenderPipelineInitInfo pipeline_init_info;
+    Pipeline = std::static_pointer_cast<RenderPipeline>(std::make_shared<ForwardPipeline>());
+    Pipeline->RHI = RHI;
+    Pipeline->Initialize(&pipeline_init_info);
+
 }
 
 void RenderSystem::Clear()

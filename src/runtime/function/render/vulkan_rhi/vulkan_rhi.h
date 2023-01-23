@@ -93,14 +93,14 @@ public:
     std::vector<vk::Semaphore> RenderFinishedSemaphores;
     std::vector<vk::Fence>     InFlightFences;
 
-    uint32_t current_frame {0};
-    bool     frame_buffer_resized {false};
+    uint32_t CurrentFrame {0};
+    bool     FrameBufferResized {false};
 
     QueueFamilyIndices QueueIndices;
 
     vk::Sampler                     LinearSampler;
     vk::Sampler                     NearestSampler;
-    std::map<uint32_t, vk::Sampler> m_mipmap_sampler_map;
+    std::map<uint32_t, vk::Sampler> MipmapSamplerMap;
 
     vk::SampleCountFlagBits MsaaSamples {vk::SampleCountFlagBits::e1};
 
