@@ -23,6 +23,8 @@ public:
 
     static bool HasStencilComponent(vk::Format format);
 
+    static vk::DeviceSize GetTextureSize(uint32_t width, uint32_t height, vk::Format format);
+
     static vk::ShaderModule CreateShaderModule(vk::Device device, const std::vector<byte>& shader_code);
 
     static void CreateImage(vk::PhysicalDevice      physical_device,
@@ -47,6 +49,24 @@ public:
                                          vk::ImageViewType    view_type    = vk::ImageViewType::e2D,
                                          uint32_t             layout_count = 1,
                                          uint32_t             mip_levels   = 1);
+
+    static void CreateGlobalImage(VulkanRHI*     rhi,
+                                  vk::Image&     image,
+                                  vk::ImageView& image_view,
+                                  VmaAllocation& image_allocation,
+                                  uint32_t       texture_width,
+                                  uint32_t       texture_height,
+                                  void*          texture_pixels,
+                                  vk::Format     texture_format,
+                                  uint32_t       miplevels);
+    
+    static void GenerateTextureMipMaps(VulkanRHI* rhi,
+                                       vk::Image  image,
+                                       vk::Format image_format,
+                                       uint32_t   texture_width,
+                                       uint32_t   texture_height,
+                                       uint32_t   layer_count,
+                                       uint32_t   mip_levels);
 
     static void TransitionImageLayout(VulkanRHI*           rhi,
                                       vk::Image            image,

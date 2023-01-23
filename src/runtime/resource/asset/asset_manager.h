@@ -40,7 +40,7 @@ public:
 
         json asset_json;
         bool ret = Serializer::Write(asset, asset_json);
-        ret &= FileManager::WriteString(asset_url, asset_json.dump());
+        ret &= FileManager::WriteString(asset_url.c_str(), asset_json.dump());
 
         return ret;
     }
@@ -55,7 +55,7 @@ public:
     template<typename AssetType>
     bool LoadAsset(const String& asset_url, std::shared_ptr<AssetType>& out_asset)
     {
-        std::shared_ptr<AssetType> cached_asset = Registry->GetAsset(asset_url);
+        std::shared_ptr<AssetType> cached_asset = Registry->GetAsset<AssetType>(asset_url);
         if (cached_asset)
         {
             out_asset = cached_asset;
@@ -64,7 +64,7 @@ public:
 
         cached_asset = std::make_shared<AssetType>();
 
-        bool ret = LoadAsset(asset_json, *cached_asset);
+        bool ret = LoadAsset(asset_url, *cached_asset);
         Registry->Register(asset_url, cached_asset);
 
         out_asset = cached_asset;

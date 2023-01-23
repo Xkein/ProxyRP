@@ -1,6 +1,8 @@
 #pragma once
 
-#include <Eigen/Eigen>
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
+#include "axis_aligned.h"
+#include "matrix.h"
+#include "vector.h"
+#include "quaternion.h"
+#include "transform.h"
 

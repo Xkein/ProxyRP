@@ -60,16 +60,30 @@ class RHITexture : RHIResource
 {};
 class RHIUniformBuffer : RHIResource
 {};
-class RHIIndexBuffer : RHIResource
-{};
-class RHIVertexBuffer : RHIResource
-{};
-
-typedef std::shared_ptr<RHIUniformBuffer> RHIUniformBufferRef;
-typedef std::shared_ptr<RHIIndexBuffer>   RHIIndexBufferRef;
-typedef std::shared_ptr<RHIVertexBuffer>  RHIVertexBufferRef;
 
 
-typedef std::shared_ptr<RHITexture> RHITextureRef;
+typedef std::shared_ptr<RHIBuffer>              RHIBufferRef;
+typedef std::shared_ptr<RHIBufferView>          RHIBufferViewRef;
+typedef std::shared_ptr<RHICommandBuffer>       RHICommandBufferRef;
+typedef std::shared_ptr<RHICommandPool>         RHICommandPoolRef;
+typedef std::shared_ptr<RHIDescriptorPool>      RHIDescriptorPoolRef;
+typedef std::shared_ptr<RHIDescriptorSet>       RHIDescriptorSetRef;
+typedef std::shared_ptr<RHIDescriptorSetLayout> RHIDescriptorSetLayoutRef;
+typedef std::shared_ptr<RHIDevice>              RHIDeviceRef;
+typedef std::shared_ptr<RHIDeviceMemory>        RHIDeviceMemoryRef;
+typedef std::shared_ptr<RHIEvent>               RHIEventRef;
+typedef std::shared_ptr<RHIFence>               RHIFenceRef;
+typedef std::shared_ptr<RHIFramebuffer>         RHIFramebufferRef;
+typedef std::shared_ptr<RHIImage>               RHIImageRef;
+typedef std::shared_ptr<RHIImageView>           RHIImageViewRef;
+typedef std::shared_ptr<RHIInstance>            RHIInstanceRef;
+typedef std::shared_ptr<RHIQueue>               RHIQueueRef;
+typedef std::shared_ptr<RHIPhysicalDevice>      RHIPhysicalDeviceRef;
+typedef std::shared_ptr<RHIPipeline>            RHIPipelineRef;
+typedef std::shared_ptr<RHIPipelineCache>       RHIPipelineCacheRef;
+typedef std::shared_ptr<RHIPipelineLayout>      RHIPipelineLayoutRef;
+typedef std::shared_ptr<RHIRenderPass>          RHIRenderPassRef;
+typedef std::shared_ptr<RHISampler>             RHISamplerRef;
+typedef std::shared_ptr<RHISemaphore>           RHISemaphoreRef;
+typedef std::shared_ptr<RHIShader>              RHIShaderRef;
 
-typedef std::shared_ptr<RHIShader> RHIShaderRef;

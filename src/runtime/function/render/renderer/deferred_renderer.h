@@ -1,8 +1,8 @@
 #pragma once
 
-#include "function/render/renderer.h"
+#include "function/render/scene_renderer.h"
 
-class DeferredRenderer : public Renderer
+class DeferredSceneRenderer : public SceneRenderer
 {
 public:
 };

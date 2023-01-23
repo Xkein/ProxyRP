@@ -1,10 +1,5 @@
 #pragma once
 
-#include "math.h"
-#include "core/reflection/reflection.h"
+#include <Eigen/Geometry>
 
-STRUCT(Quaternionf)
-{
-    REFLECTION_STRUCT_BODY(Quaternionf);
-
-};
+using Quaternionf = Eigen::Quaternionf;

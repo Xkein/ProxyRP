@@ -7,7 +7,7 @@
 class VulkanRHI;
 class RenderScene;
 class RenderCamera;
-class Renderer;
+class SceneRenderer;
 class RenderPipeline;
 class WindowSystem;
 
@@ -27,6 +27,11 @@ public:
 
     void Tick(float delta_time);
 
+    void                          SwapLogicRenderData();
+    RenderSwapContext&            GetSwapContext();
+    std::shared_ptr<VulkanRHI>    GetRHI() const;
+    std::shared_ptr<RenderCamera> GetRenderCamera() const;
+
 private:
     void ProcessSwapData();
 
@@ -35,6 +40,6 @@ private:
     std::shared_ptr<VulkanRHI>      RHI;
     std::shared_ptr<RenderScene>    Scene;
     std::shared_ptr<RenderCamera>   Camera;
-    std::shared_ptr<Renderer>       Renderer;
+    std::shared_ptr<SceneRenderer>  Renderer;
     std::shared_ptr<RenderPipeline> Pipeline;
 };

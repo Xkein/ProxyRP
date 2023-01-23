@@ -26,10 +26,9 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
 
     Scene = std::make_shared<RenderScene>();
 
-    Renderer = std::make_shared<ForwardRenderer>();
+    Renderer = std::make_shared<ForwardSceneRenderer>();
     Renderer->RHI    = RHI;
     Renderer->Scene  = Scene;
-    Renderer->Camera = Camera;
 
     RenderPipelineInitInfo pipeline_init_info;
     Pipeline = std::static_pointer_cast<RenderPipeline>(std::make_shared<ForwardPipeline>());
@@ -53,10 +52,47 @@ void RenderSystem::Clear()
     Renderer.reset();
 }
 
-void RenderSystem::Tick(float delta_time) {
-    SwapContext.SwapLogicRenderData();
+void RenderSystem::Tick(float delta_time)
+{
+    SwapLogicRenderData();
 
     ProcessSwapData();
+
+    RHI->PrepareContext();
+
+    Renderer->UpdatePerBuffer(Camera);
+
+    Scene->UpdateVisibleObjects(Camera);
+
+    Pipeline->PreparePassData();
+
+    Renderer->Render();
 }
 
-void RenderSystem::ProcessSwapData() {}
+void RenderSystem::SwapLogicRenderData()
+{
+    SwapContext.SwapLogicRenderData();
+}
+
+RenderSwapContext& RenderSystem::GetSwapContext()
+{
+    return SwapContext;
+}
+
+std::shared_ptr<VulkanRHI> RenderSystem::GetRHI() const
+{
+    return RHI;
+}
+
+std::shared_ptr<RenderCamera> RenderSystem::GetRenderCamera() const
+{
+    return Camera;
+}
+
+void RenderSystem::ProcessSwapData()
+{
+    RenderSwapData& swap_data = SwapContext.GetRenderSwapData();
+
+    std::shared_ptr<AssetManager> asset_manager = GAssetManager;
+
+}

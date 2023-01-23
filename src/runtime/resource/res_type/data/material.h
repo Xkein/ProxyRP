@@ -8,8 +8,14 @@ STRUCT(MaterialResource)
     REFLECTION_STRUCT_BODY(MaterialResource);
 
     PROPERTY()
-    String BaseColorTexture;
+    String BaseColorFile;
     PROPERTY()
-    String NormalTexture;
+    String NormalFile;
+    PROPERTY()
+    String MetallicRoughnessFile;
+    PROPERTY()
+    String OcclusionFile;
+    PROPERTY()
+    String EmissiveFile;
 };
 

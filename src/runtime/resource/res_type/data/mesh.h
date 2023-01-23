@@ -1,20 +1,12 @@
 #pragma once
 
-#include "core/math/math.h"
-#include "resource/res_type/data/texture.h"
+#include "core/reflection/reflection.h"
+#include "platform/string.h"
 
-#include <vector>
-
-struct RawVertex
+STRUCT(MeshResource)
 {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoords;
-};
+    REFLECTION_STRUCT_BODY(MeshResource);
 
-struct MeshResource
-{
-    std::vector<RawVertex>          Vertices;
-    std::vector<uint32_t>        Indices;
-    std::vector<TextureResource> Textures;
+    PROPERTY()
+    String MeshFile;
 };

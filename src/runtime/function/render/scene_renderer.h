@@ -12,7 +12,7 @@ struct RendererInitInfo
 
 };
 
-class Renderer
+class SceneRenderer
 {
 public:
     virtual void Initialize(RendererInitInfo* init_info) = 0;
@@ -20,10 +20,10 @@ public:
 
     virtual void Render() = 0;
 
+    virtual void UpdatePerBuffer(std::shared_ptr<RenderCamera> camera);
 
 public:
     std::shared_ptr<VulkanRHI>      RHI;
-    std::shared_ptr<RenderCamera>   Camera;
     std::shared_ptr<RenderScene>    Scene;
     std::shared_ptr<RenderPipeline> Pipeline;
 };

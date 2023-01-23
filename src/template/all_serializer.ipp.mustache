@@ -6,7 +6,7 @@
 {{#class_defines}}
 template<>
 bool Serializer::Read(const json& context, {{class_name}}& instance) {
-    assert(context.is_object());
+    ASSERT(context.is_object());
     bool ret = true;
 {{#class_base_class_defines}}
     ret &= Serializer::Read(context, *({{class_base_class_name}}*)&instance);
@@ -14,7 +14,7 @@ bool Serializer::Read(const json& context, {{class_name}}& instance) {
 {{#class_field_defines}}
     if(!context["{{class_field_display_name}}"].is_null()) {
 {{#class_field_is_vector}}
-        assert(context["{{class_field_display_name}}"].is_array());
+        ASSERT(context["{{class_field_display_name}}"].is_array());
         const json& array_{{class_field_name}} = context["{{class_field_display_name}}"];
         instance.{{class_field_name}}.resize(array_{{class_field_name}}.size());
         for (size_t index = 0; index < array_{{class_field_name}}.size(); ++index) {
@@ -34,7 +34,7 @@ bool Serializer::Write(const {{class_name}}& instance, json& context) {
 {{#class_base_class_defines}}
     json json_context_{{class_base_class_index}};
     ret &= Serializer::Write(*({{class_base_class_name}}*)&instance, json_context_{{class_base_class_index}});
-    assert(json_context_{{class_base_class_index}}.is_object());
+    ASSERT(json_context_{{class_base_class_index}}.is_object());
     auto& json_context_map_{{class_base_class_index}} = json_context_{{class_base_class_index}};
     context.insert(json_context_map_{{class_base_class_index}}.begin() , json_context_map_{{class_base_class_index}}.end());
 {{/class_base_class_defines}}

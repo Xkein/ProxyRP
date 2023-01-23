@@ -17,6 +17,7 @@ public:
     virtual void Initialize(RHIInitInfo init_info) override;
     virtual void PrepareContext() override;
 
+    // allocate and create
     virtual void CreateSwapChain() override;
     virtual void RecreateSwapChain() override;
     virtual void CreateSwapChainImageViews() override;
@@ -41,9 +42,15 @@ public:
                                  uint32_t             miplevels,
                                  vk::ImageView&       image_view);
 
+    // command
     virtual vk::CommandBuffer BeginSingleTimeCommands();
     virtual void              EndSingleTimeCommands(vk::CommandBuffer command_buffer);
 
+    // query
+    virtual vk::CommandBuffer  GetCommandBuffer() const;
+    virtual vk::DescriptorPool GetDescriptorPool() const;
+    
+    // destroy
     virtual void Clear() override;
     virtual void ClearSwapChain() override;
 

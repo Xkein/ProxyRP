@@ -1,11 +1,5 @@
 #pragma once
 
-#include "math.h"
-#include "quaternion.h"
-#include "core/reflection/reflection.h"
+#include <Eigen/Geometry>
 
-STRUCT(Transformf)
-{
-    REFLECTION_STRUCT_BODY(Transformf);
-
-};
+using Transformf = Eigen::Transform<float, 3, Eigen::Affine>;

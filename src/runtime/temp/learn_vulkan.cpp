@@ -1,6 +1,5 @@
 //#define GLM_FORCE_LEFT_HANDED
 
-#include "core/math/math.h"
 #include "resource/loader/texture_loader.h"
 #include "resource/loader/model_loader.h"
 #include "platform/file/file_manager.h"
@@ -8,6 +7,8 @@
 #include <vulkan/vulkan.hpp>
 #include <optional>
 #include <set>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 

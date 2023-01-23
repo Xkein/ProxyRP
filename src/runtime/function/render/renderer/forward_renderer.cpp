@@ -1,7 +1,7 @@
 #include "forward_renderer.h"
 
-void ForwardRenderer::Render() {}
+void ForwardSceneRenderer::Render() {}
 
-void ForwardRenderer::Clear() {}
+void ForwardSceneRenderer::Clear() {}
 
-void ForwardRenderer::Initialize(RendererInitInfo* init_info) {}
+void ForwardSceneRenderer::Initialize(RendererInitInfo* init_info) {}

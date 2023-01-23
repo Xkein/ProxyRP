@@ -20,7 +20,9 @@ private:
     void SetupDescriptorSetLayout();
     void SetupDescriptorSet();
     void SetupFramebufferDescriptorSet();
+    void SetupRenderPass();
     void SetupPipelines();
+    void SetupSwapchainFramebuffers();
 
     std::vector<vk::Framebuffer> SwapchainFrameBuffers;
 };
