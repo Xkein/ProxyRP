@@ -40,6 +40,21 @@ bool Cursor::IsDefinition() const
     return clang_isCursorDefinition(Handle);
 }
 
+bool Cursor::IsMethodStatic() const
+{
+    return clang_CXXMethod_isStatic(Handle);
+}
+
+bool Cursor::IsMethodConst() const
+{
+    return clang_CXXMethod_isConst(Handle);
+}
+
+bool Cursor::IsEnumClass() const
+{
+    return clang_EnumDecl_isScoped(Handle);
+}
+
 const CursorType& Cursor::GetType() const
 {
     return Type;

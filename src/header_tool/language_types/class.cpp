@@ -21,6 +21,9 @@ Class::Class(const Cursor& cursor, const Namespace& current_namespace) :
             case CXCursor_FieldDecl:
                 Fields.emplace_back(new Field(child, current_namespace, this));
                 break;
+            case CXCursor_CXXMethod:
+                Methods.emplace_back(new Method(child, current_namespace, this));
+                break;
             default:
                 break;
         }

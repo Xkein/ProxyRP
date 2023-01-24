@@ -20,6 +20,7 @@ protected:
 
 private:
     Mustache::data ClassDefines {Mustache::data::type::list};
+    Mustache::data EnumDefines {Mustache::data::type::list};
     Mustache::data IncludeHeadFiles {Mustache::data::type::list};
     Mustache::data IncludeCppFiles {Mustache::data::type::list};
 };

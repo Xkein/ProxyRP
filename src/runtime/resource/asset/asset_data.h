@@ -7,6 +7,8 @@
 class AssetData
 {
 public:
+    AssetData() {}
+
     template<typename T>
     AssetData(const String& url, const std::shared_ptr<T>& ptr) : Url(url) {
         Data = std::reinterpret_pointer_cast<void*>(ptr);

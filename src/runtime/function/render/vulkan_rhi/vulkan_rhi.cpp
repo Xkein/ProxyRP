@@ -51,7 +51,10 @@ void VulkanRHI::Initialize(RHIInitInfo init_info)
     CreateAllocator();
 }
 
-void VulkanRHI::PrepareContext() {}
+void VulkanRHI::PrepareContext()
+{
+    CurrentCommandBuffer = CommandBuffers[CurrentFrame];
+}
 
 void VulkanRHI::CreateSwapChain()
 {
@@ -98,9 +101,9 @@ void VulkanRHI::CreateSwapChain()
     create_info.clipped        = VK_TRUE;
     create_info.oldSwapchain   = VK_NULL_HANDLE;
 
-    SwapChain = Device.createSwapchainKHR(create_info);
+    SwapChain = Device->createSwapchainKHR(create_info);
 
-    SwapChainImages       = Device.getSwapchainImagesKHR(SwapChain);
+    SwapChainImages       = Device->getSwapchainImagesKHR(SwapChain);
     SwapChainImageFormat = surface_format.format;
     SwapChainExtent       = extent;
 
@@ -116,7 +119,7 @@ void VulkanRHI::RecreateSwapChain()
         glfwWaitEvents();
     }
     
-    vk::Result result_wait = Device.waitForFences(InFlightFences, VK_TRUE, UINT64_MAX);
+    vk::Result result_wait = Device->waitForFences(InFlightFences, VK_TRUE, UINT64_MAX);
     if (result_wait != vk::Result::eSuccess)
     {
         LOG_ERROR("waitForFences failed");
@@ -169,9 +172,39 @@ bool VulkanRHI::CreateFramebuffer(const vk::FramebufferCreateInfo* pCreateInfo, 
     create_info.height          = pCreateInfo->height;
     create_info.layers          = pCreateInfo->layers;
 
-    pFramebuffer = Device.createFramebuffer(create_info);
+    pFramebuffer = Device->createFramebuffer(create_info);
 
     return true;
+}
+
+RHIShader* VulkanRHI::CreateShaderModule(const std::vector<byte>& shader_code)
+{
+    VulkanShader* shader = new VulkanShader();
+
+    shader->Resource = VulkanUtil::CreateShaderModule(Device, shader_code);
+
+    return shader;
+}
+
+void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
+                             vk::BufferUsageFlags    usage,
+                             vk::MemoryPropertyFlags properties,
+                             vk::Buffer&             buffer,
+                             vk::DeviceMemory&       buffer_memory)
+{
+    VulkanUtil::CreateBuffer(PhysicalDevice, Device, size, usage, properties, buffer, buffer_memory);
+}
+
+void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
+                                          vk::BufferUsageFlags    usage,
+                                          vk::MemoryPropertyFlags properties,
+                                          vk::Buffer&             buffer,
+                                          vk::DeviceMemory&       buffer_memory,
+                                          void*                   data,
+                                          int                     data_size)
+{
+    VulkanUtil::CreateBufferAndInitialize(
+        Device, PhysicalDevice, usage, properties, buffer, buffer_memory, size, data, data_size);
 }
 
 void VulkanRHI::CreateImage(uint32_t                width,
@@ -215,6 +248,23 @@ void VulkanRHI::CreateImageView(vk::Image            image,
         VulkanUtil::CreateImageView(Device, image, format, image_aspect_flags, view_type, layout_count, miplevels);
 }
 
+void VulkanRHI::CreateTextureImage(vk::Image&         image,
+                                   vk::ImageView&     image_view,
+                                   vk::DeviceMemory&  device_memory,
+                                   const TextureData* texure_data)
+{
+    VulkanUtil::CreateTextureImage(this, image, image_view, device_memory, texure_data);
+}
+
+void VulkanRHI::CopyBuffer(vk::Buffer     srcBuffer,
+                           vk::Buffer     dstBuffer,
+                           vk::DeviceSize srcOffset,
+                           vk::DeviceSize dstOffset,
+                           vk::DeviceSize size)
+{
+    VulkanUtil::CopyBuffer(this, srcBuffer, dstBuffer, srcOffset, dstOffset, size);
+}
+
 vk::CommandBuffer VulkanRHI::BeginSingleTimeCommands()
 {
     vk::CommandBufferAllocateInfo alloc_info {
@@ -223,7 +273,7 @@ vk::CommandBuffer VulkanRHI::BeginSingleTimeCommands()
         .commandBufferCount = 1,
     };
 
-    vk::CommandBuffer command_buffer = Device.allocateCommandBuffers(alloc_info)[0];
+    vk::CommandBuffer command_buffer = Device->allocateCommandBuffers(alloc_info)[0];
 
     vk::CommandBufferBeginInfo begin_info {
         .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
@@ -243,35 +293,45 @@ void VulkanRHI::EndSingleTimeCommands(vk::CommandBuffer command_buffer)
         .pCommandBuffers    = &command_buffer,
     };
 
-    GraphicsQueue.submit({submit_info});
-    GraphicsQueue.waitIdle();
+    GraphicsQueue->submit({submit_info});
+    GraphicsQueue->waitIdle();
 
-    Device.freeCommandBuffers(CommandPool, {command_buffer});
+    Device->freeCommandBuffers(CommandPool, {command_buffer});
+}
+
+vk::CommandBuffer VulkanRHI::GetCommandBuffer() const
+{
+    return CurrentCommandBuffer;
+}
+
+vk::DescriptorPool VulkanRHI::GetDescriptorPool() const
+{
+    return DescriptorPool;
 }
 
 void VulkanRHI::Clear()
 {
     if (EnableValidationLayers)
     {
-        Instance.destroyDebugUtilsMessengerEXT(DebugMessenger, nullptr, DispatchDynamic);
+        Instance->destroyDebugUtilsMessengerEXT(DebugMessenger, nullptr, DispatchDynamic);
     }
 }
 
 void VulkanRHI::ClearSwapChain()
 {
-    Device.destroyImageView(ColorImageView);
-    Device.destroyImage(ColorImage);
-    Device.freeMemory(ColorImageMemory);
+    Device->destroyImageView(ColorImageView);
+    Device->destroyImage(ColorImage);
+    Device->freeMemory(ColorImageMemory);
 
-    Device.destroyImageView(DepthImageView);
-    Device.destroyImage(DepthImage);
-    Device.freeMemory(DepthImageMemory);
+    Device->destroyImageView(DepthImageView);
+    Device->destroyImage(DepthImage);
+    Device->freeMemory(DepthImageMemory);
 
     for (auto& image_view : SwapChainImageViews)
     {
-        Device.destroyImageView(image_view);
+        Device->destroyImageView(image_view);
     }
-    Device.destroySwapchainKHR(SwapChain);
+    Device->destroySwapchainKHR(SwapChain);
 }
 
 
@@ -336,7 +396,7 @@ void VulkanRHI::SetupDebugMessenger()
         .pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)DebugCallback,
         .pUserData       = nullptr};
 
-    DebugMessenger = Instance.createDebugUtilsMessengerEXT(create_info, nullptr, DispatchDynamic);
+    DebugMessenger = Instance->createDebugUtilsMessengerEXT(create_info, nullptr, DispatchDynamic);
 }
 
 void VulkanRHI::CreateWindowSurface()
@@ -349,7 +409,7 @@ void VulkanRHI::CreateWindowSurface()
 
 void VulkanRHI::SelectPhysicalDevice()
 {
-    std::vector<vk::PhysicalDevice> physical_devices = Instance.enumeratePhysicalDevices();
+    std::vector<vk::PhysicalDevice> physical_devices = Instance->enumeratePhysicalDevices();
 
     std::vector<std::pair<int, vk::PhysicalDevice>> ranked_physical_devices;
     for (const auto& device : physical_devices)
@@ -425,11 +485,11 @@ void VulkanRHI::CreateLogicalDevice()
                                       .ppEnabledExtensionNames = DeviceExtensions.data(),
                                       .pEnabledFeatures        = &device_features};
 
-    Device = PhysicalDevice.createDevice(create_info);
+    Device = PhysicalDevice->createDevice(create_info);
 
-    GraphicsQueue = Device.getQueue(indices.GraphicsFamily.value(), 0);
-    ComputeQueue  = Device.getQueue(indices.ComputeFamily.value(), 0);
-    PresentQueue  = Device.getQueue(indices.PresentFamily.value(), 0);
+    GraphicsQueue = Device->getQueue(indices.GraphicsFamily.value(), 0);
+    ComputeQueue  = Device->getQueue(indices.ComputeFamily.value(), 0);
+    PresentQueue  = Device->getQueue(indices.PresentFamily.value(), 0);
 
     DispatchDynamic.init(Device);
 
@@ -445,18 +505,18 @@ void VulkanRHI::CreateCommandPool()
         .queueFamilyIndex = queue_family_indices.GraphicsFamily.value(),
     };
 
-    CommandPool = Device.createCommandPool(pool_info);
+    CommandPool = Device->createCommandPool(pool_info);
 }
 
 void VulkanRHI::CreateCommandBuffer()
 {
-    CcommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    CommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
     vk::CommandBufferAllocateInfo allocate_info {.commandPool        = CommandPool,
                                                  .level              = vk::CommandBufferLevel::ePrimary,
-                                                 .commandBufferCount = (uint32_t)CcommandBuffers.size()};
+                                                 .commandBufferCount = (uint32_t)CommandBuffers.size()};
 
-    CcommandBuffers = Device.allocateCommandBuffers(allocate_info);
+    CommandBuffers = Device->allocateCommandBuffers(allocate_info);
 }
 
 void VulkanRHI::CreateDescriptorPool() {}
@@ -472,9 +532,9 @@ void VulkanRHI::CreateSyncObjects()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        ImageAvailableSemaphores[i] = Device.createSemaphore(semaphore_info);
-        RenderFinishedSemaphores[i] = Device.createSemaphore(semaphore_info);
-        InFlightFences[i]           = Device.createFence(fence_info);
+        ImageAvailableSemaphores[i] = Device->createSemaphore(semaphore_info);
+        RenderFinishedSemaphores[i] = Device->createSemaphore(semaphore_info);
+        InFlightFences[i]           = Device->createFence(fence_info);
     }
 }
 

@@ -58,6 +58,31 @@ bool Serializer::Write(const {{class_name}}& instance, json& context) {
 }
 
 {{/class_defines}}
+{{#enum_defines}}
+template<>
+bool Serializer::Read(const json& context, {{enum_name}}& instance) {
+    ASSERT(context.is_string());
+    String value = context.get<String>();
+{{#enum_const_defines}}
+    if (value == "{{enum_const_display_name}}") {
+        instance = {{enum_name}}::{{enum_const_name}};
+        return true;
+    }
+ {{/enum_const_defines}}
+    return false;
+}
+template<>
+bool Serializer::Write(const {{enum_name}}& instance, json& context) {
+{{#enum_const_defines}}
+    if (instance == {{enum_name}}::{{enum_const_name}}) {
+        context = "{{enum_const_display_name}}";
+        return true;
+    }
+ {{/enum_const_defines}}
+    return false;
+}
+
+{{/enum_defines}}
 
 // results of reflection
 
@@ -67,3 +92,9 @@ bool Serializer::Write(const {{class_name}}& instance, json& context) {
 // }
 
 {{/class_defines}}
+{{#enum_defines}}
+// enum {{enum_name}} { {{#enum_const_defines}}
+//  {{enum_const_name}} = ? META(DisplayName="{{enum_const_display_name}}"); {{/enum_const_defines}}
+// }
+
+{{/enum_defines}}

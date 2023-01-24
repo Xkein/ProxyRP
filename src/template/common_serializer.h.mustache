@@ -11,3 +11,11 @@ template<>
 bool Serializer::Write(const {{class_name}}& instance, json& context);
 
 {{/class_defines}}
+
+{{#enum_defines}}
+template<>
+bool Serializer::Read(const json& context, {{enum_name}}& instance);
+template<>
+bool Serializer::Write(const {{enum_name}}& instance, json& context);
+
+{{/enum_defines}}

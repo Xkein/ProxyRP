@@ -29,7 +29,9 @@ public:
 
 		registration::class_<{{class_name}}>("{{class_name}}")
 			.constructor<>()
-		{{#class_field_defines}}
+		{{#class_method_defines}}
+			.method("{{class_method_name}}", &{{class_name}}::{{class_method_name}})
+		{{/class_method_defines}}{{#class_field_defines}}
 			.property("{{class_field_name}}", &{{class_name}}::{{class_field_name}})
 		{{/class_field_defines}};
 	}
@@ -38,3 +40,24 @@ public:
 };
 
 {{/class_defines}}
+
+{{#enum_defines}}
+class __ReflectionType{{enum_name}}
+{
+public:
+	static void Register()
+	{
+		using namespace rttr;
+
+		registration::enumeration<{{enum_name}}>("{{enum_name}}")
+		(
+		{{#enum_const_defines}}
+			value("{{enum_const_name}}", {{enum_name}}::{{enum_const_name}}),
+		{{/enum_const_defines}}
+			metadata("__PlaceHolder", "place holder")
+		);
+	}
+	static void Unregister()
+	{}
+};
+{{/enum_defines}}

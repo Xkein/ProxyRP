@@ -2,6 +2,7 @@
 
 #include "type_info.h"
 #include "field.h"
+#include "method.h"
 
 #include <memory>
 
@@ -32,7 +33,8 @@ public:
     std::string DisplayName;
     std::string QualifiedName;
 
-    std::vector<std::shared_ptr<Field>> Fields;
+    std::vector<std::shared_ptr<Field>>  Fields;
+    std::vector<std::shared_ptr<Method>> Methods;
 
     bool IsAccessible() const;
 

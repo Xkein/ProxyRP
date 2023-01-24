@@ -1,5 +1,6 @@
 #include "reflection_generator.h"
 #include "language_types/class.h"
+#include "language_types/enum.h"
 #include "template/template_manager.h"
 #include "meta/meta_utils.h"
 
@@ -19,10 +20,12 @@ int ReflectionGenerator::Generate(const std::string& path, SchemaModule schema)
     Mustache::data mustache_data;
     Mustache::data include_headfiles(Mustache::data::type::list);
     Mustache::data class_defines(Mustache::data::type::list);
+    Mustache::data enum_defines(Mustache::data::type::list);
     
     include_headfiles.push_back(Mustache::data("headfile_name", utils::get_relative_path(RootPath, path)));
 
     std::set<std::string> class_names;
+    std::set<std::string> enum_names;
 
     for (auto& class_temp : schema.Classes)
     {
@@ -42,11 +45,31 @@ int ReflectionGenerator::Generate(const std::string& path, SchemaModule schema)
             
         }
 
-
         class_defines.push_back(class_def);
     }
 
+    for (auto& enum_temp : schema.Enumerations)
+    {
+        if (!enum_temp->ShouldCompile())
+            continue;
+
+        enum_names.insert(enum_temp->Name);
+
+        Mustache::data enum_def;
+        GenEnumRenderData(enum_temp, enum_def);
+
+        for (auto& enum_const : enum_temp->Constants)
+        {
+            if (!enum_const->ShouldCompile())
+                continue;
+
+        }
+
+        enum_defines.push_back(enum_def);
+    }
+
     mustache_data.set("class_defines", class_defines);
+    mustache_data.set("enum_defines", enum_defines);
     mustache_data.set("include_headfiles", include_headfiles);
 
     std::string render_string = GTemplateManager->RenderByTemplate("common_reflection.h", mustache_data);
@@ -55,6 +78,10 @@ int ReflectionGenerator::Generate(const std::string& path, SchemaModule schema)
     for (auto& class_name : class_names)
     {
         TypeList.push_back(Mustache::data("class_name", class_name));
+    }
+    for (auto& enum_name : enum_names)
+    {
+        EnumList.push_back(Mustache::data("enum_name", enum_name));
     }
 
     HeadFileList.push_back(Mustache::data("headfile_name", utils::get_relative_path(RootPath, file_path)));
@@ -68,6 +95,7 @@ void ReflectionGenerator::Finish()
     mustache_data.set("include_headfiles", HeadFileList);
     mustache_data.set("include_cpp_files", CppFileList);
     mustache_data.set("class_defines", TypeList);
+    mustache_data.set("enum_defines", EnumList);
 
     std::string render_string = GTemplateManager->RenderByTemplate("all_reflection.h", mustache_data);
     utils::save_file(render_string, OutPath + "/all_reflection.h");

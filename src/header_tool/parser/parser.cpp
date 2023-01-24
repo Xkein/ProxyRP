@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "cursor/cursor.h"
 #include "language_types/class.h"
+#include "language_types/enum.h"
 #include "generator/reflection_generator.h"
 #include "generator/serializer_generator.h"
 #include "meta/meta_utils.h"
@@ -163,17 +164,31 @@ void MetaParser::BuildClassAST(const Cursor& cursor, Namespace& current_namespac
     {
         CXCursorKind kind = child.GetKind();
 
-        if (child.IsDefinition() && (kind == CXCursor_ClassDecl || kind == CXCursor_StructDecl))
+        if (child.IsDefinition())
         {
-            auto class_ptr = std::make_shared<Class>(child, current_namespace);
-
-            //std::cout << class_ptr->Name << std::endl;
-
-            if (class_ptr->ShouldCompile())
+            if (kind == CXCursor_ClassDecl || kind == CXCursor_StructDecl)
             {
-                auto file = class_ptr->GetSourceFile();
-                SchemaModules[file].Classes.emplace_back(class_ptr);
-                TypeTable[class_ptr->DisplayName] = file;
+                auto class_ptr = std::make_shared<Class>(child, current_namespace);
+
+                // std::cout << class_ptr->Name << std::endl;
+
+                if (class_ptr->ShouldCompile())
+                {
+                    auto file = class_ptr->GetSourceFile();
+                    SchemaModules[file].Classes.emplace_back(class_ptr);
+                    TypeTable[class_ptr->DisplayName] = file;
+                }
+            }
+            else if (kind == CXCursor_EnumDecl)
+            {
+                auto enum_ptr = std::make_shared<Enum>(child, current_namespace);
+
+                if (enum_ptr->ShouldCompile())
+                {
+                    auto file = enum_ptr->GetSourceFile();
+                    SchemaModules[file].Enumerations.emplace_back(enum_ptr);
+                    TypeTable[enum_ptr->Name] = file;
+                }
             }
         }
         else

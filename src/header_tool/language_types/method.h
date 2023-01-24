@@ -14,7 +14,10 @@ public:
     bool ShouldCompile() const;
 
 public:
-    bool IsEnumClass();
+    bool IsStatic;
+    bool IsConst;
+
+    Class* Parent;
 
     std::string Name;
     std::string DisplayName;

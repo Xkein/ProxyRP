@@ -22,4 +22,5 @@ private:
     Mustache::data HeadFileList {Mustache::data::type::list};
     Mustache::data CppFileList {Mustache::data::type::list};
     Mustache::data TypeList {Mustache::data::type::list};
+    Mustache::data EnumList {Mustache::data::type::list};
 };

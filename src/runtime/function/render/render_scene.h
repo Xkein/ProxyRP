@@ -1,5 +1,9 @@
 #pragma once
 
+#include <memory>
+
+class RenderCamera;
+
 class RenderScene
 {
 public:

@@ -17,6 +17,11 @@ public:
 
 	bool IsDefinition() const;
 
+    bool IsMethodStatic() const;
+    bool IsMethodConst() const;
+
+    bool IsEnumClass() const;
+
 	const CursorType& GetType() const;
 
 	std::vector<Cursor> GetChildren() const;

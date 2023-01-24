@@ -8,6 +8,9 @@ void TypeMetaRegister::Register()
 {{#class_defines}}
     __ReflectionType{{class_name}}::Register();
 {{/class_defines}}
+{{#enum_defines}}
+    __ReflectionType{{enum_name}}::Register();
+{{/enum_defines}}
 }
 
 void TypeMetaRegister::Unregister()
@@ -15,4 +18,7 @@ void TypeMetaRegister::Unregister()
 {{#class_defines}}
     __ReflectionType{{class_name}}::Unregister();
 {{/class_defines}}
+{{#enum_defines}}
+    __ReflectionType{{enum_name}}::Unregister();
+{{/enum_defines}}
 }

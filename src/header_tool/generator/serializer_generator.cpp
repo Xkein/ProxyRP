@@ -1,5 +1,6 @@
 #include "serializer_generator.h"
 #include "language_types/class.h"
+#include "language_types/enum.h"
 #include "template/template_manager.h"
 #include "meta/meta_utils.h"
 
@@ -19,8 +20,10 @@ int SerializerGenerator::Generate(const std::string& path, SchemaModule schema)
     Mustache::data mustache_data;
     Mustache::data include_headfiles(Mustache::data::type::list);
     Mustache::data class_defines(Mustache::data::type::list);
+    Mustache::data enum_defines(Mustache::data::type::list);
 
     include_headfiles.push_back(Mustache::data("headfile_name", utils::get_relative_path(RootPath, path)));
+
     for (auto& class_temp : schema.Classes)
     {
         if (!class_temp->ShouldCompileFields())
@@ -59,7 +62,26 @@ int SerializerGenerator::Generate(const std::string& path, SchemaModule schema)
         ClassDefines.push_back(class_def);
     }
 
+    for (auto& enum_temp : schema.Enumerations)
+    {
+        if (!enum_temp->ShouldCompile())
+            continue;
+
+        Mustache::data enum_def;
+        GenEnumRenderData(enum_temp, enum_def);
+
+        for (auto& enum_const : enum_temp->Constants)
+        {
+            if (!enum_const->ShouldCompile())
+                continue;
+        }
+
+        enum_defines.push_back(enum_def);
+        EnumDefines.push_back(enum_def);
+    }
+
     mustache_data.set("class_defines", class_defines);
+    mustache_data.set("enum_defines", enum_defines);
     mustache_data.set("include_headfiles", include_headfiles);
 
     std::string cpp_file_path = utils::change_extension(file_path, ".cpp");
@@ -81,6 +103,7 @@ void SerializerGenerator::Finish()
 {
     Mustache::data mustache_data;
     mustache_data.set("class_defines", ClassDefines);
+    mustache_data.set("enum_defines", EnumDefines);
     mustache_data.set("include_headfiles", IncludeHeadFiles);
     mustache_data.set("include_cpp_files", IncludeCppFiles);
 

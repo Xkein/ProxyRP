@@ -1,6 +1,7 @@
 #include "vulkan_util.h"
 #include "core/log/log_system.h"
 #include "function/render/vulkan_rhi/vulkan_rhi.h"
+#include "function/render/render_type.h"
 
 uint32_t
 VulkanUtil::FindMemoryType(vk::PhysicalDevice physical_device, uint32_t type_filter, vk::MemoryPropertyFlags properties)
@@ -125,6 +126,57 @@ vk::ShaderModule VulkanUtil::CreateShaderModule(vk::Device device, const std::ve
     return shader_module;
 }
 
+void VulkanUtil::CreateBuffer(vk::PhysicalDevice      physical_device,
+                              vk::Device              device,
+                              vk::DeviceSize          size,
+                              vk::BufferUsageFlags    usage,
+                              vk::MemoryPropertyFlags properties,
+                              vk::Buffer&             buffer,
+                              vk::DeviceMemory&       buffer_memory)
+{
+    vk::BufferCreateInfo buffer_info {
+        .flags       = {},
+        .size        = size,
+        .usage       = usage,
+        .sharingMode = vk::SharingMode::eExclusive,
+    };
+
+    buffer = device.createBuffer(buffer_info);
+
+    vk::MemoryRequirements memory_requirements = device.getBufferMemoryRequirements(buffer);
+
+    vk::MemoryAllocateInfo alloc_info {
+        .allocationSize  = memory_requirements.size,
+        .memoryTypeIndex = FindMemoryType(physical_device, memory_requirements.memoryTypeBits, properties),
+    };
+
+    buffer_memory = device.allocateMemory(alloc_info);
+
+    device.bindBufferMemory(buffer, buffer_memory, 0);
+}
+
+void VulkanUtil::CreateBufferAndInitialize(vk::Device              device,
+                                           vk::PhysicalDevice      physicalDevice,
+                                           vk::BufferUsageFlags    usageFlags,
+                                           vk::MemoryPropertyFlags memoryPropertyFlags,
+                                           vk::Buffer&              buffer,
+                                           vk::DeviceMemory&        buffer_memory,
+                                           vk::DeviceSize          size,
+                                           void*                   data,
+                                           int                     data_size)
+{
+    CreateBuffer(physicalDevice, device, size, usageFlags, memoryPropertyFlags, buffer, buffer_memory);
+    
+    if (!data || data_size == 0)
+    {
+        return;
+    }
+
+    void* mapped = device.mapMemory(buffer_memory, 0, size);
+    memcpy(mapped, data, data_size);
+    device.unmapMemory(buffer_memory);
+}
+
 void VulkanUtil::CreateImage(vk::PhysicalDevice      physical_device,
                              vk::Device              device,
                              uint32_t                width,
@@ -141,6 +193,7 @@ void VulkanUtil::CreateImage(vk::PhysicalDevice      physical_device,
                              vk::SampleCountFlagBits sample_count)
 {
     vk::ImageCreateInfo image_info {
+        .flags         = create_flags,
         .imageType     = vk::ImageType::e2D,
         .format        = format,
         .extent        = {width, height, 1},
@@ -193,6 +246,103 @@ vk::ImageView VulkanUtil::CreateImageView(vk::Device           device,
     return device.createImageView(view_info);
 }
 
+void VulkanUtil::CreateGlobalImage(VulkanRHI*     rhi,
+                                   vk::Image&     image,
+                                   vk::ImageView& image_view,
+                                   VmaAllocation& image_allocation,
+                                   uint32_t       texture_width,
+                                   uint32_t       texture_height,
+                                   void*          texture_pixels,
+                                   vk::Format     texture_format,
+                                   uint32_t       miplevels)
+{
+    
+    if (!texture_pixels)
+    {
+        return;
+    }
+
+    vk::DeviceSize texture_size = GetTextureSize(texture_width, texture_height, texture_format);
+
+    LOG_ERROR("CreateGlobalImage not implement");
+}
+
+void VulkanUtil::CreateTextureImage(VulkanRHI*         rhi,
+                                    vk::Image&         image,
+                                    vk::ImageView&     image_view,
+                                    vk::DeviceMemory&  image_memory,
+                                    const TextureData* texture_data)
+{
+    if (!texture_data)
+    {
+        return;
+    }
+
+    vk::Device       device         = rhi->Device;
+    const uint32_t&  texture_width  = texture_data->Width;
+    const uint32_t&  texture_height = texture_data->Height;
+    const vk::Format texture_format = texture_data->Format;
+
+    vk::DeviceSize   texture_size   =
+        GetTextureSize(texture_width, texture_height, texture_format);
+
+    uint32_t mip_levels = (texture_data->MipLevels != 0) ? texture_data->MipLevels :
+                                                           floor(log2(std::max(texture_width, texture_height))) + 1;
+
+    vk::Buffer       inefficient_staging_buffer;
+    vk::DeviceMemory inefficient_staging_buffer_memory;
+
+    CreateBuffer(rhi->PhysicalDevice,
+                 rhi->Device,
+                 texture_size,
+                 vk::BufferUsageFlagBits::eTransferSrc,
+                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                 inefficient_staging_buffer,
+                 inefficient_staging_buffer_memory);
+
+    void* data = device.mapMemory(inefficient_staging_buffer_memory, 0, texture_size);
+    memcpy(data, texture_data->Pixels, (size_t)texture_size);
+    device.unmapMemory(inefficient_staging_buffer_memory);
+
+    CreateImage(rhi->PhysicalDevice,
+                rhi->Device,
+                texture_width,
+                texture_height,
+                vk::Format::eR8G8B8A8Srgb,
+                vk::ImageTiling::eOptimal,
+                vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
+                    vk::ImageUsageFlagBits::eSampled,
+                vk::MemoryPropertyFlagBits::eDeviceLocal,
+                image,
+                image_memory,
+                {},
+                1,
+                mip_levels,
+                vk::SampleCountFlagBits::e1);
+
+    TransitionImageLayout(rhi,
+                          image,
+                          vk::Format::eR8G8B8A8Srgb,
+                          vk::ImageLayout::eUndefined,
+                          vk::ImageLayout::eTransferDstOptimal,
+                          vk::ImageAspectFlagBits::eColor,
+                          1,
+                          mip_levels);
+
+    CopyBufferToImage(rhi, inefficient_staging_buffer, image, texture_width, texture_height);
+
+    GenerateTextureMipMaps(rhi, image, vk::Format::eR8G8B8A8Srgb, texture_width, texture_height, 1, mip_levels);
+
+    // TransitionImageLayout(texture_image,
+    //                       vk::Format::eR8G8B8A8Srgb,
+    //                       vk::ImageLayout::eTransferDstOptimal,
+    //                       vk::ImageLayout::eShaderReadOnlyOptimal,
+    //                       mip_levels);
+
+    device.destroyBuffer(inefficient_staging_buffer);
+    device.freeMemory(inefficient_staging_buffer_memory);
+}
+
 void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
                                         vk::Image  image,
                                         vk::Format image_format,
@@ -201,7 +351,7 @@ void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
                                         uint32_t   layer_count,
                                         uint32_t   mip_levels)
 {
-    vk::FormatProperties format_properties = rhi->PhysicalDevice.getFormatProperties(image_format);
+    vk::FormatProperties format_properties = rhi->PhysicalDevice->getFormatProperties(image_format);
     if (!(format_properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear))
     {
         throw std::runtime_error("texture image format does not support linear blitting!");
@@ -346,6 +496,56 @@ void VulkanUtil::TransitionImageLayout(VulkanRHI*           rhi,
     }
 
     command_buffer.pipelineBarrier(source_stage, destination_stage, {}, {}, {}, {barrier});
+
+    rhi->EndSingleTimeCommands(command_buffer);
+}
+
+void VulkanUtil::CopyBuffer(VulkanRHI*     rhi,
+                            vk::Buffer     srcBuffer,
+                            vk::Buffer     dstBuffer,
+                            vk::DeviceSize srcOffset,
+                            vk::DeviceSize dstOffset,
+                            vk::DeviceSize size)
+{
+    vk::CommandBuffer command_buffer = rhi->BeginSingleTimeCommands();
+
+    vk::BufferCopy copy_region {
+        .srcOffset = srcOffset,
+        .dstOffset = dstOffset,
+        .size      = size,
+    };
+
+    command_buffer.copyBuffer(srcBuffer, dstBuffer, {copy_region});
+
+    rhi->EndSingleTimeCommands(command_buffer);
+}
+
+void VulkanUtil::CopyBufferToImage(VulkanRHI* rhi,
+                                   vk::Buffer buffer,
+                                   vk::Image  image,
+                                   uint32_t   width,
+                                   uint32_t   height,
+                                   uint32_t   layer_count)
+{
+    vk::CommandBuffer command_buffer = rhi->BeginSingleTimeCommands();
+
+    vk::ImageSubresourceLayers image_subresource {
+        .aspectMask     = vk::ImageAspectFlagBits::eColor,
+        .mipLevel       = 0,
+        .baseArrayLayer = 0,
+        .layerCount     = layer_count,
+    };
+
+    vk::BufferImageCopy region {
+        .bufferOffset      = 0,
+        .bufferRowLength   = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource  = image_subresource,
+        .imageOffset       = {0, 0, 0},
+        .imageExtent       = {width, height, 1},
+    };
+
+    command_buffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, {region});
 
     rhi->EndSingleTimeCommands(command_buffer);
 }

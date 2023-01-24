@@ -24,8 +24,13 @@ public:
 
 protected:
     virtual void        PrepareStatus(const std::string& path);
+
     virtual void        GenClassRenderData(std::shared_ptr<Class> class_temp, Mustache::data& class_def);
     virtual void        GenClassFieldRenderData(std::shared_ptr<Class> class_temp, Mustache::data& field_defs);
+    virtual void        GenClassMethodRenderData(std::shared_ptr<Class> class_temp, Mustache::data& method_defs);
+
+    virtual void        GenEnumRenderData(std::shared_ptr<Enum> enum_temp, Mustache::data& enum_defs);
+
     virtual std::string ProcessFileName(const std::string& path) = 0;
 
     std::string OutPath;
