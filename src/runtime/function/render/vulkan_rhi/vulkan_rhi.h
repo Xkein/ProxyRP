@@ -30,13 +30,13 @@ public:
     virtual void CreateBuffer(vk::DeviceSize          size,
                               vk::BufferUsageFlags    usage,
                               vk::MemoryPropertyFlags properties,
-                              vk::Buffer&             buffer,
-                              vk::DeviceMemory&       buffer_memory);
+                              RHIBuffer*&             buffer,
+                              RHIDeviceMemory*&       buffer_memory);
     virtual void CreateBufferAndInitialize(vk::DeviceSize          size,
                                            vk::BufferUsageFlags    usage,
                                            vk::MemoryPropertyFlags properties,
-                                           vk::Buffer&             buffer,
-                                           vk::DeviceMemory&       buffer_memory,
+                                           RHIBuffer*&             buffer,
+                                           RHIDeviceMemory*&       buffer_memory,
                                            void*                   data      = nullptr,
                                            int                     data_size = 0);
 
@@ -46,30 +46,30 @@ public:
                              vk::ImageTiling         tiling,
                              vk::ImageUsageFlags     usage,
                              vk::MemoryPropertyFlags properties,
-                             vk::Image&              image,
-                             vk::DeviceMemory&       image_memory,
+                             RHIImage*&              image,
+                             RHIDeviceMemory*&       image_memory,
                              vk::ImageCreateFlags    create_flags = {},
                              uint32_t                array_layers = 1,
                              uint32_t                mip_levels   = 1,
                              vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
-    virtual void CreateImageView(vk::Image           image,
+    virtual void CreateImageView(const RHIImage*      image,
                                  vk::Format           format,
                                  vk::ImageAspectFlags image_aspect_flags,
                                  vk::ImageViewType    view_type,
                                  uint32_t             layout_count,
                                  uint32_t             miplevels,
-                                 vk::ImageView&       image_view);
+                                 RHIImageView*&       image_view);
 
-    virtual void CreateTextureImage(vk::Image&         image,
-                                    vk::ImageView&     image_view,
-                                    vk::DeviceMemory&  device_memory,
+    virtual void CreateTextureImage(RHIImage*&         image,
+                                    RHIImageView*&     image_view,
+                                    RHIDeviceMemory*&  image_memory,
                                     const TextureData* texure_data);
 
-    virtual void CopyBuffer(vk::Buffer     srcBuffer,
-                            vk::Buffer     dstBuffer,
-                            vk::DeviceSize srcOffset,
-                            vk::DeviceSize dstOffset,
+    virtual void CopyBuffer(RHIBuffer*     src_buffer,
+                            RHIBuffer*     dst_buffer,
+                            vk::DeviceSize src_offset,
+                            vk::DeviceSize dst_offset,
                             vk::DeviceSize size);
 
     // command
@@ -83,6 +83,13 @@ public:
     // destroy
     virtual void Clear() override;
     virtual void ClearSwapChain() override;
+    virtual void DestroyImage(RHIImage* image);
+    virtual void DestroyImageView(RHIImageView* image_view);
+
+    // memory
+    virtual void FreeMemory(RHIDeviceMemory* memory);
+    virtual void MapMemory(RHIDeviceMemory* memory, vk::DeviceSize offset, vk::DeviceSize size, vk::MemoryMapFlags flags, void*& data);
+    virtual void UnmapMemory(RHIDeviceMemory* memory);
 
 public:
     GLFWwindow* Window {nullptr};
@@ -104,22 +111,22 @@ public:
 
     vk::SwapchainKHR               SwapChain;
     vk::Format                     SwapChainImageFormat;
-    std::vector<vk::Image>       SwapChainImages;
-    std::vector<vk::ImageView>   SwapChainImageViews;
+    std::vector<RHIImage*>       SwapChainImages;
+    std::vector<RHIImageView*>   SwapChainImageViews;
     std::vector<vk::Framebuffer> SwapChainFrameBuffers;
 
-    VulkanImage        ColorImage;
-    VulkanDeviceMemory ColorImageMemory;
-    VulkanImageView    ColorImageView;
+    RHIImage*        ColorImage;
+    RHIDeviceMemory* ColorImageMemory;
+    RHIImageView*    ColorImageView;
 
     vk::Extent2D SwapChainExtent;
     vk::Viewport Viewport;
     vk::Rect2D   Scissor;
 
     vk::Format         DepthImageFormat;
-    VulkanImage        DepthImage;
-    VulkanImageView    DepthImageView;
-    VulkanDeviceMemory DepthImageMemory;
+    RHIImage*          DepthImage;
+    RHIImageView*      DepthImageView;
+    RHIDeviceMemory*   DepthImageMemory;
 
     VulkanDescriptorPool DescriptorPool;
 

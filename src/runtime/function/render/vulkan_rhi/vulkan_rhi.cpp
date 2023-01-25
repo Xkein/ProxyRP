@@ -103,7 +103,11 @@ void VulkanRHI::CreateSwapChain()
 
     SwapChain = Device->createSwapchainKHR(create_info);
 
-    SwapChainImages       = Device->getSwapchainImagesKHR(SwapChain);
+    std::vector<vk::Image> swapchain_images  = Device->getSwapchainImagesKHR(SwapChain);
+    SwapChainImages.resize(swapchain_images.size());
+    std::transform(swapchain_images.begin(), swapchain_images.end(), SwapChainImages.begin(), [](vk::Image image) {
+        return new VulkanImage(image);
+    });
     SwapChainImageFormat = surface_format.format;
     SwapChainExtent       = extent;
 
@@ -189,22 +193,32 @@ RHIShader* VulkanRHI::CreateShaderModule(const std::vector<byte>& shader_code)
 void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
                              vk::BufferUsageFlags    usage,
                              vk::MemoryPropertyFlags properties,
-                             vk::Buffer&             buffer,
-                             vk::DeviceMemory&       buffer_memory)
+                             RHIBuffer*&             buffer,
+                             RHIDeviceMemory*&       buffer_memory)
 {
-    VulkanUtil::CreateBuffer(PhysicalDevice, Device, size, usage, properties, buffer, buffer_memory);
+    vk::Buffer       vulkan_buffer;
+    vk::DeviceMemory vulkan_buffer_memory;
+    VulkanUtil::CreateBuffer(PhysicalDevice, Device, size, usage, properties, vulkan_buffer, vulkan_buffer_memory);
+
+    buffer        = new VulkanBuffer(vulkan_buffer);
+    buffer_memory = new VulkanDeviceMemory(vulkan_buffer_memory);
 }
 
 void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
                                           vk::BufferUsageFlags    usage,
                                           vk::MemoryPropertyFlags properties,
-                                          vk::Buffer&             buffer,
-                                          vk::DeviceMemory&       buffer_memory,
-                                          void*                   data,
-                                          int                     data_size)
+                                          RHIBuffer*&           buffer,
+                                          RHIDeviceMemory*&     buffer_memory,
+                                          void*                   data      = nullptr,
+                                          int                     data_size = 0)
 {
+    vk::Buffer       vulkan_buffer;
+    vk::DeviceMemory vulkan_buffer_memory;
     VulkanUtil::CreateBufferAndInitialize(
-        Device, PhysicalDevice, usage, properties, buffer, buffer_memory, size, data, data_size);
+        Device, PhysicalDevice, usage, properties, vulkan_buffer, vulkan_buffer_memory, size, data, data_size);
+
+    buffer        = new VulkanBuffer(vulkan_buffer);
+    buffer_memory = new VulkanDeviceMemory(vulkan_buffer_memory);
 }
 
 void VulkanRHI::CreateImage(uint32_t                width,
@@ -213,13 +227,15 @@ void VulkanRHI::CreateImage(uint32_t                width,
                             vk::ImageTiling         tiling,
                             vk::ImageUsageFlags     usage,
                             vk::MemoryPropertyFlags properties,
-                            vk::Image&              image,
-                            vk::DeviceMemory&       image_memory,
+                            RHIImage*&              image,
+                            RHIDeviceMemory*&       image_memory,
                             vk::ImageCreateFlags    create_flags,
                             uint32_t                array_layers,
                             uint32_t                mip_levels,
-                            vk::SampleCountFlagBits sample_count)
+                            vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1)
 {
+    vk::Image        vulkan_image;
+    vk::DeviceMemory vulkan_image_memory;
     VulkanUtil::CreateImage(PhysicalDevice,
                             Device,
                             width,
@@ -228,41 +244,52 @@ void VulkanRHI::CreateImage(uint32_t                width,
                             tiling,
                             usage,
                             properties,
-                            image,
-                            image_memory,
+                            vulkan_image,
+                            vulkan_image_memory,
                             create_flags,
                             array_layers,
                             mip_levels,
                             sample_count);
+
 }
 
-void VulkanRHI::CreateImageView(vk::Image            image,
+void VulkanRHI::CreateImageView(const RHIImage*      image,
                                 vk::Format           format,
                                 vk::ImageAspectFlags image_aspect_flags,
                                 vk::ImageViewType    view_type,
                                 uint32_t             layout_count,
                                 uint32_t             miplevels,
-                                vk::ImageView&       image_view)
+                                RHIImageView*&       image_view)
 {
-    image_view =
-        VulkanUtil::CreateImageView(Device, image, format, image_aspect_flags, view_type, layout_count, miplevels);
+    vk::ImageView    vulkan_image_view;
+    vulkan_image_view                 = VulkanUtil::CreateImageView(
+        Device, *(VulkanImage*)image, format, image_aspect_flags, view_type, layout_count, miplevels);
+
 }
 
-void VulkanRHI::CreateTextureImage(vk::Image&         image,
-                                   vk::ImageView&     image_view,
-                                   vk::DeviceMemory&  device_memory,
+void VulkanRHI::CreateTextureImage(RHIImage*&         image,
+                                   RHIImageView*&     image_view,
+                                   RHIDeviceMemory*&  image_memory,
                                    const TextureData* texure_data)
 {
-    VulkanUtil::CreateTextureImage(this, image, image_view, device_memory, texure_data);
+    vk::Image        vulkan_image;
+    vk::ImageView    vulkan_image_view;
+    vk::DeviceMemory vulkan_image_memory;
+    VulkanUtil::CreateTextureImage(this, vulkan_image, vulkan_image_view, vulkan_image_memory, texure_data);
+
+    
+    image        = new VulkanImage(vulkan_image);
+    image_view   = new VulkanImageView(vulkan_image_view);
+    image_memory = new VulkanDeviceMemory(vulkan_image_memory);
 }
 
-void VulkanRHI::CopyBuffer(vk::Buffer     srcBuffer,
-                           vk::Buffer     dstBuffer,
-                           vk::DeviceSize srcOffset,
-                           vk::DeviceSize dstOffset,
+void VulkanRHI::CopyBuffer(RHIBuffer*     src_buffer,
+                           RHIBuffer*     dst_buffer,
+                           vk::DeviceSize src_offset,
+                           vk::DeviceSize dst_offset,
                            vk::DeviceSize size)
 {
-    VulkanUtil::CopyBuffer(this, srcBuffer, dstBuffer, srcOffset, dstOffset, size);
+    VulkanUtil::CopyBuffer(this, *(VulkanBuffer*)src_buffer, *(VulkanBuffer*)dst_buffer, src_offset, dst_offset, size);
 }
 
 vk::CommandBuffer VulkanRHI::BeginSingleTimeCommands()
@@ -319,21 +346,49 @@ void VulkanRHI::Clear()
 
 void VulkanRHI::ClearSwapChain()
 {
-    Device->destroyImageView(ColorImageView);
-    Device->destroyImage(ColorImage);
-    Device->freeMemory(ColorImageMemory);
+    DestroyImageView(ColorImageView);
+    DestroyImage(ColorImage);
+    FreeMemory(ColorImageMemory);
 
-    Device->destroyImageView(DepthImageView);
-    Device->destroyImage(DepthImage);
-    Device->freeMemory(DepthImageMemory);
+    DestroyImageView(DepthImageView);
+    DestroyImage(DepthImage);
+    FreeMemory(DepthImageMemory);
 
     for (auto& image_view : SwapChainImageViews)
     {
-        Device->destroyImageView(image_view);
+        DestroyImageView(image_view);
     }
     Device->destroySwapchainKHR(SwapChain);
 }
 
+void VulkanRHI::DestroyImage(RHIImage* image)
+{
+    Device->destroyImage(*(VulkanImage*)image);
+}
+
+void VulkanRHI::DestroyImageView(RHIImageView* image_view)
+{
+    Device->destroyImageView(*(VulkanImageView*)image_view);
+}
+
+void VulkanRHI::FreeMemory(RHIDeviceMemory* memory)
+{
+    Device->freeMemory(*(VulkanDeviceMemory*)memory);
+}
+
+void VulkanRHI::MapMemory(RHIDeviceMemory*   memory,
+                          vk::DeviceSize     offset,
+                          vk::DeviceSize     size,
+                          vk::MemoryMapFlags flags,
+                          void*&             data)
+{
+    data = Device->mapMemory(*(VulkanDeviceMemory*)memory, offset, size, flags);
+}
+
+void VulkanRHI::UnmapMemory(RHIDeviceMemory* memory)
+{
+    Device->unmapMemory(*(VulkanDeviceMemory*)memory);
+}
 
 void VulkanRHI::CreateInstance() {
     if (EnableValidationLayers && !CheckValidationLayerSupport())
@@ -594,7 +649,7 @@ void VulkanRHI::CreateDepthResources()
         DepthImage, DepthImageFormat, vk::ImageAspectFlagBits::eDepth, vk::ImageViewType::e2D, 1, 1, DepthImageView);
 
     VulkanUtil::TransitionImageLayout(this,
-                                      DepthImage,
+                                      *(VulkanImage*)DepthImage,
                                       DepthImageFormat,
                                       vk::ImageLayout::eUndefined,
                                       vk::ImageLayout::eDepthStencilAttachmentOptimal,

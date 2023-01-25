@@ -23,6 +23,8 @@ class VulkanBuffer : public RHIBuffer
 public:
     vk::Buffer Resource;
 
+    VulkanBuffer(vk::Buffer buffer) : Resource(buffer) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -87,6 +89,8 @@ class VulkanDeviceMemory : public RHIDeviceMemory
 public:
     vk::DeviceMemory Resource;
 
+    VulkanDeviceMemory(vk::DeviceMemory memory) : Resource(memory) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -119,6 +123,8 @@ class VulkanImage : public RHIImage
 public:
     vk::Image Resource;
 
+    VulkanImage(vk::Image image) : Resource(image) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -126,6 +132,8 @@ class VulkanImageView : public RHIImageView
 {
 public:
     vk::ImageView Resource;
+
+    VulkanImageView(vk::ImageView image_view) : Resource(image_view) {}
 
     __VULKAN_RHI_MAKE_OPERATOR();
 };
