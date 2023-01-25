@@ -10,6 +10,7 @@ class RenderCamera;
 class SceneRenderer;
 class RenderPipeline;
 class WindowSystem;
+class RenderResourceManager;
 
 struct RenderSystemInitInfo
 {
@@ -42,4 +43,6 @@ private:
     std::shared_ptr<RenderCamera>   Camera;
     std::shared_ptr<SceneRenderer>  Renderer;
     std::shared_ptr<RenderPipeline> Pipeline;
+
+    std::shared_ptr<RenderResourceManager> ResourceManager;
 };

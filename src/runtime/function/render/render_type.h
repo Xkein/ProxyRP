@@ -1,19 +1,16 @@
 #pragma once
 
 #include "rhi_definition.h"
+#include "render_resource.h"
 #include "core/math/vector.h"
 #include "platform/platform.h"
 
 #include <memory>
 #include <cstdint>
 
-enum class ShadingModel
+class BufferData
 {
-	PBR
-};
-
-struct BufferData
-{
+public:
     size_t Size;
     byte*  Data;
 
@@ -84,4 +81,35 @@ struct RenderMaterialData
     std::shared_ptr<TextureData> MetallicRoughnessTexture;
     std::shared_ptr<TextureData> OcclusionTexture;
     std::shared_ptr<TextureData> EmissiveTexture;
+};
+
+
+struct RenderMesh
+{
+    bool EnableVertexBlending;
+
+    uint32_t VertexCount;
+
+    VertexBufferRef PositionBuffer;
+    VertexBufferRef VaryingEnableBlendingBuffer;
+    VertexBufferRef JointBindingBuffer;
+
+    RHIDescriptorSetRef BlendingDescriptorSet;
+
+    VertexBufferRef VaryingBuffer;
+
+    uint32_t IndexCount;
+
+    IndexBufferRef IndexBuffer;
+};
+
+struct PBRMaterial
+{
+    TextureRef BaseColor;
+    TextureRef MetallicRoughness;
+    TextureRef Normal;
+    TextureRef Occlusion;
+    TextureRef Emissive;
+
+    RHIDescriptorSetRef DescriptorSet;
 };

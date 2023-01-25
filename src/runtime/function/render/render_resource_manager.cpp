@@ -1,4 +1,4 @@
-#include "render_resource_loader.h"
+#include "render_resource_manager.h"
 #include "core/log/log_system.h"
 #include "resource/asset/asset_manager.h"
 #include "platform/file/file_manager.h"
@@ -8,7 +8,35 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-std::shared_ptr<TextureData> RenderResourceLoader::LoadTexture(const String& file_path, bool is_srgb)
+void RenderResourceManager::Clear()
+{}
+
+void RenderResourceManager::UploadGlobalRenderResource(const LevelResourceDesc& level_resource_desc)
+{
+
+}
+
+void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&       render_entity,
+                                                           const RenderMeshData&     mesh_data,
+                                                           const RenderMaterialData& material_data)
+{
+    UploadGameObjectRenderResource(render_entity, mesh_data);
+    UploadGameObjectRenderResource(render_entity, material_data);
+}
+
+void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&   render_entity,
+                                                           const RenderMeshData& mesh_data)
+{
+    GetOrCreateRenderMesh(render_entity, mesh_data);
+}
+
+void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&       render_entity,
+                                                           const RenderMaterialData& material_data)
+{
+    GetOrCreatePBRMaterial(render_entity, material_data);
+}
+
+std::shared_ptr<TextureData> RenderResourceManager::LoadTexture(const String& file_path, bool is_srgb)
 {
     std::shared_ptr<TextureData> cached_asset = Registry->GetAsset<TextureData>(file_path);
     if (cached_asset)
@@ -38,7 +66,7 @@ std::shared_ptr<TextureData> RenderResourceLoader::LoadTexture(const String& fil
     return texture;
 }
 
-std::shared_ptr<TextureData> RenderResourceLoader::LoadTextureHDR(const String& file_path, int desired_channels)
+std::shared_ptr<TextureData> RenderResourceManager::LoadTextureHDR(const String& file_path, int desired_channels)
 {
     std::shared_ptr<TextureData> cached_asset = Registry->GetAsset<TextureData>(file_path);
     if (cached_asset)
@@ -79,7 +107,7 @@ std::shared_ptr<TextureData> RenderResourceLoader::LoadTextureHDR(const String& 
     return texture;
 }
 
-std::shared_ptr<RenderMaterialData> RenderResourceLoader::LoadMaterialData(const MaterialResource& material_res)
+std::shared_ptr<RenderMaterialData> RenderResourceManager::LoadMaterialData(const MaterialResource& material_res)
 {
     std::shared_ptr<RenderMaterialData> material = std::make_shared<RenderMaterialData>();
 
@@ -92,7 +120,7 @@ std::shared_ptr<RenderMaterialData> RenderResourceLoader::LoadMaterialData(const
     return material;
 }
 
-std::shared_ptr<RenderMeshData> RenderResourceLoader::LoadMeshData(const MeshResource&   mesh_res,
+std::shared_ptr<RenderMeshData> RenderResourceManager::LoadMeshData(const MeshResource&   mesh_res,
                                                                    const AxisAlignedBox& bounding_box)
 {
     std::shared_ptr<RenderMeshData> cached_asset = Registry->GetAsset<RenderMeshData>(mesh_res.MeshFile);
@@ -145,7 +173,7 @@ struct Model
 void ProcessModel(const aiScene* scene, const aiNode* node, Model* model);
 void ProcessMesh(const aiScene* scene, const aiMesh* mesh, Model* model, Model::SubMesh* out_mesh);
 
-StaticMeshData RenderResourceLoader::LoadStaticMesh(const String& mesh_file, const AxisAlignedBox& bounding_box)
+StaticMeshData RenderResourceManager::LoadStaticMesh(const String& mesh_file, const AxisAlignedBox& bounding_box)
 {
     std::vector<byte> data = FileManager::Read(mesh_file.c_str());
 
@@ -173,6 +201,20 @@ StaticMeshData RenderResourceLoader::LoadStaticMesh(const String& mesh_file, con
 
     return mesh_data;
 }
+
+std::shared_ptr<RenderMesh> RenderResourceManager::GetOrCreateRenderMesh(const RenderEntity&   entity,
+                                                                         const RenderMeshData& material_data)
+{
+    return std::shared_ptr<RenderMesh>();
+}
+
+std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const RenderEntity&       entity,
+                                                                           const RenderMaterialData& material_data)
+{
+    return std::shared_ptr<PBRMaterial>();
+}
+
+void RenderResourceManager::CreateAndMapStorageBuffer() {}
 
 void ProcessModel(const aiScene* scene, const aiNode* node, Model* model)
 {

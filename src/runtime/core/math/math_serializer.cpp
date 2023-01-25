@@ -82,6 +82,7 @@ bool Serializer::Write(const Matrix4x4& instance, json& context)
 {
     return WriteEigenMatrix(instance, context);
 }
+
 // serializer for quaternion
 
 template<>
@@ -93,19 +94,6 @@ template<>
 bool Serializer::Write(const Quaternionf& instance, json& context)
 {
     return WriteEigenMatrix(instance.coeffs(), context);
-}
-
-// serializer for transform
-
-template<>
-bool Serializer::Read(const json& context, Transformf& instance)
-{
-    return ReadEigenMatrix(context, instance.matrix());
-}
-template<>
-bool Serializer::Write(const Transformf& instance, json& context)
-{
-    return WriteEigenMatrix(instance.matrix(), context);
 }
 
 // serializer for axis aligned bounding box

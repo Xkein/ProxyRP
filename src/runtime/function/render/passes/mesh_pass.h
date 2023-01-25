@@ -12,18 +12,16 @@ class MeshPass : public RenderPass
 public:
     virtual void Initialize(const RenderPassInitInfo* init_info) override;
     virtual void PrepareData() override;
-    virtual void UpdateAfterFramebufferRecreate() override;
+    virtual void UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info) override;
     virtual void Draw() override;
 
 private:
     void SetupAttachments();
     void SetupDescriptorSetLayout();
     void SetupDescriptorSet();
-    void SetupFramebufferDescriptorSet();
     void SetupRenderPass();
     void SetupPipelines();
-    void SetupSwapchainFramebuffers();
 
-    std::vector<vk::Framebuffer> SwapchainFrameBuffers;
+
 };
 

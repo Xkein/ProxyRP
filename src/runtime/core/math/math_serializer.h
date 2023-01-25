@@ -39,13 +39,6 @@ bool Serializer::Read(const json& context, Quaternionf& instance);
 template<>
 bool Serializer::Write(const Quaternionf& instance, json& context);
 
-// serializer for transform
-
-template<>
-bool Serializer::Read(const json& context, Transformf& instance);
-template<>
-bool Serializer::Write(const Transformf& instance, json& context);
-
 // serializer for axis aligned bounding box
 
 template<>

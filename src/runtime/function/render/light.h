@@ -4,17 +4,17 @@
 
 struct AmbientLight
 {
-    glm::vec3 Irradiance;
+    Vector3f Irradiance;
 };
 
 struct DirectionalLight
 {
-    glm::vec3 Direction;
-    glm::vec3 Color;
+    Vector3f Direction;
+    Vector3f Color;
 };
 
 struct PointLight
 {
-    glm::vec3 Position;
-    glm::vec3 Flux;
+    Vector3f Position;
+    Vector3f Flux;
 };

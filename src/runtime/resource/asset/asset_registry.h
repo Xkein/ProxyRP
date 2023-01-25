@@ -24,6 +24,8 @@ public:
         return std::shared_ptr<AssetType>();
     }
 
+    void Clean();
+
 private:
     std::map<String, AssetData> Data;
 };

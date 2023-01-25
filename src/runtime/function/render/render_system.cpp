@@ -2,6 +2,7 @@
 #include "function/render/vulkan_rhi/vulkan_rhi.h"
 #include "function/render/render_camera.h"
 #include "function/render/render_scene.h"
+#include "function/render/render_resource_manager.h"
 #include "function/render/pipeline/forward_pipeline.h"
 #include "function/render/renderer/forward_renderer.h"
 #include "function/global/global_context.h"
@@ -18,6 +19,9 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
 
     RHI = std::make_shared<VulkanRHI>();
     RHI->Initialize(rhi_init_info);
+
+    ResourceManager = std::make_shared<RenderResourceManager>();
+    ResourceManager->RHI = RHI;
 
     GlobalRenderingResource global_rendering_res;
     GAssetManager->LoadAsset(GConfigManager->Global.GlobalRenderingResourceUrl, global_rendering_res);
@@ -44,6 +48,12 @@ void RenderSystem::Clear()
         RHI->Clear();
     }
     RHI.reset();
+
+    if (ResourceManager)
+    {
+        ResourceManager->Clear();
+    }
+    ResourceManager.reset();
 
     if (Renderer)
     {

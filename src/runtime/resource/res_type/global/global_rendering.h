@@ -10,6 +10,42 @@ ENUM_CLASS(ERenderPipelineType : uint8_t)
     Num,
 };
 
+STRUCT(SkyBoxIrradianceMap)
+{
+    REFLECTION_STRUCT_BODY(SkyBoxIrradianceMap);
+
+    PROPERTY()
+    String m_negative_x_map;
+    PROPERTY()
+    String m_positive_x_map;
+    PROPERTY()
+    String m_negative_y_map;
+    PROPERTY()
+    String m_positive_y_map;
+    PROPERTY()
+    String m_negative_z_map;
+    PROPERTY()
+    String m_positive_z_map;
+};
+
+STRUCT(SkyBoxSpecularMap)
+{
+    REFLECTION_STRUCT_BODY(SkyBoxSpecularMap);
+
+    PROPERTY()
+    String m_negative_x_map;
+    PROPERTY()
+    String m_positive_x_map;
+    PROPERTY()
+    String m_negative_y_map;
+    PROPERTY()
+    String m_positive_y_map;
+    PROPERTY()
+    String m_negative_z_map;
+    PROPERTY()
+    String m_positive_z_map;
+};
+
 STRUCT(CameraPose)
 {
     REFLECTION_STRUCT_BODY(CameraPose);
@@ -51,11 +87,25 @@ STRUCT(GlobalRenderingResource)
     REFLECTION_STRUCT_BODY(GlobalRenderingResource);
 
     PROPERTY()
-    CameraConfig CameraConfig;
-
-    PROPERTY()
     ERenderPipelineType RenderPipelineType;
 
     PROPERTY()
+    SkyBoxIrradianceMap SkyboxIrradianceMap;
+    PROPERTY()
+    SkyBoxSpecularMap SkyboxSpecularMap;
+    PROPERTY()
+    String BrdfMap;
+    PROPERTY()
+    String ColorGradingMap;
+    PROPERTY()
+    Vector3f SkyColor;
+    PROPERTY()
+    Vector3f AmbientLight;
+    PROPERTY()
     DirectionalLightResource DirectionalLight;
+
+    PROPERTY()
+    CameraConfig CameraConfig;
+
+
 };

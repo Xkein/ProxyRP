@@ -13,7 +13,11 @@ public:
     Component() = default;
     virtual ~Component() {}
 
-    // Instantiating the component after definition loaded
+    /**
+     *  Instantiating the component after definition loaded.
+     * 
+     * \param parent_object
+     */
     virtual void PostLoadResource(std::weak_ptr<GameObject> parent_object)
     {
         ParentObject = parent_object;
