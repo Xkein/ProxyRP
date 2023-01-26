@@ -2,6 +2,8 @@
 
 #include "function/render/render_pipeline.h"
 
+class RenderPassCommon;
+
 class ForwardPipeline : public RenderPipeline
 {
 public:
@@ -19,4 +21,6 @@ public:
     std::shared_ptr<RenderPass> ColorGradingPass;
     std::shared_ptr<RenderPass> ToneMappingPass;
     std::shared_ptr<RenderPass> UIPass;
+
+    std::shared_ptr<RenderPassCommon> PassCommon;
 };

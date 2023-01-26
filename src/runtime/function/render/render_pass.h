@@ -8,18 +8,26 @@
 
 class VulkanRHI;
 class WindowUI;
+class RenderResourceManager;
+class RenderPassCommon;
 
 struct RenderPassInitInfo
 {};
 
 struct RenderPassCommonInfo
 {
-    std::shared_ptr<VulkanRHI> RHI;
+    std::shared_ptr<VulkanRHI>        RHI;
+    std::shared_ptr<RenderPassCommon> PassCommon;
+};
+
+struct RenderPassPrepareInfo
+{
+    std::shared_ptr<RenderResourceManager> ResourceManager;
 };
 
 struct FramebufferRecreateInfo
 {
-    RHIImageViewRef InputAttachment;
+    RHIImageView* InputAttachment;
 
 };
 
@@ -29,8 +37,8 @@ class RenderPass
 public:
     virtual void Initialize(const RenderPassInitInfo* init_info) = 0;
     virtual void PostInitialize() {}
-    virtual void SetCommonInfo(RenderPassCommonInfo common_info);
-    virtual void PrepareData() = 0;
+    virtual void SetCommonInfo(RenderPassCommonInfo* common_info);
+    virtual void PrepareData(RenderPassPrepareInfo* prepare_info)                             = 0;
     virtual void UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info) = 0;
 
     virtual void Draw() = 0;
@@ -41,9 +49,9 @@ public:
         int               Width;
         int               Height;
         RHIFramebufferRef Framebuffer;
-        RHIRenderPassRef  Render_pass;
+        RHIRenderPassRef  RenderPass;
         
-        std::vector<TextureRef> Attachments;
+        std::vector<Texture> Attachments;
     };
 
 protected:

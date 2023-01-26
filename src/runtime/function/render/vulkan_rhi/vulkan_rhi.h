@@ -1,6 +1,7 @@
 #pragma once
 
 #include "function/render/rhi.h"
+#include "function/render/rhi_struct.h"
 #include "function/render/vulkan_rhi/vulkan_rhi_resources.h"
 #include "platform/platform.h"
 
@@ -23,7 +24,10 @@ public:
     virtual void CreateSwapChain() override;
     virtual void RecreateSwapChain() override;
     virtual void CreateSwapChainImageViews() override;
-    virtual bool CreateFramebuffer(const vk::FramebufferCreateInfo* pCreateInfo, vk::Framebuffer& pFramebuffer);
+    virtual RHIFramebuffer* CreateFramebuffer(const RHIFramebufferCreateInfo* pCreateInfo);
+    virtual RHIRenderPass* CreateRenderPass(const RHIRenderPassCreateInfo* create_info);
+    virtual RHIDescriptorSetLayout* CreateDescriptorSetLayout(const RHIDescriptorSetLayoutCreateInfo* create_info);
+    virtual RHIPipelineLayout*      CreatePipelineLayout(const RHIPipelineLayoutCreateInfo* create_info);
 
     virtual RHIShader* CreateShaderModule(const std::vector<byte>& shader_code);
 
@@ -32,11 +36,23 @@ public:
                               vk::MemoryPropertyFlags properties,
                               RHIBuffer*&             buffer,
                               RHIDeviceMemory*&       buffer_memory);
+    virtual void CreateBuffer(vk::DeviceSize          size,
+                              vk::BufferUsageFlags    usage,
+                              vk::MemoryPropertyFlags properties,
+                              RHIBufferRef&           buffer,
+                              RHIDeviceMemoryRef&     buffer_memory);
     virtual void CreateBufferAndInitialize(vk::DeviceSize          size,
                                            vk::BufferUsageFlags    usage,
                                            vk::MemoryPropertyFlags properties,
                                            RHIBuffer*&             buffer,
                                            RHIDeviceMemory*&       buffer_memory,
+                                           void*                   data      = nullptr,
+                                           int                     data_size = 0);
+    virtual void CreateBufferAndInitialize(vk::DeviceSize          size,
+                                           vk::BufferUsageFlags    usage,
+                                           vk::MemoryPropertyFlags properties,
+                                           RHIBufferRef&           buffer,
+                                           RHIDeviceMemoryRef&     buffer_memory,
                                            void*                   data      = nullptr,
                                            int                     data_size = 0);
 
@@ -52,6 +68,18 @@ public:
                              uint32_t                array_layers = 1,
                              uint32_t                mip_levels   = 1,
                              vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
+    virtual void CreateImage(uint32_t                width,
+                             uint32_t                height,
+                             vk::Format              format,
+                             vk::ImageTiling         tiling,
+                             vk::ImageUsageFlags     usage,
+                             vk::MemoryPropertyFlags properties,
+                             RHIImageRef&            image,
+                             RHIDeviceMemoryRef&     image_memory,
+                             vk::ImageCreateFlags    create_flags = {},
+                             uint32_t                array_layers = 1,
+                             uint32_t                mip_levels   = 1,
+                             vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
     virtual void CreateImageView(const RHIImage*      image,
                                  vk::Format           format,
@@ -60,11 +88,22 @@ public:
                                  uint32_t             layout_count,
                                  uint32_t             miplevels,
                                  RHIImageView*&       image_view);
+    virtual void CreateImageView(const RHIImage*      image,
+                                 vk::Format           format,
+                                 vk::ImageAspectFlags image_aspect_flags,
+                                 vk::ImageViewType    view_type,
+                                 uint32_t             layout_count,
+                                 uint32_t             miplevels,
+                                 RHIImageViewRef&     image_view);
 
     virtual void CreateTextureImage(RHIImage*&         image,
                                     RHIImageView*&     image_view,
                                     RHIDeviceMemory*&  image_memory,
                                     const TextureData* texure_data);
+    virtual void CreateTextureImage(RHIImageRef&        image,
+                                    RHIImageViewRef&    image_view,
+                                    RHIDeviceMemoryRef& image_memory,
+                                    const TextureData*  texure_data);
 
     virtual void CopyBuffer(RHIBuffer*     src_buffer,
                             RHIBuffer*     dst_buffer,
@@ -79,6 +118,9 @@ public:
     // query
     virtual vk::CommandBuffer  GetCommandBuffer() const;
     virtual vk::DescriptorPool GetDescriptorPool() const;
+    virtual RHIDepthImageDesc  GetDepthImageInfo() const;
+    virtual uint8_t            GetMaxFramesInFlight() const;
+    virtual uint8_t            GetCurrentFrameIndex() const;
     
     // destroy
     virtual void Clear() override;

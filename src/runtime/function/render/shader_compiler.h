@@ -1,29 +1,27 @@
 #pragma once
 
 #include "shader.h"
+#include "shader_map.h"
+#include "platform/platform.h"
 #include "platform/string.h"
 
-class RHIShader;
+#include <taskflow/taskflow.hpp>
 
-RHIShader* CompileShader(const Char* path);
-
-struct ShaderCompileInfo
+struct ShaderCompiledInfo
 {
-    String CodePath;
-    String OutputPath;
+    std::vector<byte> ShaderData;
 
-    String    EntryPoint;
-    ShaderLanguage Language;
-    ShaderType     Type;
+    String Message;
+    bool   HasError;
 };
 
-struct ShaderCompileResult
+class ShaderCompiler
 {
-    bool Success;
+public:
+    static tf::Future<std::optional<ShaderCompiledInfo>> BeginCompileShader(ShaderType* shader_type, std::shared_ptr<ShaderMap> shader_map);
+
+    static tf::Future<void> BeginCompileShaders(std::vector<ShaderType*>   shader_types, std::shared_ptr<ShaderMap> shader_map);
+
+private:
+    static ShaderCompiledInfo Compile(ShaderType* shader_type, std::shared_ptr<ShaderMap> shader_map);
 };
-
-
-ShaderCompileResult CompileShader(const ShaderCompileInfo& info);
-
-RHIShader* LoadShader(const String& shader_path);
-

@@ -11,8 +11,8 @@
 class BufferData
 {
 public:
-    size_t Size;
     byte*  Data;
+    size_t Size;
 
     BufferData() = delete;
     BufferData(size_t size) : Size(size)
@@ -20,6 +20,10 @@ public:
         Data = (byte*)malloc(size);
     }
     ~BufferData()
+    {
+        Clear();
+    }
+    void Clear()
     {
         if (Data)
         {

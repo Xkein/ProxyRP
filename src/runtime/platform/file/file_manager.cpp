@@ -40,7 +40,7 @@ String FileManager::ReadString(const Char* path)
     return text;
 }
 
-bool FileManager::WriteString(const Char* path, const String& str)
+bool FileManager::WriteString(const Char* path, const Char* str)
 {
     std::ofstream file(path);
     if (!file)

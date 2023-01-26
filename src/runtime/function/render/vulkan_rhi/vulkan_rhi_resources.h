@@ -73,6 +73,8 @@ class VulkanDescriptorSetLayout : public RHIDescriptorSetLayout
 public:
     vk::DescriptorSetLayout Resource;
 
+    VulkanDescriptorSetLayout(vk::DescriptorSetLayout descriptor_set_layout) : Resource(descriptor_set_layout) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -114,6 +116,8 @@ class VulkanFramebuffer : public RHIFramebuffer
 {
 public:
     vk::Framebuffer Resource;
+
+    VulkanFramebuffer(vk::Framebuffer framebuffer) : Resource(framebuffer) {}
 
     __VULKAN_RHI_MAKE_OPERATOR();
 };
@@ -183,6 +187,8 @@ class VulkanPipelineLayout : public RHIPipelineLayout
 public:
     vk::PipelineLayout Resource;
 
+    VulkanPipelineLayout(vk::PipelineLayout pipeline_layout) : Resource(pipeline_layout) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -190,6 +196,8 @@ class VulkanRenderPass : public RHIRenderPass
 {
 public:
     vk::RenderPass Resource;
+
+    VulkanRenderPass(vk::RenderPass render_pass) : Resource(render_pass) {}
 
     __VULKAN_RHI_MAKE_OPERATOR();
 };

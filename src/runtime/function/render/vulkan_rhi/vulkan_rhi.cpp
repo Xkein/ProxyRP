@@ -1,7 +1,8 @@
 #include "vulkan_rhi.h"
+#include "vulkan_util.h"
+#include "vulkan_rhi_converter.h"
 #include "core/macro.h"
 #include "core/log/log_system.h"
-#include "function/render/vulkan_rhi/vulkan_util.h"
 #include "function/ui/window_system.h"
 
 #include <GLFW/glfw3.h>
@@ -154,31 +155,57 @@ void VulkanRHI::CreateSwapChainImageViews()
     }
 }
 
-bool VulkanRHI::CreateFramebuffer(const vk::FramebufferCreateInfo* pCreateInfo, vk::Framebuffer& pFramebuffer)
+RHIFramebuffer* VulkanRHI::CreateFramebuffer(const RHIFramebufferCreateInfo* pCreateInfo)
 {
-    int                      image_view_size = pCreateInfo->attachmentCount;
+    vk::FramebufferCreateInfo vk_create_info = VulkanRHIConverter::Convert(*pCreateInfo);
+
+    int                        image_view_size = vk_create_info.attachmentCount;
     std::vector<vk::ImageView> vk_image_view_list(image_view_size);
     for (int i = 0; i < image_view_size; ++i)
     {
-        const auto& rhi_image_view_element = pCreateInfo->pAttachments[i];
+        const auto& rhi_image_view_element = vk_create_info.pAttachments[i];
         auto&       vk_image_view_element  = vk_image_view_list[i];
 
         vk_image_view_element = rhi_image_view_element;
     };
 
     vk::FramebufferCreateInfo create_info {};
-    create_info.pNext           = pCreateInfo->pNext;
-    create_info.flags           = pCreateInfo->flags;
-    create_info.renderPass      = pCreateInfo->renderPass;
-    create_info.attachmentCount = pCreateInfo->attachmentCount;
+    create_info.pNext           = vk_create_info.pNext;
+    create_info.flags           = vk_create_info.flags;
+    create_info.renderPass      = vk_create_info.renderPass;
+    create_info.attachmentCount = vk_create_info.attachmentCount;
     create_info.pAttachments    = vk_image_view_list.data();
-    create_info.width           = pCreateInfo->width;
-    create_info.height          = pCreateInfo->height;
-    create_info.layers          = pCreateInfo->layers;
+    create_info.width           = vk_create_info.width;
+    create_info.height          = vk_create_info.height;
+    create_info.layers          = vk_create_info.layers;
 
-    pFramebuffer = Device->createFramebuffer(create_info);
+    vk::Framebuffer framebuffer = Device->createFramebuffer(create_info);
 
-    return true;
+    return new VulkanFramebuffer(framebuffer);
+}
+
+RHIRenderPass* VulkanRHI::CreateRenderPass(const RHIRenderPassCreateInfo* create_info)
+{
+    vk::RenderPassCreateInfo vk_create_info = VulkanRHIConverter::Convert(*create_info);
+    vk::RenderPass render_pass = Device->createRenderPass(vk_create_info);
+
+    return new VulkanRenderPass(render_pass);
+}
+
+RHIDescriptorSetLayout* VulkanRHI::CreateDescriptorSetLayout(const RHIDescriptorSetLayoutCreateInfo* create_info)
+{
+    vk::DescriptorSetLayoutCreateInfo vk_create_info        = VulkanRHIConverter::Convert(*create_info);
+    vk::DescriptorSetLayout           descriptor_set_layout = Device->createDescriptorSetLayout(vk_create_info);
+
+    return new VulkanDescriptorSetLayout(descriptor_set_layout);
+}
+
+RHIPipelineLayout* VulkanRHI::CreatePipelineLayout(const RHIPipelineLayoutCreateInfo* create_info)
+{
+    vk::PipelineLayoutCreateInfo vk_create_info  = VulkanRHIConverter::Convert(*create_info);
+    vk::PipelineLayout           pipeline_layout = Device->createPipelineLayout(vk_create_info);
+
+    return new VulkanPipelineLayout(pipeline_layout);
 }
 
 RHIShader* VulkanRHI::CreateShaderModule(const std::vector<byte>& shader_code)
@@ -204,6 +231,20 @@ void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
     buffer_memory = new VulkanDeviceMemory(vulkan_buffer_memory);
 }
 
+void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
+                             vk::BufferUsageFlags    usage,
+                             vk::MemoryPropertyFlags properties,
+                             RHIBufferRef&           buffer,
+                             RHIDeviceMemoryRef&     buffer_memory)
+{
+    RHIBuffer*       vulkan_buffer;
+    RHIDeviceMemory* vulkan_buffer_memory;
+    CreateBuffer(size, usage, properties, vulkan_buffer, vulkan_buffer_memory);
+
+    buffer        = std::make_shared<VulkanBuffer>(vulkan_buffer);
+    buffer_memory = std::make_shared<VulkanDeviceMemory>(vulkan_buffer_memory);
+}
+
 void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
                                           vk::BufferUsageFlags    usage,
                                           vk::MemoryPropertyFlags properties,
@@ -219,6 +260,22 @@ void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
 
     buffer        = new VulkanBuffer(vulkan_buffer);
     buffer_memory = new VulkanDeviceMemory(vulkan_buffer_memory);
+}
+
+void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
+                                          vk::BufferUsageFlags    usage,
+                                          vk::MemoryPropertyFlags properties,
+                                          RHIBufferRef&           buffer,
+                                          RHIDeviceMemoryRef&     buffer_memory,
+                                          void*                   data,
+                                          int                     data_size)
+{
+    RHIBuffer*       vulkan_buffer;
+    RHIDeviceMemory* vulkan_buffer_memory;
+    CreateBufferAndInitialize(size, usage, properties, vulkan_buffer, vulkan_buffer_memory, data, data_size);
+
+    buffer        = std::make_shared<VulkanBuffer>(vulkan_buffer);
+    buffer_memory = std::make_shared<VulkanDeviceMemory>(vulkan_buffer_memory);
 }
 
 void VulkanRHI::CreateImage(uint32_t                width,
@@ -251,6 +308,40 @@ void VulkanRHI::CreateImage(uint32_t                width,
                             mip_levels,
                             sample_count);
 
+    image        = new VulkanImage(vulkan_image);
+    image_memory = new VulkanDeviceMemory(vulkan_image_memory);
+}
+
+void VulkanRHI::CreateImage(uint32_t                width,
+                            uint32_t                height,
+                            vk::Format              format,
+                            vk::ImageTiling         tiling,
+                            vk::ImageUsageFlags     usage,
+                            vk::MemoryPropertyFlags properties,
+                            RHIImageRef&            image,
+                            RHIDeviceMemoryRef&     image_memory,
+                            vk::ImageCreateFlags    create_flags,
+                            uint32_t                array_layers,
+                            uint32_t                mip_levels,
+                            vk::SampleCountFlagBits sample_count)
+{
+    RHIImage*        vulkan_image;
+    RHIDeviceMemory* vulkan_image_memory;
+    CreateImage(width,
+                height,
+                format,
+                tiling,
+                usage,
+                properties,
+                vulkan_image,
+                vulkan_image_memory,
+                create_flags,
+                array_layers,
+                mip_levels,
+                sample_count);
+
+    image        = std::make_shared<VulkanImage>(vulkan_image);
+    image_memory = std::make_shared<VulkanDeviceMemory>(vulkan_image_memory);
 }
 
 void VulkanRHI::CreateImageView(const RHIImage*      image,
@@ -262,9 +353,23 @@ void VulkanRHI::CreateImageView(const RHIImage*      image,
                                 RHIImageView*&       image_view)
 {
     vk::ImageView    vulkan_image_view;
-    vulkan_image_view                 = VulkanUtil::CreateImageView(
+    vulkan_image_view = VulkanUtil::CreateImageView(
         Device, *(VulkanImage*)image, format, image_aspect_flags, view_type, layout_count, miplevels);
 
+}
+
+void VulkanRHI::CreateImageView(const RHIImage*      image,
+                                vk::Format           format,
+                                vk::ImageAspectFlags image_aspect_flags,
+                                vk::ImageViewType    view_type,
+                                uint32_t             layout_count,
+                                uint32_t             miplevels,
+                                RHIImageViewRef&     image_view)
+{
+    RHIImageView* vulkan_image_view;
+    CreateImageView(image, format, image_aspect_flags, view_type, layout_count, miplevels, vulkan_image_view);
+
+    image_view = std::make_shared<VulkanImageView>(vulkan_image_view);
 }
 
 void VulkanRHI::CreateTextureImage(RHIImage*&         image,
@@ -281,6 +386,21 @@ void VulkanRHI::CreateTextureImage(RHIImage*&         image,
     image        = new VulkanImage(vulkan_image);
     image_view   = new VulkanImageView(vulkan_image_view);
     image_memory = new VulkanDeviceMemory(vulkan_image_memory);
+}
+
+void VulkanRHI::CreateTextureImage(RHIImageRef&        image,
+                                   RHIImageViewRef&    image_view,
+                                   RHIDeviceMemoryRef& image_memory,
+                                   const TextureData*  texure_data)
+{
+    RHIImage*        vulkan_image;
+    RHIImageView*    vulkan_image_view;
+    RHIDeviceMemory* vulkan_image_memory;
+    CreateTextureImage(vulkan_image, vulkan_image_view, vulkan_image_memory, texure_data);
+
+    image        = std::make_shared<VulkanImage>(vulkan_image);
+    image_view   = std::make_shared<VulkanImageView>(vulkan_image_view);
+    image_memory = std::make_shared<VulkanDeviceMemory>(vulkan_image_memory);
 }
 
 void VulkanRHI::CopyBuffer(RHIBuffer*     src_buffer,
@@ -334,6 +454,25 @@ vk::CommandBuffer VulkanRHI::GetCommandBuffer() const
 vk::DescriptorPool VulkanRHI::GetDescriptorPool() const
 {
     return DescriptorPool;
+}
+
+RHIDepthImageDesc VulkanRHI::GetDepthImageInfo() const
+{
+    return RHIDepthImageDesc {
+        .DepthImage       = DepthImage,
+        .DepthImageView   = DepthImageView,
+        .DepthImageFormat = DepthImageFormat,
+    };
+}
+
+uint8_t VulkanRHI::GetMaxFramesInFlight() const
+{
+    return MAX_FRAMES_IN_FLIGHT;
+}
+
+uint8_t VulkanRHI::GetCurrentFrameIndex() const
+{
+    return CurrentFrame;
 }
 
 void VulkanRHI::Clear()

@@ -3,6 +3,8 @@
 #include "core/reflection/reflection.h"
 #include "platform/string.h"
 
+#include <filesystem>
+
 STRUCT(EngineConfig)
 {
     REFLECTION_STRUCT_BODY(EngineConfig);
@@ -33,6 +35,11 @@ class ConfigManager
 {
 public:
     void Initialize();
+
+    std::filesystem::path EngineRootPath;
+    std::filesystem::path AssetPath;
+    std::filesystem::path ShaderPath;
+    std::filesystem::path ShaderCachePath;
 
     GlobalConfig   Global;
     EngineConfig   Engine;

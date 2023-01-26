@@ -2,6 +2,7 @@
 
 #include "rhi_resource.h"
 #include "rhi_definition.h"
+#include "platform/platform.h"
 
 class RenderResource
 {
@@ -61,14 +62,16 @@ public:
     }
 };
 
-class Shader : RenderResource
+class UniformBuffer : RenderResource
 {
 public:
-    RHIShaderRef ShaderRHI;
+    RHIBufferRef       IndexBufferRHI;
+    RHIDeviceMemoryRef DeviceMemoryRHI;
 
     virtual void ReleaseRHI() override
     {
-        ShaderRHI.reset();
+        IndexBufferRHI.reset();
+        DeviceMemoryRHI.reset();
     }
 };
 
