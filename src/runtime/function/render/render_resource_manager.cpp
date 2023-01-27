@@ -141,7 +141,7 @@ struct Model
 {
     struct SubMesh
     {
-        std::vector<MeshVertexData> Vertices;
+        std::vector<MeshVertexDataDefinition> Vertices;
         std::vector<uint32_t>       Indices;
         std::vector<String>         Textures;
     };
@@ -191,12 +191,12 @@ StaticMeshData RenderResourceManager::LoadStaticMesh(const String& mesh_file, co
     ProcessModel(scene, scene->mRootNode, &model);
     Model::SubMesh merged_mesh = model.MergeSubMesh();
 
-    mesh_data.VertexBuffer = std::make_shared<BufferData>(merged_mesh.Vertices.size() * sizeof(MeshVertexData));
+    mesh_data.VertexBuffer = std::make_shared<BufferData>(merged_mesh.Vertices.size() * sizeof(MeshVertexDataDefinition));
     mesh_data.IndexBuffer  = std::make_shared<BufferData>(merged_mesh.Indices.size() * sizeof(uint16_t));
 
     ASSERT(merged_mesh.Vertices.size() <= std::numeric_limits<uint16_t>::max()); // check if need uint32_t 
 
-    std::copy(merged_mesh.Vertices.begin(), merged_mesh.Vertices.end(), (MeshVertexData*)mesh_data.VertexBuffer->Data);
+    std::copy(merged_mesh.Vertices.begin(), merged_mesh.Vertices.end(), (MeshVertexDataDefinition*)mesh_data.VertexBuffer->Data);
     std::copy(merged_mesh.Indices.begin(), merged_mesh.Indices.end(), (uint16_t*)mesh_data.IndexBuffer->Data);
 
     return mesh_data;
@@ -235,7 +235,7 @@ void ProcessMesh(const aiScene* scene, const aiMesh* mesh, Model* model, Model::
 {
     for (size_t i = 0; i < mesh->mNumVertices; i++)
     {
-        MeshVertexData vertex;
+        MeshVertexDataDefinition vertex;
         vertex.Position = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
         vertex.Normal   = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
         if (mesh->HasTextureCoords(0))

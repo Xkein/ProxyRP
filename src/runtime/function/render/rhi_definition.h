@@ -4,6 +4,8 @@
 
 #define RHI_SUBPASS_EXTERNAL VK_SUBPASS_EXTERNAL
 #define RHI_NULL_HANDLE VK_NULL_HANDLE
+#define RHI_TRUE true
+#define RHI_FALSE false
 
 using RHIFormat = vk::Format;
 using RHIImageTiling = vk::ImageTiling;
@@ -35,3 +37,15 @@ using RHIDescriptorType = vk::DescriptorType;
 
 using RHIShaderStageFlags = vk::ShaderStageFlags;
 using RHIShaderStageFlagBits = vk::ShaderStageFlagBits;
+
+using RHIVertexInputRate = vk::VertexInputRate;
+
+using RHIPrimitiveTopology = vk::PrimitiveTopology;
+using RHIPolygonMode = vk::PolygonMode;
+using RHICullModeFlags = vk::CullModeFlags;
+using RHICullModeFlagBits = vk::CullModeFlagBits;
+using RHIFrontFace = vk::FrontFace;
+using RHIBlendOp = vk::BlendOp;
+using RHIBlendFactor = vk::BlendFactor;
+using RHILogicOp = vk::LogicOp;
+using RHICompareOp = vk::CompareOp;

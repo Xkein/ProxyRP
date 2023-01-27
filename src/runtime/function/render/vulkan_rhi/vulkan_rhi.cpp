@@ -57,6 +57,14 @@ void VulkanRHI::PrepareContext()
     CurrentCommandBuffer = CommandBuffers[CurrentFrame];
 }
 
+RHIDescriptorSet* VulkanRHI::AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info)
+{
+    vk::DescriptorSetAllocateInfo vk_allocate_info = VulkanRHIConverter::Convert(*allocate_info);
+    vk::DescriptorSet             descriptor_set   = Device->allocateDescriptorSets(vk_allocate_info)[0];
+
+    return new VulkanDescriptorSet(descriptor_set);
+}
+
 void VulkanRHI::CreateSwapChain()
 {
     SwapChainSupportDetails swap_chain_support = QuerySwapChainSupport(PhysicalDevice);
@@ -210,11 +218,20 @@ RHIPipelineLayout* VulkanRHI::CreatePipelineLayout(const RHIPipelineLayoutCreate
 
 RHIShader* VulkanRHI::CreateShaderModule(const std::vector<byte>& shader_code)
 {
-    VulkanShader* shader = new VulkanShader();
+    vk::ShaderModule shader = VulkanUtil::CreateShaderModule(Device, shader_code);
 
-    shader->Resource = VulkanUtil::CreateShaderModule(Device, shader_code);
+    return new VulkanShader(shader);
+}
 
-    return shader;
+RHIPipeline* VulkanRHI::CreateGraphicsPipeline(RHIPipelineCache*                    pipeline_cache,
+                                               const RHIGraphicsPipelineCreateInfo* create_info)
+{
+    vk::GraphicsPipelineCreateInfo vk_create_info = VulkanRHIConverter::Convert(*create_info);
+    vk::PipelineCache              vk_pipeline_cache =
+        pipeline_cache == VK_NULL_HANDLE ? VK_NULL_HANDLE : *(VulkanPipelineCache*)pipeline_cache;
+    vk::Pipeline pipeline = Device->createGraphicsPipeline(vk_pipeline_cache, vk_create_info).value;
+
+    return new VulkanPipeline(pipeline);
 }
 
 void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
@@ -248,10 +265,10 @@ void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
 void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
                                           vk::BufferUsageFlags    usage,
                                           vk::MemoryPropertyFlags properties,
-                                          RHIBuffer*&           buffer,
-                                          RHIDeviceMemory*&     buffer_memory,
-                                          void*                   data      = nullptr,
-                                          int                     data_size = 0)
+                                          RHIBuffer*&             buffer,
+                                          RHIDeviceMemory*&       buffer_memory,
+                                          void*                   data,
+                                          int                     data_size)
 {
     vk::Buffer       vulkan_buffer;
     vk::DeviceMemory vulkan_buffer_memory;
@@ -289,7 +306,7 @@ void VulkanRHI::CreateImage(uint32_t                width,
                             vk::ImageCreateFlags    create_flags,
                             uint32_t                array_layers,
                             uint32_t                mip_levels,
-                            vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1)
+                            vk::SampleCountFlagBits sample_count)
 {
     vk::Image        vulkan_image;
     vk::DeviceMemory vulkan_image_memory;
@@ -446,14 +463,37 @@ void VulkanRHI::EndSingleTimeCommands(vk::CommandBuffer command_buffer)
     Device->freeCommandBuffers(CommandPool, {command_buffer});
 }
 
-vk::CommandBuffer VulkanRHI::GetCommandBuffer() const
+void VulkanRHI::UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
+                                     const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies)
 {
-    return CurrentCommandBuffer;
+    Device->updateDescriptorSets(descriptor_writes, descriptor_copies);
 }
 
-vk::DescriptorPool VulkanRHI::GetDescriptorPool() const
+void VulkanRHI::PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color)
 {
-    return DescriptorPool;
+    if (!EnableDebugUtilsLabel)
+        return;
+
+    vk::DebugUtilsLabelEXT label_info {
+        .pLabelName = name,
+        .color      = color,
+    };
+
+    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.beginDebugUtilsLabelEXT(label_info);
+}
+void VulkanRHI::PopEvent(RHICommandBuffer* commond_buffer)
+{
+    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.endDebugUtilsLabelEXT();
+}
+
+RHICommandBuffer* VulkanRHI::GetCommandBuffer() const
+{
+    return (RHICommandBuffer*)&CurrentCommandBuffer;
+}
+
+RHIDescriptorPool* VulkanRHI::GetDescriptorPool() const
+{
+    return (RHIDescriptorPool*)&DescriptorPool;
 }
 
 RHIDepthImageDesc VulkanRHI::GetDepthImageInfo() const
@@ -462,6 +502,17 @@ RHIDepthImageDesc VulkanRHI::GetDepthImageInfo() const
         .DepthImage       = DepthImage,
         .DepthImageView   = DepthImageView,
         .DepthImageFormat = DepthImageFormat,
+    };
+}
+
+RHISwapchainDesc VulkanRHI::GetSwapchainInfo()
+{
+    return RHISwapchainDesc {
+        .ImageFormat = SwapChainImageFormat,
+        .Extent      = SwapChainExtent,
+        .Viewport    = &Viewport,
+        .Scissor     = &Scissor,
+        .ImageViews  = SwapChainImageViews,
     };
 }
 
@@ -508,6 +559,11 @@ void VulkanRHI::DestroyImage(RHIImage* image)
 void VulkanRHI::DestroyImageView(RHIImageView* image_view)
 {
     Device->destroyImageView(*(VulkanImageView*)image_view);
+}
+
+void VulkanRHI::DestroyShaderModule(RHIShader* shader)
+{
+    Device->destroyShaderModule(*(VulkanShader*)shader);
 }
 
 void VulkanRHI::FreeMemory(RHIDeviceMemory* memory)

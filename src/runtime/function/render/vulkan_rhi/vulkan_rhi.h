@@ -21,6 +21,8 @@ public:
     virtual void PrepareContext() override;
 
     // allocate and create
+    virtual RHIDescriptorSet* AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info);
+
     virtual void CreateSwapChain() override;
     virtual void RecreateSwapChain() override;
     virtual void CreateSwapChainImageViews() override;
@@ -28,6 +30,8 @@ public:
     virtual RHIRenderPass* CreateRenderPass(const RHIRenderPassCreateInfo* create_info);
     virtual RHIDescriptorSetLayout* CreateDescriptorSetLayout(const RHIDescriptorSetLayoutCreateInfo* create_info);
     virtual RHIPipelineLayout*      CreatePipelineLayout(const RHIPipelineLayoutCreateInfo* create_info);
+    virtual RHIPipeline*            CreateGraphicsPipeline(RHIPipelineCache*                    pipeline_cache,
+                                                           const RHIGraphicsPipelineCreateInfo* create_info);
 
     virtual RHIShader* CreateShaderModule(const std::vector<byte>& shader_code);
 
@@ -115,9 +119,16 @@ public:
     virtual vk::CommandBuffer BeginSingleTimeCommands();
     virtual void              EndSingleTimeCommands(vk::CommandBuffer command_buffer);
 
+    virtual void UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
+                                      const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies);
+
+    virtual void PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color);
+    virtual void PopEvent(RHICommandBuffer* commond_buffer);
+
     // query
-    virtual vk::CommandBuffer  GetCommandBuffer() const;
-    virtual vk::DescriptorPool GetDescriptorPool() const;
+    virtual RHICommandBuffer*  GetCommandBuffer() const;
+    virtual RHIDescriptorPool* GetDescriptorPool() const;
+    virtual RHISwapchainDesc   GetSwapchainInfo();
     virtual RHIDepthImageDesc  GetDepthImageInfo() const;
     virtual uint8_t            GetMaxFramesInFlight() const;
     virtual uint8_t            GetCurrentFrameIndex() const;
@@ -127,6 +138,7 @@ public:
     virtual void ClearSwapChain() override;
     virtual void DestroyImage(RHIImage* image);
     virtual void DestroyImageView(RHIImageView* image_view);
+    virtual void DestroyShaderModule(RHIShader* shader);
 
     // memory
     virtual void FreeMemory(RHIDeviceMemory* memory);

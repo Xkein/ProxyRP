@@ -1,8 +1,10 @@
 #pragma once
 
+#include "platform/platform.h"
 #include "platform/string.h"
 
 #include <cstdint>
+#include <vector>
 
 enum EShaderFrequency : uint8_t
 {
@@ -19,29 +21,46 @@ enum EShaderFrequency : uint8_t
 class ShaderType
 {
 public:
+    ShaderType(const String&    name,
+               const String&    source_filename,
+               const String&    enter_point,
+               EShaderFrequency frequency);
+
+    const String& GetHashedName() const ;
 
 	String           Name;
     String           TypeName;
     String           SourceFile;
-    String           EnterPoint;
+    String           EntryPoint;
     EShaderFrequency Frequency;
+
+    String HashedName;
 };
 
 class Shader
 {
 public:
 
-    void Finalize();
 
-private:
-    std::shared_ptr<ShaderType> Type;
-    int                         Index;
+    ShaderType* Type;
+    int         Index {-1};
 };
 
 class ShaderCache
 {
 public:
-
 };
 
+template<typename... Ts>
+struct ShaderPermutationDomain
+{};
+
+
+#define DECLARE_SHADER(ShaderClass) \
+    static ShaderType StaticType;
+
+#define IMPLEMENT_SHADER_TYPE(ShaderClass, SourceFilename, EntryPoint, Frequency) \
+    ShaderType ShaderClass::StaticType(#ShaderClass, SourceFilename, EntryPoint, Frequency);
+
+std::vector<ShaderType*> __AllShaderTypes;
 

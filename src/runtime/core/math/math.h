@@ -27,6 +27,6 @@ T RoundUp(T value, T alignment)
 {
     static_assert(std::is_integral_v<T>, "RoundUp is for integer only.");
     T temp = value + alignment - static_cast<T>(1);
-    reutnr temp - temp % alignment;
+    return temp - temp % alignment;
 }
 

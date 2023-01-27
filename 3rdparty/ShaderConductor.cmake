@@ -31,7 +31,7 @@ if(NOT TARGET shader_conductor)
     
     set(SHADER_CONDUCTOR_BIN_DIR ${LLVM_DIR}/build/lib/Release CACHE STRING "")
     if (CMAKE_HOST_WIN32)
-        target_link_libraries(llvm INTERFACE ${THIRD_PARTY_DIR}/ShaderConductor/build/lib/Release/ShaderConductor.lib)
+        target_link_libraries(shader_conductor INTERFACE ${THIRD_PARTY_DIR}/ShaderConductor/build/lib/Release/ShaderConductor.lib)
     endif()
 
 endif()

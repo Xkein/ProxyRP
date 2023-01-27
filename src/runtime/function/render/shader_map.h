@@ -1,7 +1,9 @@
 #pragma once
 
 #include "function/render/shader.h"
-#include "resource/asset/asset_registry.h"
+
+#include <map>
+#include <memory>
 
 class ShaderMap
 {
@@ -10,11 +12,10 @@ public:
 
     bool HasShader(ShaderType* shader_type);
 
-
-    void LoadCachedShader(const String& cached_shader_path);
-
+    void AddShader(Shader* shader);
 
 private:
 
-    AssetRegistry ShaderRegistry;
+    std::map<StringView, std::shared_ptr<Shader>> ShaderMapContent;
 };
+

@@ -23,6 +23,8 @@ set(CMAKE_INSTALL_PREFIX "${PROXYRP_ROOT_DIR}/bin")
 set(BINARY_ROOT_DIR "${CMAKE_INSTALL_PREFIX}/")
 
 set(ENGINE_ROOT_DIR "${PROXYRP_ROOT_DIR}")
+set(ENGINE_OUTPUT_DIR "${ENGINE_ROOT_DIR}/bin")
+set(ENGINE_ASSET_DIR "${ENGINE_ROOT_DIR}/asset")
 
 add_subdirectory(3rdparty)
 add_subdirectory(src/shaders)

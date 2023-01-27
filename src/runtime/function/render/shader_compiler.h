@@ -20,8 +20,12 @@ class ShaderCompiler
 public:
     static tf::Future<std::optional<ShaderCompiledInfo>> BeginCompileShader(ShaderType* shader_type, std::shared_ptr<ShaderMap> shader_map);
 
-    static tf::Future<void> BeginCompileShaders(std::vector<ShaderType*>   shader_types, std::shared_ptr<ShaderMap> shader_map);
+    static tf::Future<void> BeginCompileShaders(std::vector<ShaderType*> shader_types, std::shared_ptr<ShaderMap> shader_map);
 
 private:
     static ShaderCompiledInfo Compile(ShaderType* shader_type, std::shared_ptr<ShaderMap> shader_map);
 };
+
+
+tf::Future<void> __CompileAllShaders();
+

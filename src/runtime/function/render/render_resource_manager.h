@@ -37,7 +37,7 @@ public:
         uint32_t StorageBufferAlignment {256};
         uint32_t MaxStorageBufferRange {1 << 27};
 
-        RHIBufferRef Global
+
     };
 
     struct

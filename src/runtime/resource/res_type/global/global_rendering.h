@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/math/vector.h"
 #include "core/reflection/reflection.h"
 #include "platform/string.h"
 

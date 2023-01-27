@@ -65,6 +65,8 @@ class VulkanDescriptorSet : public RHIDescriptorSet
 public:
     vk::DescriptorSet Resource;
 
+    VulkanDescriptorSet(vk::DescriptorSet descriptor_set) : Resource(descriptor_set) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -171,6 +173,8 @@ class VulkanPipeline : public RHIPipeline
 public:
     vk::Pipeline Resource;
 
+    VulkanPipeline(vk::Pipeline pipeline) : Resource(pipeline) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -222,6 +226,8 @@ class VulkanShader : public RHIShader
 {
 public:
     vk::ShaderModule Resource;
+
+    VulkanShader(vk::ShaderModule shader_module) : Resource(shader_module) {}
 
     __VULKAN_RHI_MAKE_OPERATOR();
 };

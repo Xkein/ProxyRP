@@ -5,6 +5,8 @@
 class RenderPassCommon
 {
 public:
+    void Initialize();
+
     void SetupDescriptorSetLayout();
 
     std::shared_ptr<VulkanRHI> RHI;

@@ -59,7 +59,7 @@ public:
     }
 };
 
-struct MeshVertexData
+struct MeshVertexDataDefinition
 {
     Vector3f Position;
     Vector3f Normal;

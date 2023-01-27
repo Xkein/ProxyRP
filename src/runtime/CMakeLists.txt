@@ -2,7 +2,7 @@
 set(TARGET_NAME ProxyRP)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options("/MP")
+    add_compile_options("/MP" "/bigobj")
     set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ProxyRP)
 endif()
 
@@ -50,9 +50,6 @@ target_link_libraries(${TARGET_NAME}
         Boost::interprocess
         Boost::process
 )
-
-set(ENGINE_OUTPUT_DIR "${ENGINE_ROOT_DIR}/bin")
-set(ENGINE_ASSET_DIR "${ENGINE_ROOT_DIR}/asset")
 
 if (CMAKE_HOST_WIN32)
 	set(SHADER_CONDUCTOR_LIB_PATH ${SHADER_CONDUCTOR_BIN_DIR}/ShaderConductor.dll)

@@ -9,7 +9,7 @@ void MeshPass::Initialize(const RenderPassInitInfo* init_info)
     SetupDescriptorSet();
 }
 
-void MeshPass::PrepareData() {}
+void MeshPass::PrepareData(RenderPassPrepareInfo* prepare_info) {}
 
 void MeshPass::UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info) {}
 

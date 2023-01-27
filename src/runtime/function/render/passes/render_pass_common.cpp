@@ -2,6 +2,8 @@
 #include "function/render/vulkan_rhi/vulkan_rhi.h"
 #include "function/render/rhi_struct.h"
 
+void RenderPassCommon::Initialize() {}
+
 void RenderPassCommon::SetupDescriptorSetLayout()
 {
 

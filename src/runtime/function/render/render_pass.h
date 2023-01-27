@@ -27,8 +27,9 @@ struct RenderPassPrepareInfo
 
 struct FramebufferRecreateInfo
 {
-    RHIImageView* InputAttachment;
-
+    RHIImageView* SceneAttachment;
+    RHIImageView* UIAttachment;
+    RHIImageView* PostProcessAttachment;
 };
 
 

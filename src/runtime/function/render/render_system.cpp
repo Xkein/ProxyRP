@@ -9,6 +9,7 @@
 #include "resource/asset/asset_manager.h"
 #include "resource/config/config_manager.h"
 #include "resource/res_type/global/global_rendering.h"
+#include "function/render/shader_compiler.h"
 
 RenderSystem::~RenderSystem() {}
 
@@ -25,6 +26,8 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
 
     GlobalRenderingResource global_rendering_res;
     GAssetManager->LoadAsset(GConfigManager->Global.GlobalRenderingResourceUrl, global_rendering_res);
+
+    __CompileAllShaders().wait();
 
     Camera = std::make_shared<RenderCamera>();
 

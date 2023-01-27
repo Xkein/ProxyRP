@@ -14,6 +14,11 @@ struct RenderPipelineInitInfo
 {
 };
 
+struct RenderPipelinePrepareInfo
+{
+    std::shared_ptr<RenderResourceManager> ResourceManager;
+};
+
 class RenderPipeline
 {
 public:
@@ -23,8 +28,8 @@ public:
     virtual void InitializeUIRenderBackend(WindowUI* window_ui) {}
     virtual void Clear() {};
 
-    virtual void PreparePassData()                  = 0;
-    virtual void PassUpdateAfterRecreateSwapchain() = 0;
+    virtual void PreparePassData(RenderPipelinePrepareInfo* prepare_info) = 0;
+    virtual void PassUpdateAfterRecreateSwapchain()                       = 0;
 
 
 public:

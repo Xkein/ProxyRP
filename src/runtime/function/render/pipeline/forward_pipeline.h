@@ -8,7 +8,7 @@ class ForwardPipeline : public RenderPipeline
 {
 public:
     virtual void Initialize(RenderPipelineInitInfo* init_info) override;
-    virtual void PreparePassData() override;
+    virtual void PreparePassData(RenderPipelinePrepareInfo* prepare_info) override;
     virtual void PassUpdateAfterRecreateSwapchain() override;
 
 public:
