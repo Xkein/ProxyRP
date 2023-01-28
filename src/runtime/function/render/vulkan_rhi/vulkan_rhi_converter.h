@@ -36,5 +36,6 @@ __DEFINE_VULKAN_RHI_CONVERTER_TRAIT(DescriptorSetLayoutCreateInfo);
 __DEFINE_VULKAN_RHI_CONVERTER_TRAIT(PipelineLayoutCreateInfo);
 __DEFINE_VULKAN_RHI_CONVERTER_TRAIT(GraphicsPipelineCreateInfo);
 __DEFINE_VULKAN_RHI_CONVERTER_TRAIT(DescriptorSetAllocateInfo);
+__DEFINE_VULKAN_RHI_CONVERTER_TRAIT(DescriptorPoolCreateInfo);
 
 

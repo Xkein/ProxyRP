@@ -10,6 +10,7 @@ class VulkanRHI;
 class WindowUI;
 class RenderResourceManager;
 class RenderPassCommon;
+class RenderScene;
 
 struct RenderPassInitInfo
 {};
@@ -22,6 +23,7 @@ struct RenderPassCommonInfo
 
 struct RenderPassPrepareInfo
 {
+    std::shared_ptr<RenderScene> Scene;
     std::shared_ptr<RenderResourceManager> ResourceManager;
 };
 
@@ -37,6 +39,7 @@ class RenderPass
 {
 public:
     virtual void Initialize(const RenderPassInitInfo* init_info) = 0;
+    virtual void InitializeUIRenderBackend(WindowUI* window_ui) {}
     virtual void PostInitialize() {}
     virtual void SetCommonInfo(RenderPassCommonInfo* common_info);
     virtual void PrepareData(RenderPassPrepareInfo* prepare_info)                             = 0;

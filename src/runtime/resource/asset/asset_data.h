@@ -10,7 +10,7 @@ public:
     AssetData() {}
 
     template<typename T>
-    AssetData(const String& url, const std::shared_ptr<T>& ptr) : Url(url) {
+    AssetData(size_t hash, const std::shared_ptr<T>& ptr) : Hash(hash) {
         Data = std::reinterpret_pointer_cast<void*>(ptr);
     }
 
@@ -24,6 +24,6 @@ public:
         return std::reinterpret_pointer_cast<T>(Data.lock());
     }
 
-    String               Url;
+    size_t               Hash;
     std::weak_ptr<void*> Data;
 };

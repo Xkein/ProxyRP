@@ -77,9 +77,17 @@ void RenderSystem::Tick(float delta_time)
 
     Scene->UpdateVisibleObjects(Camera);
 
-    Pipeline->PreparePassData();
+    RenderPipelinePrepareInfo pipeline_prepare_info;
+    pipeline_prepare_info.Scene           = Scene;
+    pipeline_prepare_info.ResourceManager = ResourceManager;
+    Pipeline->PreparePassData(&pipeline_prepare_info);
 
     Renderer->Render();
+}
+
+void RenderSystem::InitializeUIRenderBackend(WindowUI* window_ui)
+{
+    Pipeline->InitializeUIRenderBackend(window_ui);
 }
 
 void RenderSystem::SwapLogicRenderData()

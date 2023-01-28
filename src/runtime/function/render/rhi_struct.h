@@ -3,6 +3,7 @@
 #include "rhi_resource.h"
 #include "rhi_definition.h"
 
+using RHIPhysicalDeviceProperties = vk::PhysicalDeviceProperties;
 
 using RHIAttachmentDescription =  vk::AttachmentDescription;
 using RHIAttachmentReference =  vk::AttachmentReference;
@@ -14,6 +15,7 @@ using RHIRenderPassCreateInfo = vk::RenderPassCreateInfo;
 
 using RHIFramebufferCreateInfo = vk::FramebufferCreateInfo;
 
+using RHIDescriptorPoolCreateInfo = vk::DescriptorPoolCreateInfo;
 using RHIDescriptorSetLayoutBinding = vk::DescriptorSetLayoutBinding;
 using RHIDescriptorSetLayoutCreateInfo = vk::DescriptorSetLayoutCreateInfo;
 using RHIDescriptorSetAllocateInfo = vk::DescriptorSetAllocateInfo;

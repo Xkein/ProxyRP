@@ -66,6 +66,19 @@ struct MeshVertexDataDefinition
     Vector2f TexCoords;
 };
 
+struct MeshVertexBindingDataDefinition
+{
+    int Index0 {0};
+    int Index1 {0};
+    int Index2 {0};
+    int Index3 {0};
+
+    float Weight0 {0.f};
+    float Weight1 {0.f};
+    float Weight2 {0.f};
+    float Weight3 {0.f};
+};
+
 struct StaticMeshData
 {
     std::shared_ptr<BufferData> VertexBuffer;
@@ -94,17 +107,17 @@ struct RenderMesh
 
     uint32_t VertexCount;
 
-    VertexBufferRef PositionBuffer;
-    VertexBufferRef VaryingEnableBlendingBuffer;
-    VertexBufferRef JointBindingBuffer;
+    VertexBuffer PositionBuffer;
+    VertexBuffer VaryingEnableBlendingBuffer;
+    VertexBuffer JointBindingBuffer;
 
     RHIDescriptorSetRef BlendingDescriptorSet;
 
-    VertexBufferRef VaryingBuffer;
+    VertexBuffer VaryingBuffer;
 
     uint32_t IndexCount;
 
-    IndexBufferRef IndexBuffer;
+    IndexBuffer IndexBuffer;
 };
 
 struct PBRMaterial
@@ -117,3 +130,22 @@ struct PBRMaterial
 
     RHIDescriptorSetRef DescriptorSet;
 };
+
+struct RenderMeshNode
+{
+    const Matrix4x4*   ModelMatrix {nullptr};
+    const Matrix4x4*   JointMatrices {nullptr};
+    uint32_t           JointCount {0};
+    RenderMesh*        RefMesh {nullptr};
+    PBRMaterial*       RefMaterial {nullptr};
+    uint32_t           NodeId;
+    bool               EnableVertexBlending {false};
+};
+
+struct VisiableNodes
+{
+    std::vector<RenderMeshNode>* DirectionalLightVisibleMeshNodes {nullptr};
+    std::vector<RenderMeshNode>* PointLightsVisibleMeshNodes {nullptr};
+    std::vector<RenderMeshNode>* MainCameraVisibleMeshNodes {nullptr};
+};
+

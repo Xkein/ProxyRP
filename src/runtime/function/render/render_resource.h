@@ -65,12 +65,25 @@ public:
 class UniformBuffer : RenderResource
 {
 public:
-    RHIBufferRef       IndexBufferRHI;
+    RHIBufferRef       BufferRHI;
     RHIDeviceMemoryRef DeviceMemoryRHI;
 
     virtual void ReleaseRHI() override
     {
-        IndexBufferRHI.reset();
+        BufferRHI.reset();
+        DeviceMemoryRHI.reset();
+    }
+};
+
+class StorageBuffer : RenderResource
+{
+public:
+    RHIBufferRef       BufferRHI;
+    RHIDeviceMemoryRef DeviceMemoryRHI;
+
+    virtual void ReleaseRHI() override
+    {
+        BufferRHI.reset();
         DeviceMemoryRHI.reset();
     }
 };

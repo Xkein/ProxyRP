@@ -4,17 +4,17 @@
 
 void AssetRegistry::Clean()
 {
-    std::vector<String> expired_urls;
-    for (const auto& [url, asset_data] : Data)
+    std::vector<size_t> expired_asset;
+    for (const auto& [hash, asset_data] : Data)
     {
         if (asset_data.Data.expired())
         {
-            expired_urls.emplace_back(url);
+            expired_asset.emplace_back(hash);
         }
     }
 
-    for (const String& expired_url : expired_urls)
+    for (size_t expired_hash : expired_asset)
     {
-        Data.erase(expired_url);
+        Data.erase(expired_hash);
     }
 }

@@ -32,6 +32,7 @@ public:
     virtual RHIPipelineLayout*      CreatePipelineLayout(const RHIPipelineLayoutCreateInfo* create_info);
     virtual RHIPipeline*            CreateGraphicsPipeline(RHIPipelineCache*                    pipeline_cache,
                                                            const RHIGraphicsPipelineCreateInfo* create_info);
+    virtual RHIDescriptorPool*      CreateDescriptorPool(const RHIDescriptorPoolCreateInfo* create_info);
 
     virtual RHIShader* CreateShaderModule(const std::vector<byte>& shader_code);
 
@@ -126,6 +127,7 @@ public:
     virtual void PopEvent(RHICommandBuffer* commond_buffer);
 
     // query
+    virtual RHIPhysicalDeviceProperties GetPhysicalDeviceProperties();
     virtual RHICommandBuffer*  GetCommandBuffer() const;
     virtual RHIDescriptorPool* GetDescriptorPool() const;
     virtual RHISwapchainDesc   GetSwapchainInfo();
@@ -136,13 +138,14 @@ public:
     // destroy
     virtual void Clear() override;
     virtual void ClearSwapChain() override;
+    virtual void DestroyBuffer(RHIBuffer* buffer);
     virtual void DestroyImage(RHIImage* image);
     virtual void DestroyImageView(RHIImageView* image_view);
     virtual void DestroyShaderModule(RHIShader* shader);
 
     // memory
     virtual void FreeMemory(RHIDeviceMemory* memory);
-    virtual void MapMemory(RHIDeviceMemory* memory, vk::DeviceSize offset, vk::DeviceSize size, vk::MemoryMapFlags flags, void*& data);
+    virtual void* MapMemory(RHIDeviceMemory* memory, vk::DeviceSize offset, vk::DeviceSize size, vk::MemoryMapFlags flags);
     virtual void UnmapMemory(RHIDeviceMemory* memory);
 
 public:

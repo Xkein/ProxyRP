@@ -234,6 +234,13 @@ RHIPipeline* VulkanRHI::CreateGraphicsPipeline(RHIPipelineCache*                
     return new VulkanPipeline(pipeline);
 }
 
+RHIDescriptorPool* VulkanRHI::CreateDescriptorPool(const RHIDescriptorPoolCreateInfo* create_info) {
+    vk::DescriptorPoolCreateInfo vk_create_info = VulkanRHIConverter::Convert(*create_info);
+    vk::DescriptorPool           descriptor_pool = Device->createDescriptorPool(vk_create_info);
+
+    return new VulkanDescriptorPool(descriptor_pool);
+}
+
 void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
                              vk::BufferUsageFlags    usage,
                              vk::MemoryPropertyFlags properties,
@@ -486,6 +493,11 @@ void VulkanRHI::PopEvent(RHICommandBuffer* commond_buffer)
     static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.endDebugUtilsLabelEXT();
 }
 
+RHIPhysicalDeviceProperties VulkanRHI::GetPhysicalDeviceProperties()
+{
+    return PhysicalDevice->getProperties();
+}
+
 RHICommandBuffer* VulkanRHI::GetCommandBuffer() const
 {
     return (RHICommandBuffer*)&CurrentCommandBuffer;
@@ -571,13 +583,12 @@ void VulkanRHI::FreeMemory(RHIDeviceMemory* memory)
     Device->freeMemory(*(VulkanDeviceMemory*)memory);
 }
 
-void VulkanRHI::MapMemory(RHIDeviceMemory*   memory,
+void* VulkanRHI::MapMemory(RHIDeviceMemory*   memory,
                           vk::DeviceSize     offset,
                           vk::DeviceSize     size,
-                          vk::MemoryMapFlags flags,
-                          void*&             data)
+                          vk::MemoryMapFlags flags)
 {
-    data = Device->mapMemory(*(VulkanDeviceMemory*)memory, offset, size, flags);
+    return Device->mapMemory(*(VulkanDeviceMemory*)memory, offset, size, flags);
 }
 
 void VulkanRHI::UnmapMemory(RHIDeviceMemory* memory)

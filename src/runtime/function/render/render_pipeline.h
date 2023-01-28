@@ -16,6 +16,7 @@ struct RenderPipelineInitInfo
 
 struct RenderPipelinePrepareInfo
 {
+    std::shared_ptr<RenderScene>           Scene;
     std::shared_ptr<RenderResourceManager> ResourceManager;
 };
 

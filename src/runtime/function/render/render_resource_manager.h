@@ -26,34 +26,40 @@ public:
     void UploadGameObjectRenderResource(const RenderEntity& render_entity, const RenderMeshData& mesh_data);
     void UploadGameObjectRenderResource(const RenderEntity& render_entity, const RenderMaterialData& material_data);
 
+    std::shared_ptr<RenderMesh> GetEntityMesh(RenderEntity entity);
+    std::shared_ptr<PBRMaterial> GetEntityMaterial(RenderEntity entity);
+
     std::shared_ptr<TextureData>        LoadTexture(const String& file_path, bool is_srgb = false);
     std::shared_ptr<TextureData>        LoadTextureHDR(const String& file_path, int desired_channels = 4);
     std::shared_ptr<RenderMaterialData> LoadMaterialData(const MaterialResource& material_res);
     std::shared_ptr<RenderMeshData> LoadMeshData(const MeshResource& mesh_res, const AxisAlignedBox& bounding_box = {});
 
-    struct StorageBuffer
-    {
-        uint32_t UniformBufferAlignment {256};
-        uint32_t StorageBufferAlignment {256};
-        uint32_t MaxStorageBufferRange {1 << 27};
-
-
-    };
-
-    struct
-    {
-        StorageBuffer _StorageBuffer;
-    } GlobalRenderResource;
-
-
 private:
     StaticMeshData LoadStaticMesh(const String& mesh_file, const AxisAlignedBox& bounding_box);
 
-    std::shared_ptr<RenderMesh> GetOrCreateRenderMesh(const RenderEntity& entity, const RenderMeshData& material_data);
+    std::shared_ptr<RenderMesh> GetOrCreateRenderMesh(const RenderEntity& entity, const RenderMeshData& mesh_data);
     std::shared_ptr<PBRMaterial> GetOrCreatePBRMaterial(const RenderEntity& entity, const RenderMaterialData& material_data);
-
-    void CreateAndMapStorageBuffer();
+    
+    void UpdateMeshData(bool                                          enable_vertex_blending,
+                        uint32_t                                      index_buffer_size,
+                        void*                                         index_buffer_data,
+                        uint32_t                                      vertex_buffer_size,
+                        struct MeshVertexDataDefinition const*        vertex_buffer_data,
+                        uint32_t                                      joint_binding_buffer_size,
+                        struct MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
+                        RenderMesh&                                   mesh);
+    void UpdateVertexBuffer(bool                                          enable_vertex_blending,
+                            uint32_t                                      vertex_buffer_size,
+                            struct MeshVertexDataDefinition const*        vertex_buffer_data,
+                            uint32_t                                      joint_binding_buffer_size,
+                            struct MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
+                            uint32_t                                      index_buffer_size,
+                            uint16_t*                                     index_buffer_data,
+                            RenderMesh&                                   mesh);
+    void UpdateIndexBuffer(uint32_t index_buffer_size, void* index_buffer_data, RenderMesh& mesh);
 
     std::shared_ptr<VulkanRHI>     RHI;
     std::shared_ptr<AssetRegistry> Registry;
+
+    std::vector<std::shared_ptr<void*>> __PersistentResources;
 };

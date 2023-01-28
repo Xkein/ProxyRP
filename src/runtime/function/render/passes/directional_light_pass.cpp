@@ -4,6 +4,7 @@
 #include "function/render/shader.h"
 #include "function/render/shader_map.h"
 #include "function/render/render_mesh.h"
+#include "function/render/render_scene.h"
 #include "platform/file/file_manager.h"
 
 class DirectionalLightShadowVS : public Shader
@@ -45,14 +46,20 @@ void DirectionalLightPass::SetCommonInfo(RenderPassCommonInfo* common_info)
 
 void DirectionalLightPass::PrepareData(RenderPassPrepareInfo* prepare_info)
 {
-}
-
-void DirectionalLightPass::UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info)
-{
+    PerframeStorageBufferObject.LightProjView = prepare_info->Scene->LightProjView;
+    VisiableNodes                             = &prepare_info->Scene->VisiableNodes;
 }
 
 void DirectionalLightPass::Draw()
 {
+    struct MeshNode
+    {
+        const Matrix4x4* model_matrix {nullptr};
+        const Matrix4x4* joint_matrices {nullptr};
+        uint32_t         joint_count {0};
+    };
+
+
 }
 
 void DirectionalLightPass::SetupAttachments()
@@ -158,15 +165,50 @@ void DirectionalLightPass::SetupDescriptorSet()
     DescriptorInfos[0].DescriptorSetRHI = RHIDescriptorSetRef(RHI->AllocateDescriptorSets(&descriptor_set_alloc_info));
 
     RHIDescriptorBufferInfo perframe_storage_buffer_info {
+        .buffer = *(VulkanBuffer*)PassCommon->GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffer.BufferRHI.get(),
         .offset = 0,
-        .range = ,
-        .buffer = ,
+        .range  = sizeof(MeshDirectionalLightShadowPerframeStorageBufferObject),
     };
 
+    RHIDescriptorBufferInfo perdrawcall_storage_buffer_info {
+        .buffer = *(VulkanBuffer*)PassCommon->GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffer.BufferRHI.get(),
+        .offset = 0,
+        .range  = sizeof(MeshDirectionalLightShadowPerdrawcallStorageBufferObject),
+    };
 
+    RHIDescriptorBufferInfo perdrawcall_vertex_blending_storage_buffer_info {
+        .buffer = *(VulkanBuffer*)PassCommon->GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffer.BufferRHI.get(),
+        .offset = 0,
+        .range  = sizeof(MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject),
+    };
+
+    RHIDescriptorSet* descriptor_set = DescriptorInfos[0].DescriptorSetRHI.get();
+    
     std::array<RHIWriteDescriptorSet, 3> descriptor_writes {};
 
     RHIWriteDescriptorSet& perframe_storage_buffer_write = descriptor_writes[0];
+    perframe_storage_buffer_write.dstSet                 = (vk::DescriptorSet)*(VulkanDescriptorSet*)descriptor_set;
+    perframe_storage_buffer_write.dstBinding             = 0;
+    perframe_storage_buffer_write.dstArrayElement        = 0;
+    perframe_storage_buffer_write.descriptorType         = RHIDescriptorType::eStorageBufferDynamic;
+    perframe_storage_buffer_write.descriptorCount        = 1;
+    perframe_storage_buffer_write.pBufferInfo            = &perframe_storage_buffer_info;
+
+    RHIWriteDescriptorSet& perdrawcall_storage_buffer_write = descriptor_writes[1];
+    perdrawcall_storage_buffer_write.dstSet                 = (vk::DescriptorSet)*(VulkanDescriptorSet*)descriptor_set;
+    perdrawcall_storage_buffer_write.dstBinding             = 1;
+    perdrawcall_storage_buffer_write.dstArrayElement        = 0;
+    perdrawcall_storage_buffer_write.descriptorType         = RHIDescriptorType::eStorageBufferDynamic;
+    perdrawcall_storage_buffer_write.descriptorCount        = 1;
+    perdrawcall_storage_buffer_write.pBufferInfo            = &perdrawcall_storage_buffer_info;
+
+    RHIWriteDescriptorSet& perdrawcall_vertex_blending_storage_buffer_write = descriptor_writes[1];
+    perdrawcall_vertex_blending_storage_buffer_write.dstSet                 = (vk::DescriptorSet)*(VulkanDescriptorSet*)descriptor_set;
+    perdrawcall_vertex_blending_storage_buffer_write.dstBinding             = 2;
+    perdrawcall_vertex_blending_storage_buffer_write.dstArrayElement        = 0;
+    perdrawcall_vertex_blending_storage_buffer_write.descriptorType         = RHIDescriptorType::eStorageBufferDynamic;
+    perdrawcall_vertex_blending_storage_buffer_write.descriptorCount        = 1;
+    perdrawcall_vertex_blending_storage_buffer_write.pBufferInfo            = &perdrawcall_vertex_blending_storage_buffer_info;
 
     RHI->UpdateDescriptorSets(descriptor_writes, {});
 }

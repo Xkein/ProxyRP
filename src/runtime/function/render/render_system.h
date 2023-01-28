@@ -11,6 +11,7 @@ class SceneRenderer;
 class RenderPipeline;
 class WindowSystem;
 class RenderResourceManager;
+class WindowUI;
 
 struct RenderSystemInitInfo
 {
@@ -27,6 +28,8 @@ public:
     void Clear();
 
     void Tick(float delta_time);
+    
+    void InitializeUIRenderBackend(WindowUI* window_ui);
 
     void                          SwapLogicRenderData();
     RenderSwapContext&            GetSwapContext();

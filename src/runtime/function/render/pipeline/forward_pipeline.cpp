@@ -2,6 +2,7 @@
 #include "function/render/passes/directional_light_pass.h"
 #include "function/render/passes/mesh_pass.h"
 #include "function/render/passes/render_pass_common.h"
+#include "function/render/render_scene.h"
 
 void ForwardPipeline::Initialize(RenderPipelineInitInfo* init_info)
 {
@@ -28,7 +29,10 @@ void ForwardPipeline::Initialize(RenderPipelineInitInfo* init_info)
 void ForwardPipeline::PreparePassData(RenderPipelinePrepareInfo* prepare_info)
 {
     RenderPassPrepareInfo pass_prepare_info;
+    pass_prepare_info.Scene           = prepare_info->Scene;
     pass_prepare_info.ResourceManager = prepare_info->ResourceManager;
+
+    PassCommon->DirectionalLightShadowPerframeStorageBufferObject.LightProjView = prepare_info->Scene->LightProjView;
 
     DirectionalLightPass->PrepareData(&pass_prepare_info);
     MeshPass->PrepareData(&pass_prepare_info);

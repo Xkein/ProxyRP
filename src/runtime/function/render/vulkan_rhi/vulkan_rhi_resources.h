@@ -57,6 +57,8 @@ class VulkanDescriptorPool : public RHIDescriptorPool
 public:
     vk::DescriptorPool Resource;
 
+    VulkanDescriptorPool(vk::DescriptorPool descriptor_pool) : Resource(descriptor_pool) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 

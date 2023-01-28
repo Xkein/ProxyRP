@@ -3,7 +3,8 @@
 #include <vulkan/vulkan.hpp>
 
 #define RHI_SUBPASS_EXTERNAL VK_SUBPASS_EXTERNAL
-#define RHI_NULL_HANDLE VK_NULL_HANDLE
+#define RHI_WHOLE_SIZE (~0ull) 
+#define RHI_NULL_HANDLE nullptr
 #define RHI_TRUE true
 #define RHI_FALSE false
 
@@ -17,6 +18,9 @@ using RHIImageAspectFlags = vk::ImageAspectFlags;
 using RHIImageAspectFlagBits = vk::ImageAspectFlagBits;
 using RHIImageViewType = vk::ImageViewType;
 using RHIImageLayout = vk::ImageLayout;
+
+using RHIBufferUsageFlags = vk::BufferUsageFlags;
+using RHIBufferUsageFlagBits = vk::BufferUsageFlagBits;
 
 using RHIMemoryPropertyFlags = vk::MemoryPropertyFlags;
 using RHIMemoryPropertyFlagBits = vk::MemoryPropertyFlagBits;
@@ -49,3 +53,5 @@ using RHIBlendOp = vk::BlendOp;
 using RHIBlendFactor = vk::BlendFactor;
 using RHILogicOp = vk::LogicOp;
 using RHICompareOp = vk::CompareOp;
+
+using RHIDeviceSize = vk::DeviceSize;

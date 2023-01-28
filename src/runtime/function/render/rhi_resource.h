@@ -56,11 +56,6 @@ class RHISemaphore : RHIResource
 
 class RHIShader : RHIResource
 {};
-class RHITexture : RHIResource
-{};
-class RHIUniformBuffer : RHIResource
-{};
-
 
 typedef std::shared_ptr<RHIBuffer>              RHIBufferRef;
 typedef std::shared_ptr<RHIBufferView>          RHIBufferViewRef;

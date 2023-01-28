@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math_const.h"
 #include "angle.h"
 #include "axis_aligned.h"
 #include "matrix.h"

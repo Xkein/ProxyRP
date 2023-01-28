@@ -1,6 +1,7 @@
 #pragma once
 
 #include "function/render/render_pass.h"
+#include "function/render/render_common.h"
 
 struct DirectionalLightPassInitInfo : public RenderPassInitInfo
 {
@@ -15,7 +16,6 @@ public:
     virtual void PostInitialize() override;
     virtual void SetCommonInfo(RenderPassCommonInfo* common_info) override;
     virtual void PrepareData(RenderPassPrepareInfo* prepare_info) override;
-    virtual void UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info) override;
 
     virtual void Draw() override;
 
@@ -31,4 +31,7 @@ private:
 
     std::vector<Descriptor> DescriptorInfos;
     std::vector<Pipeline>   RenderPipelines;
+
+    MeshDirectionalLightShadowPerframeStorageBufferObject PerframeStorageBufferObject;
+    VisiableNodes*                                        VisiableNodes;
 };

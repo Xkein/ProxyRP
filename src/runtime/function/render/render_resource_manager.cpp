@@ -2,6 +2,7 @@
 #include "core/log/log_system.h"
 #include "resource/asset/asset_manager.h"
 #include "platform/file/file_manager.h"
+#include "function/render/vulkan_rhi/vulkan_rhi.h"
 
 #include <stb_image.h>
 #include <assimp/Importer.hpp>
@@ -27,13 +28,25 @@ void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&  
 void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&   render_entity,
                                                            const RenderMeshData& mesh_data)
 {
-    GetOrCreateRenderMesh(render_entity, mesh_data);
+    auto mesh = GetOrCreateRenderMesh(render_entity, mesh_data);
+    __PersistentResources.push_back(std::reinterpret_pointer_cast<void*>(mesh));
 }
 
 void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&       render_entity,
                                                            const RenderMaterialData& material_data)
 {
-    GetOrCreatePBRMaterial(render_entity, material_data);
+    auto material = GetOrCreatePBRMaterial(render_entity, material_data);
+    __PersistentResources.push_back(std::reinterpret_pointer_cast<void*>(material));
+}
+
+std::shared_ptr<RenderMesh> RenderResourceManager::GetEntityMesh(RenderEntity entity)
+{
+    return std::shared_ptr<RenderMesh>();
+}
+
+std::shared_ptr<PBRMaterial> RenderResourceManager::GetEntityMaterial(RenderEntity entity)
+{
+    return std::shared_ptr<PBRMaterial>();
 }
 
 std::shared_ptr<TextureData> RenderResourceManager::LoadTexture(const String& file_path, bool is_srgb)
@@ -137,18 +150,137 @@ std::shared_ptr<RenderMeshData> RenderResourceManager::LoadMeshData(const MeshRe
     return mesh;
 }
 
+std::shared_ptr<RenderMesh> RenderResourceManager::GetOrCreateRenderMesh(const RenderEntity&   entity,
+                                                                         const RenderMeshData& mesh_data)
+{
+    std::shared_ptr<RenderMesh> cached_asset = Registry->GetAsset<RenderMesh>(entity.MeshAssetId);
+    if (cached_asset)
+    {
+        return cached_asset;
+    }
+
+    std::shared_ptr<RenderMesh> mesh = std::make_shared<RenderMesh>();
+
+    size_t index_buffer_size = mesh_data.MeshData.IndexBuffer->Size;
+    byte*  index_buffer_data = mesh_data.MeshData.IndexBuffer->Data;
+
+    size_t vertex_buffer_size = mesh_data.MeshData.VertexBuffer->Size;
+    MeshVertexDataDefinition* vertex_buffer_data = (MeshVertexDataDefinition*)mesh_data.MeshData.VertexBuffer->Data;
+
+    if (mesh_data.SkeletonBindingBuffer)
+    {
+        size_t joint_binding_buffer_size = mesh_data.MeshData.IndexBuffer->Size;
+        MeshVertexBindingDataDefinition* joint_binding_buffer_data =
+            (MeshVertexBindingDataDefinition*)mesh_data.MeshData.IndexBuffer->Data;
+        UpdateMeshData(false,
+                       index_buffer_size,
+                       index_buffer_data,
+                       vertex_buffer_size,
+                       vertex_buffer_data,
+                       joint_binding_buffer_size,
+                       joint_binding_buffer_data,
+                       *mesh);
+    }
+    else
+    {
+        UpdateMeshData(
+            false, index_buffer_size, index_buffer_data, vertex_buffer_size, vertex_buffer_data, 0, nullptr, *mesh);
+    }
+
+
+    Registry->Register(entity.MeshAssetId, mesh);
+
+    return mesh;
+}
+
+std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const RenderEntity&       entity,
+                                                                           const RenderMaterialData& material_data)
+{
+    return std::shared_ptr<PBRMaterial>();
+}
+
+void RenderResourceManager::UpdateMeshData(bool                                   enable_vertex_blending,
+                                           uint32_t                               index_buffer_size,
+                                           void*                                  index_buffer_data,
+                                           uint32_t                               vertex_buffer_size,
+                                           MeshVertexDataDefinition const*        vertex_buffer_data,
+                                           uint32_t                               joint_binding_buffer_size,
+                                           MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
+                                           RenderMesh&                            mesh)
+{
+    mesh.EnableVertexBlending = enable_vertex_blending;
+
+    ASSERT(0 == (vertex_buffer_size % sizeof(MeshVertexDataDefinition)));
+    mesh.VertexCount = vertex_buffer_size / sizeof(MeshVertexDataDefinition);
+    
+    UpdateVertexBuffer(enable_vertex_blending,
+                       vertex_buffer_size,
+                       vertex_buffer_data,
+                       joint_binding_buffer_size,
+                       joint_binding_buffer_data,
+                       index_buffer_size,
+                       (uint16_t*)index_buffer_data,
+                       mesh);
+
+    ASSERT(0 == (index_buffer_size % sizeof(uint16_t)));
+    mesh.IndexCount = index_buffer_size / sizeof(uint16_t);
+
+    UpdateIndexBuffer(index_buffer_size, index_buffer_data, mesh);
+}
+
+void RenderResourceManager::UpdateVertexBuffer(bool                                   enable_vertex_blending,
+                                               uint32_t                               vertex_buffer_size,
+                                               MeshVertexDataDefinition const*        vertex_buffer_data,
+                                               uint32_t                               joint_binding_buffer_size,
+                                               MeshVertexBindingDataDefinition const* joint_binding_buffer_data,
+                                               uint32_t                               index_buffer_size,
+                                               uint16_t*                              index_buffer_data,
+                                               RenderMesh&                            mesh)
+{}
+
+void RenderResourceManager::UpdateIndexBuffer(uint32_t index_buffer_size, void* index_buffer_data, RenderMesh& mesh)
+{
+    RHIDeviceSize buffer_size = index_buffer_size;
+
+    RHIBufferRef       inefficient_staging_buffer;
+    RHIDeviceMemoryRef inefficient_staging_buffer_memory;
+    RHI->CreateBuffer(buffer_size,
+                      RHIBufferUsageFlagBits::eTransferSrc,
+                      RHIMemoryPropertyFlagBits::eHostVisible | RHIMemoryPropertyFlagBits::eHostCoherent,
+                      inefficient_staging_buffer,
+                      inefficient_staging_buffer_memory);
+
+    void* staging_buffer_data = RHI->MapMemory(inefficient_staging_buffer_memory.get(), 0, buffer_size, {});
+    memcpy(staging_buffer_data, index_buffer_data, buffer_size);
+    RHI->UnmapMemory(inefficient_staging_buffer_memory.get());
+
+    // TODO: use vma?
+
+    RHI->CreateBuffer(buffer_size,
+                      RHIBufferUsageFlagBits::eIndexBuffer | RHIBufferUsageFlagBits::eTransferDst,
+                      RHIMemoryPropertyFlagBits::eDeviceLocal,
+                      mesh.IndexBuffer.IndexBufferRHI,
+                      mesh.IndexBuffer.DeviceMemoryRHI);
+
+    RHI->CopyBuffer(inefficient_staging_buffer.get(), mesh.IndexBuffer.IndexBufferRHI.get(), 0, 0, buffer_size);
+
+    RHI->DestroyBuffer(inefficient_staging_buffer.get());
+    RHI->FreeMemory(inefficient_staging_buffer_memory.get());
+}
+
 struct Model
 {
     struct SubMesh
     {
         std::vector<MeshVertexDataDefinition> Vertices;
-        std::vector<uint32_t>       Indices;
-        std::vector<String>         Textures;
+        std::vector<uint32_t>                 Indices;
+        std::vector<String>                   Textures;
     };
 
     std::vector<SubMesh> Meshes;
 
-    SubMesh MergeSubMesh() {
+    SubMesh MergeSubMesh()
+    {
         SubMesh merged_mesh;
 
         uint32_t index_offset = 0;
@@ -201,20 +333,6 @@ StaticMeshData RenderResourceManager::LoadStaticMesh(const String& mesh_file, co
 
     return mesh_data;
 }
-
-std::shared_ptr<RenderMesh> RenderResourceManager::GetOrCreateRenderMesh(const RenderEntity&   entity,
-                                                                         const RenderMeshData& material_data)
-{
-    return std::shared_ptr<RenderMesh>();
-}
-
-std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const RenderEntity&       entity,
-                                                                           const RenderMaterialData& material_data)
-{
-    return std::shared_ptr<PBRMaterial>();
-}
-
-void RenderResourceManager::CreateAndMapStorageBuffer() {}
 
 void ProcessModel(const aiScene* scene, const aiNode* node, Model* model)
 {
