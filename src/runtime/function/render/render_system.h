@@ -4,7 +4,7 @@
 
 #include <memory>
 
-class VulkanRHI;
+class RHI;
 class RenderScene;
 class RenderCamera;
 class SceneRenderer;
@@ -33,7 +33,7 @@ public:
 
     void                          SwapLogicRenderData();
     RenderSwapContext&            GetSwapContext();
-    std::shared_ptr<VulkanRHI>    GetRHI() const;
+    std::shared_ptr<RHI>          GetRHI() const;
     std::shared_ptr<RenderCamera> GetRenderCamera() const;
 
 private:
@@ -41,7 +41,7 @@ private:
 
     RenderSwapContext SwapContext;
 
-    std::shared_ptr<VulkanRHI>      RHI;
+    std::shared_ptr<RHI>      RHI;
     std::shared_ptr<RenderScene>    Scene;
     std::shared_ptr<RenderCamera>   Camera;
     std::shared_ptr<SceneRenderer>  Renderer;

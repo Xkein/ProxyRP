@@ -2,7 +2,7 @@
 set(TARGET_NAME ProxyRP)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options("/MP" "/bigobj")
+    add_compile_options("/MP" "/bigobj" "/wd4819")
     set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ProxyRP)
 endif()
 

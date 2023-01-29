@@ -20,7 +20,7 @@ public:
     {}
 
     Matrix4x4 GetMatrix() const {
-        Eigen::Transform<float, 3, Eigen::Affine> transform =
+        Eigen::Affine3f transform =
             Eigen::Translation3f(Position) * Eigen::AngleAxisf(Rotation) * Eigen::Scaling(Scale);
         return transform.matrix();
     }

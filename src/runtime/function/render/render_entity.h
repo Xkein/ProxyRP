@@ -19,4 +19,5 @@ public:
     AxisAlignedBox         BoundingBox;
 
     // material
+    uint32_t               MaterialAssetId {0};
 };

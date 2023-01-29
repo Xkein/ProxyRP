@@ -3,6 +3,7 @@
 #include "rhi_definition.h"
 #include "render_resource.h"
 #include "core/math/vector.h"
+#include "core/math/matrix.h"
 #include "platform/platform.h"
 
 #include <memory>
@@ -63,7 +64,7 @@ struct MeshVertexDataDefinition
 {
     Vector3f Position;
     Vector3f Normal;
-    Vector2f TexCoords;
+    Vector2f TexCoord;
 };
 
 struct MeshVertexBindingDataDefinition
@@ -107,13 +108,13 @@ struct RenderMesh
 
     uint32_t VertexCount;
 
-    VertexBuffer PositionBuffer;
-    VertexBuffer VaryingEnableBlendingBuffer;
-    VertexBuffer JointBindingBuffer;
+    VertexBuffer VertexPositionBuffer;
+    VertexBuffer VertexVaryingEnableBlendingBuffer;
+    VertexBuffer VertexJointBindingBuffer;
 
-    RHIDescriptorSetRef BlendingDescriptorSet;
+    RHIDescriptorSetRef VertexBlendingDescriptorSet;
 
-    VertexBuffer VaryingBuffer;
+    VertexBuffer VertexVaryingBuffer;
 
     uint32_t IndexCount;
 
@@ -127,6 +128,8 @@ struct PBRMaterial
     TextureRef Normal;
     TextureRef Occlusion;
     TextureRef Emissive;
+
+    UniformBuffer UniformBuffer;
 
     RHIDescriptorSetRef DescriptorSet;
 };
@@ -149,3 +152,12 @@ struct VisiableNodes
     std::vector<RenderMeshNode>* MainCameraVisibleMeshNodes {nullptr};
 };
 
+struct TextureDataToUpdate
+{
+    TextureData* BaseColorTexture;
+    TextureData* NormalTexture;
+    TextureData* MetallicRoughnessTexture;
+    TextureData* OcclusionTexture;
+    TextureData* EmissiveTexture;
+    PBRMaterial* Material;
+};

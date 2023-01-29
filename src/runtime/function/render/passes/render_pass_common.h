@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/math/math.h"
+#include "core/macro.h"
 #include "function/render/render_pass.h"
 
 class RenderPassCommon
@@ -21,6 +23,8 @@ public:
         std::vector<uint32_t> GlobalUploadRingBuffersBegin;
         std::vector<uint32_t> GlobalUploadRingBuffersEnd;
         std::vector<uint32_t> GlobalUploadRingBuffersSize;
+
+        StorageBuffer NullStorageBuffer;
 
         template<typename T>
         T* AllocateFromRingbuffer(uint8_t current_frame_index)
@@ -44,8 +48,9 @@ public:
     void CreateAndMapStorageBuffer();
     void ResetRingBuffer(uint8_t current_frame_index);
 
-    std::shared_ptr<VulkanRHI> RHI;
+    std::shared_ptr<RHI> RHI;
 
     RHIDescriptorSetLayoutRef PerMeshLayout;
+    RHIDescriptorSetLayoutRef MaterialLayout;
 
 };

@@ -2,11 +2,9 @@
 
 #include "rhi.h"
 #include "function/render/render_resource.h"
-#include "vulkan/vulkan.hpp"
 
 #include <vector>
 
-class VulkanRHI;
 class WindowUI;
 class RenderResourceManager;
 class RenderPassCommon;
@@ -17,7 +15,7 @@ struct RenderPassInitInfo
 
 struct RenderPassCommonInfo
 {
-    std::shared_ptr<VulkanRHI>        RHI;
+    std::shared_ptr<RHI>              RHI;
     std::shared_ptr<RenderPassCommon> PassCommon;
 };
 
@@ -59,7 +57,7 @@ public:
     };
 
 protected:
-    std::shared_ptr<VulkanRHI> RHI;
+    std::shared_ptr<RHI> RHI;
 
     Framebuffer Framebuffer;
 };

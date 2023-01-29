@@ -1,16 +1,13 @@
 #pragma once
 
 #include "function/render/rhi.h"
-#include "function/render/rhi_struct.h"
 #include "function/render/vulkan_rhi/vulkan_rhi_resources.h"
-#include "platform/platform.h"
 
 #include <vulkan/vulkan.hpp>
 #include <vma/vk_mem_alloc.h>
 #include <map>
 
 class GLFWwindow;
-class TextureData;
 
 class VulkanRHI final : public RHI
 {
@@ -21,132 +18,98 @@ public:
     virtual void PrepareContext() override;
 
     // allocate and create
-    virtual RHIDescriptorSet* AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info);
+    virtual RHIDescriptorSet* AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info) override;
 
     virtual void CreateSwapChain() override;
     virtual void RecreateSwapChain() override;
     virtual void CreateSwapChainImageViews() override;
-    virtual RHIFramebuffer* CreateFramebuffer(const RHIFramebufferCreateInfo* pCreateInfo);
-    virtual RHIRenderPass* CreateRenderPass(const RHIRenderPassCreateInfo* create_info);
-    virtual RHIDescriptorSetLayout* CreateDescriptorSetLayout(const RHIDescriptorSetLayoutCreateInfo* create_info);
-    virtual RHIPipelineLayout*      CreatePipelineLayout(const RHIPipelineLayoutCreateInfo* create_info);
+    virtual RHIFramebuffer* CreateFramebuffer(const RHIFramebufferCreateInfo* pCreateInfo) override;
+    virtual RHIRenderPass* CreateRenderPass(const RHIRenderPassCreateInfo* create_info) override;
+    virtual RHIDescriptorSetLayout* CreateDescriptorSetLayout(const RHIDescriptorSetLayoutCreateInfo* create_info) override;
+    virtual RHIPipelineLayout*      CreatePipelineLayout(const RHIPipelineLayoutCreateInfo* create_info) override;
     virtual RHIPipeline*            CreateGraphicsPipeline(RHIPipelineCache*                    pipeline_cache,
-                                                           const RHIGraphicsPipelineCreateInfo* create_info);
-    virtual RHIDescriptorPool*      CreateDescriptorPool(const RHIDescriptorPoolCreateInfo* create_info);
+                                                           const RHIGraphicsPipelineCreateInfo* create_info) override;
+    virtual RHIDescriptorPool*      CreateDescriptorPool(const RHIDescriptorPoolCreateInfo* create_info) override;
 
-    virtual RHIShader* CreateShaderModule(const std::vector<byte>& shader_code);
+    virtual RHISampler* GetOrCreateDefaultSampler(RHIDefaultSamplerType type) override;
+    virtual RHISampler* GetOrCreateMipmapSampler(uint32_t width, uint32_t height) override;
+    virtual RHIShader* CreateShaderModule(const std::vector<byte>& shader_code) override;
 
-    virtual void CreateBuffer(vk::DeviceSize          size,
-                              vk::BufferUsageFlags    usage,
-                              vk::MemoryPropertyFlags properties,
+    virtual void CreateBuffer(RHIDeviceSize          size,
+                              RHIBufferUsageFlags    usage,
+                              RHIMemoryPropertyFlags properties,
                               RHIBuffer*&             buffer,
-                              RHIDeviceMemory*&       buffer_memory);
-    virtual void CreateBuffer(vk::DeviceSize          size,
-                              vk::BufferUsageFlags    usage,
-                              vk::MemoryPropertyFlags properties,
-                              RHIBufferRef&           buffer,
-                              RHIDeviceMemoryRef&     buffer_memory);
-    virtual void CreateBufferAndInitialize(vk::DeviceSize          size,
-                                           vk::BufferUsageFlags    usage,
-                                           vk::MemoryPropertyFlags properties,
+                              RHIDeviceMemory*&       buffer_memory) override;
+    virtual void CreateBufferAndInitialize(RHIDeviceSize          size,
+                                           RHIBufferUsageFlags    usage,
+                                           RHIMemoryPropertyFlags properties,
                                            RHIBuffer*&             buffer,
                                            RHIDeviceMemory*&       buffer_memory,
                                            void*                   data      = nullptr,
-                                           int                     data_size = 0);
-    virtual void CreateBufferAndInitialize(vk::DeviceSize          size,
-                                           vk::BufferUsageFlags    usage,
-                                           vk::MemoryPropertyFlags properties,
-                                           RHIBufferRef&           buffer,
-                                           RHIDeviceMemoryRef&     buffer_memory,
-                                           void*                   data      = nullptr,
-                                           int                     data_size = 0);
-
+                                           int                     data_size = 0) override;
     virtual void CreateImage(uint32_t                width,
                              uint32_t                height,
-                             vk::Format              format,
-                             vk::ImageTiling         tiling,
-                             vk::ImageUsageFlags     usage,
-                             vk::MemoryPropertyFlags properties,
+                             RHIFormat              format,
+                             RHIImageTiling         tiling,
+                             RHIImageUsageFlags     usage,
+                             RHIMemoryPropertyFlags properties,
                              RHIImage*&              image,
                              RHIDeviceMemory*&       image_memory,
-                             vk::ImageCreateFlags    create_flags = {},
+                             RHIImageCreateFlags    create_flags = {},
                              uint32_t                array_layers = 1,
                              uint32_t                mip_levels   = 1,
-                             vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
-    virtual void CreateImage(uint32_t                width,
-                             uint32_t                height,
-                             vk::Format              format,
-                             vk::ImageTiling         tiling,
-                             vk::ImageUsageFlags     usage,
-                             vk::MemoryPropertyFlags properties,
-                             RHIImageRef&            image,
-                             RHIDeviceMemoryRef&     image_memory,
-                             vk::ImageCreateFlags    create_flags = {},
-                             uint32_t                array_layers = 1,
-                             uint32_t                mip_levels   = 1,
-                             vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
+                             RHISampleCountFlagBits sample_count = RHISampleCountFlagBits::e1) override;
 
     virtual void CreateImageView(const RHIImage*      image,
-                                 vk::Format           format,
-                                 vk::ImageAspectFlags image_aspect_flags,
-                                 vk::ImageViewType    view_type,
+                                 RHIFormat           format,
+                                 RHIImageAspectFlags image_aspect_flags,
+                                 RHIImageViewType    view_type,
                                  uint32_t             layout_count,
                                  uint32_t             miplevels,
-                                 RHIImageView*&       image_view);
-    virtual void CreateImageView(const RHIImage*      image,
-                                 vk::Format           format,
-                                 vk::ImageAspectFlags image_aspect_flags,
-                                 vk::ImageViewType    view_type,
-                                 uint32_t             layout_count,
-                                 uint32_t             miplevels,
-                                 RHIImageViewRef&     image_view);
+                                 RHIImageView*&       image_view) override;
 
     virtual void CreateTextureImage(RHIImage*&         image,
                                     RHIImageView*&     image_view,
                                     RHIDeviceMemory*&  image_memory,
-                                    const TextureData* texure_data);
-    virtual void CreateTextureImage(RHIImageRef&        image,
-                                    RHIImageViewRef&    image_view,
-                                    RHIDeviceMemoryRef& image_memory,
-                                    const TextureData*  texure_data);
+                                    const TextureData* texure_data) override;
 
     virtual void CopyBuffer(RHIBuffer*     src_buffer,
                             RHIBuffer*     dst_buffer,
-                            vk::DeviceSize src_offset,
-                            vk::DeviceSize dst_offset,
-                            vk::DeviceSize size);
+                            RHIDeviceSize src_offset,
+                            RHIDeviceSize dst_offset,
+                            RHIDeviceSize size) override;
 
     // command
-    virtual vk::CommandBuffer BeginSingleTimeCommands();
-    virtual void              EndSingleTimeCommands(vk::CommandBuffer command_buffer);
+    virtual RHICommandBuffer* BeginSingleTimeCommands() override;
+    virtual void              EndSingleTimeCommands(RHICommandBuffer* command_buffer) override;
 
     virtual void UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
-                                      const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies);
+                                      const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies) override;
 
-    virtual void PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color);
-    virtual void PopEvent(RHICommandBuffer* commond_buffer);
+    virtual void PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color) override;
+    virtual void PopEvent(RHICommandBuffer* commond_buffer) override;
 
     // query
-    virtual RHIPhysicalDeviceProperties GetPhysicalDeviceProperties();
-    virtual RHICommandBuffer*  GetCommandBuffer() const;
-    virtual RHIDescriptorPool* GetDescriptorPool() const;
-    virtual RHISwapchainDesc   GetSwapchainInfo();
-    virtual RHIDepthImageDesc  GetDepthImageInfo() const;
-    virtual uint8_t            GetMaxFramesInFlight() const;
-    virtual uint8_t            GetCurrentFrameIndex() const;
+    virtual RHIPhysicalDeviceProperties GetPhysicalDeviceProperties() override;
+    virtual RHICommandBuffer*  GetCommandBuffer() const override;
+    virtual RHIDescriptorPool* GetDescriptorPool() const override;
+    virtual RHISwapchainDesc   GetSwapchainInfo() override;
+    virtual RHIDepthImageDesc  GetDepthImageInfo() const override;
+    virtual uint8_t            GetMaxFramesInFlight() const override;
+    virtual uint8_t            GetCurrentFrameIndex() const override;
     
     // destroy
     virtual void Clear() override;
     virtual void ClearSwapChain() override;
-    virtual void DestroyBuffer(RHIBuffer* buffer);
-    virtual void DestroyImage(RHIImage* image);
-    virtual void DestroyImageView(RHIImageView* image_view);
-    virtual void DestroyShaderModule(RHIShader* shader);
+    virtual void DestroyBuffer(RHIBuffer* buffer) override;
+    virtual void DestroyImage(RHIImage* image) override;
+    virtual void DestroyImageView(RHIImageView* image_view) override;
+    virtual void DestroyShaderModule(RHIShader* shader) override;
 
     // memory
-    virtual void FreeMemory(RHIDeviceMemory* memory);
-    virtual void* MapMemory(RHIDeviceMemory* memory, vk::DeviceSize offset, vk::DeviceSize size, vk::MemoryMapFlags flags);
-    virtual void UnmapMemory(RHIDeviceMemory* memory);
+    virtual void FreeMemory(RHIDeviceMemory* memory) override;
+    virtual void* MapMemory(RHIDeviceMemory* memory, vk::DeviceSize offset, vk::DeviceSize size, vk::MemoryMapFlags flags) override;
+    virtual void UnmapMemory(RHIDeviceMemory* memory) override;
 
 public:
     GLFWwindow* Window {nullptr};
@@ -185,12 +148,12 @@ public:
     RHIImageView*      DepthImageView;
     RHIDeviceMemory*   DepthImageMemory;
 
-    VulkanDescriptorPool DescriptorPool;
+    VulkanDescriptorPool* DescriptorPool;
 
     VulkanCommandPool              CommandPool;
-    std::vector<vk::CommandBuffer> CommandBuffers;
+    std::vector<RHICommandBufferRef> CommandBuffers;
 
-    VulkanCommandBuffer            CurrentCommandBuffer;
+    VulkanCommandBuffer*            CurrentCommandBuffer;
 
     std::vector<vk::Semaphore> ImageAvailableSemaphores;
     std::vector<vk::Semaphore> RenderFinishedSemaphores;
@@ -201,9 +164,9 @@ public:
 
     QueueFamilyIndices QueueIndices;
 
-    VulkanSampler                     LinearSampler;
-    VulkanSampler                     NearestSampler;
-    std::map<uint32_t, VulkanSampler> MipmapSamplerMap;
+    VulkanSampler*                     LinearSampler;
+    VulkanSampler*                     NearestSampler;
+    std::map<uint32_t, RHISampler*>    MipmapSamplerMap;
 
     vk::SampleCountFlagBits MsaaSamples {vk::SampleCountFlagBits::e1};
 

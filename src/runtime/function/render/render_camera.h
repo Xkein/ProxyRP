@@ -1,8 +1,6 @@
 #pragma once
 
-#include "core/math/vector.h"
-#include "core/math/matrix.h"
-#include "core/math/quaternion.h"
+#include "core/math/math.h"
 
 #include <mutex>
 
@@ -31,6 +29,10 @@ public:
         Aspect = aspect;
 
         FovY = RadiansToDegrees(atan(tan(DegreesToRadians(FovX * 0.5f)) / aspect) * 2.f);
+    }
+    void SetFovX(float fovx)
+    {
+        FovX = fovx;
     }
 
     Matrix4x4 GetViewMatrix() const;

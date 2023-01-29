@@ -66,7 +66,7 @@ Matrix4x4 RenderCamera::GetViewMatrix() const
 
 Matrix4x4 RenderCamera::GetPerspectiveMatrix() const
 {
-    Matrix4x4 fix_mat(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    Matrix4x4 fix_mat {{1, 0, 0, 0}, {0, -1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
     Matrix4x4 proj_mat = fix_mat * Perspective(DegreesToRadians(FovY), Aspect, ZNear, ZFar);
     return proj_mat;
 }

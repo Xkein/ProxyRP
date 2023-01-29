@@ -41,6 +41,8 @@ class VulkanCommandBuffer : public RHICommandBuffer
 public:
     vk::CommandBuffer Resource;
 
+    VulkanCommandBuffer(vk::CommandBuffer command_buffer) : Resource(command_buffer) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 
@@ -212,6 +214,8 @@ class VulkanSampler : public RHISampler
 {
 public:
     vk::Sampler Resource;
+
+    VulkanSampler(vk::Sampler sampler) : Resource(sampler) {}
 
     __VULKAN_RHI_MAKE_OPERATOR();
 };

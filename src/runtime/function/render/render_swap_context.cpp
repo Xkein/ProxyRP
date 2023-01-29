@@ -12,6 +12,26 @@ RenderSwapData& RenderSwapContext::GetRenderSwapData()
     return SwapData[RenderSwapDataIndex];
 }
 
+void RenderSwapContext::ResetLevelRsourceSwapData()
+{
+    SwapData[RenderSwapDataIndex].LevelResource.reset();
+}
+
+void RenderSwapContext::ResetGameObjectResourceSwapData()
+{
+    SwapData[RenderSwapDataIndex].GameObjectResource.reset();
+}
+
+void RenderSwapContext::ResetGameObjectToDelete()
+{
+    SwapData[RenderSwapDataIndex].GameObjectToDelete.reset();
+}
+
+void RenderSwapContext::ResetCameraSwapData()
+{
+    SwapData[RenderSwapDataIndex].CameraSwapData.reset();
+}
+
 void RenderSwapContext::SwapLogicRenderData()
 {
     if (!IsReadyToSwap())
@@ -30,10 +50,10 @@ bool RenderSwapContext::IsReadyToSwap() const
 
 void RenderSwapContext::Swap()
 {
-    SwapData[RenderSwapDataIndex].LevelResource.reset();
-    SwapData[RenderSwapDataIndex].GameObjectResource.reset();
-    SwapData[RenderSwapDataIndex].GameObjectToDelete.reset();
-    SwapData[RenderSwapDataIndex].CameraSwapData.reset();
+    ResetLevelRsourceSwapData();
+    ResetGameObjectResourceSwapData();
+    ResetGameObjectToDelete();
+    ResetCameraSwapData();
 
     std::swap(LogicSwapDataIndex, RenderSwapDataIndex);
 }

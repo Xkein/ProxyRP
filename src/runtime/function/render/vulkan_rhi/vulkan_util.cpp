@@ -357,7 +357,7 @@ void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
         throw std::runtime_error("texture image format does not support linear blitting!");
     }
 
-    vk::CommandBuffer command_buffer = rhi->BeginSingleTimeCommands();
+    RHICommandBuffer* command_buffer = rhi->BeginSingleTimeCommands();
 
     vk::ImageSubresourceRange sub_resource_range {
         .aspectMask     = vk::ImageAspectFlagBits::eColor,
@@ -383,7 +383,7 @@ void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
         barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
         barrier.dstAccessMask                 = vk::AccessFlagBits::eTransferRead;
 
-        command_buffer.pipelineBarrier(
+        (*(VulkanCommandBuffer*)command_buffer)->pipelineBarrier(
             vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, {barrier});
 
         vk::ImageBlit blit;
@@ -401,7 +401,7 @@ void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
         blit.dstSubresource.baseArrayLayer = 0;
         blit.dstSubresource.layerCount     = 1;
 
-        command_buffer.blitImage(image,
+        (*(VulkanCommandBuffer*)command_buffer)->blitImage(image,
                                  vk::ImageLayout::eTransferSrcOptimal,
                                  image,
                                  vk::ImageLayout::eTransferDstOptimal,
@@ -413,7 +413,7 @@ void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
         barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
         barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
-        command_buffer.pipelineBarrier(
+        (*(VulkanCommandBuffer*)command_buffer)->pipelineBarrier(
             vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, {barrier});
 
         mip_width  = std::max(mip_width / 2, 1);
@@ -426,7 +426,7 @@ void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
     barrier.srcAccessMask                 = vk::AccessFlagBits::eTransferWrite;
     barrier.dstAccessMask                 = vk::AccessFlagBits::eShaderRead;
 
-    command_buffer.pipelineBarrier(
+    (*(VulkanCommandBuffer*)command_buffer)->pipelineBarrier(
         vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, {barrier});
 
     rhi->EndSingleTimeCommands(command_buffer);
@@ -441,7 +441,7 @@ void VulkanUtil::TransitionImageLayout(VulkanRHI*           rhi,
                                        uint32_t             layer_count,
                                        uint32_t             mip_levels)
 {
-    vk::CommandBuffer command_buffer = rhi->BeginSingleTimeCommands();
+    RHICommandBuffer* command_buffer = rhi->BeginSingleTimeCommands();
 
     vk::ImageSubresourceRange sub_resource_range {
         .aspectMask     = aspect_mask_bits,
@@ -495,7 +495,7 @@ void VulkanUtil::TransitionImageLayout(VulkanRHI*           rhi,
         return;
     }
 
-    command_buffer.pipelineBarrier(source_stage, destination_stage, {}, {}, {}, {barrier});
+    (*(VulkanCommandBuffer*)command_buffer)->pipelineBarrier(source_stage, destination_stage, {}, {}, {}, {barrier});
 
     rhi->EndSingleTimeCommands(command_buffer);
 }
@@ -507,7 +507,7 @@ void VulkanUtil::CopyBuffer(VulkanRHI*     rhi,
                             vk::DeviceSize dstOffset,
                             vk::DeviceSize size)
 {
-    vk::CommandBuffer command_buffer = rhi->BeginSingleTimeCommands();
+    RHICommandBuffer* command_buffer = rhi->BeginSingleTimeCommands();
 
     vk::BufferCopy copy_region {
         .srcOffset = srcOffset,
@@ -515,7 +515,7 @@ void VulkanUtil::CopyBuffer(VulkanRHI*     rhi,
         .size      = size,
     };
 
-    command_buffer.copyBuffer(srcBuffer, dstBuffer, {copy_region});
+    (*(VulkanCommandBuffer*)command_buffer)->copyBuffer(srcBuffer, dstBuffer, {copy_region});
 
     rhi->EndSingleTimeCommands(command_buffer);
 }
@@ -527,7 +527,7 @@ void VulkanUtil::CopyBufferToImage(VulkanRHI* rhi,
                                    uint32_t   height,
                                    uint32_t   layer_count)
 {
-    vk::CommandBuffer command_buffer = rhi->BeginSingleTimeCommands();
+    RHICommandBuffer* command_buffer = rhi->BeginSingleTimeCommands();
 
     vk::ImageSubresourceLayers image_subresource {
         .aspectMask     = vk::ImageAspectFlagBits::eColor,
@@ -545,7 +545,7 @@ void VulkanUtil::CopyBufferToImage(VulkanRHI* rhi,
         .imageExtent       = {width, height, 1},
     };
 
-    command_buffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, {region});
+    (*(VulkanCommandBuffer*)command_buffer)->copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, {region});
 
     rhi->EndSingleTimeCommands(command_buffer);
 }

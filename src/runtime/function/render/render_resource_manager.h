@@ -9,7 +9,7 @@
 class AssetRegistry;
 struct MaterialResource;
 struct MeshResource;
-class VulkanRHI;
+class RHI;
 
 class RenderResourceManager final
 {
@@ -26,8 +26,8 @@ public:
     void UploadGameObjectRenderResource(const RenderEntity& render_entity, const RenderMeshData& mesh_data);
     void UploadGameObjectRenderResource(const RenderEntity& render_entity, const RenderMaterialData& material_data);
 
-    std::shared_ptr<RenderMesh> GetEntityMesh(RenderEntity entity);
-    std::shared_ptr<PBRMaterial> GetEntityMaterial(RenderEntity entity);
+    std::shared_ptr<RenderMesh> GetEntityMesh(const RenderEntity& entity);
+    std::shared_ptr<PBRMaterial> GetEntityMaterial(const RenderEntity& entity);
 
     std::shared_ptr<TextureData>        LoadTexture(const String& file_path, bool is_srgb = false);
     std::shared_ptr<TextureData>        LoadTextureHDR(const String& file_path, int desired_channels = 4);
@@ -58,8 +58,12 @@ private:
                             RenderMesh&                                   mesh);
     void UpdateIndexBuffer(uint32_t index_buffer_size, void* index_buffer_data, RenderMesh& mesh);
 
-    std::shared_ptr<VulkanRHI>     RHI;
+    void UpdateTextureImageData(const TextureDataToUpdate& texture_data);
+
+    std::shared_ptr<RHI>     RHI;
     std::shared_ptr<AssetRegistry> Registry;
 
     std::vector<std::shared_ptr<void*>> __PersistentResources;
+
+    std::shared_ptr<class RenderPassCommon>   PassCommon;
 };

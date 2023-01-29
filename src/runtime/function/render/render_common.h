@@ -59,3 +59,16 @@ struct MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject
     Matrix4x4 JointMatrices[GMeshVertexBlendingMaxJointCount * GMeshPerDrawcallMaxInstanceCount];
 };
 
+struct MeshPerMaterialUniformBufferObject
+{
+    Vector4f baseColorFactor {0.0f, 0.0f, 0.0f, 0.0f};
+
+    float metallicFactor    = 0.0f;
+    float roughnessFactor   = 0.0f;
+    float normalScale       = 0.0f;
+    float occlusionStrength = 0.0f;
+
+    Vector3f emissiveFactor  = {0.0f, 0.0f, 0.0f};
+    uint32_t is_blend        = 0;
+    uint32_t is_double_sided = 0;
+};

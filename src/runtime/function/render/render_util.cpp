@@ -28,9 +28,9 @@ ClusterFrustum CreateClusterFrustumFromMatrix(Matrix4x4 mat,
 
     // [vec.xyz 1][mat.col0] / [vec.xyz 1][mat.col3] > x_right
     // [vec.xyz 1][mat.col0 - mat.col3*x_right] > 0
-    f.PlaneRight = Vector4f(mat_column[0]) - (Vector4f(mat_column[3]) * x_right);
+    f.PlaneRight = Vector4f(mat_column.row(0)) - (Vector4f(mat_column.row(3)) * x_right);
     // normalize
-    f.PlaneRight *= (1.0 / Vector3f(f.PlaneRight).norm());
+    f.PlaneRight *= (1.0 / Vector3f(f.PlaneRight.head<3>()).norm());
 
     // for example, we try to calculate the "plane_left" of the tile frustum
     // note that we use the row vector to be consistent with the DirectXMath
@@ -52,31 +52,31 @@ ClusterFrustum CreateClusterFrustumFromMatrix(Matrix4x4 mat,
     // exactly [mat.col0 - mat.col3*x_left] and we need to normalize the normal[A
     // B C] of the plane let [A B C D] = [mat.col3*x_left - mat.col0] [A B C D] /=
     // length([A B C].xyz)
-    f.PlaneLeft = (Vector4f(mat_column[3]) * x_left) - Vector4f(mat_column[0]);
+    f.PlaneLeft = (Vector4f(mat_column.row(3)) * x_left) - Vector4f(mat_column.row(0));
     // normalize
-    f.PlaneLeft *= (1.0 / Vector3f(f.PlaneLeft).norm());
+    f.PlaneLeft *= (1.0 / Vector3f(f.PlaneLeft.head<3>()).norm());
 
     // [vec.xyz 1][mat.col1] / [vec.xyz 1][mat.col3] < y_top
     // [vec.xyz 1][mat.col3*y_top - mat.col1] > 0
-    f.PlaneTop = (Vector4f(mat_column[3]) * y_top) - Vector4f(mat_column[1]);
+    f.PlaneTop = (Vector4f(mat_column.row(3)) * y_top) - Vector4f(mat_column.row(1));
     // normalize
-    f.PlaneTop *= (1.0 / Vector3f(f.PlaneTop).norm());
+    f.PlaneTop *= (1.0 / Vector3f(f.PlaneTop.head<3>()).norm());
 
     // [vec.xyz 1][mat.col1] / [vec.xyz 1][mat.col3] > y_bottom
     // [vec.xyz 1][mat.col1 - mat.col3*y_bottom] > 0
-    f.PlaneBottom = Vector4f(mat_column[1]) - (Vector4f(mat_column[3]) * y_bottom);
+    f.PlaneBottom = Vector4f(mat_column.row(1)) - (Vector4f(mat_column.row(3)) * y_bottom);
     // normalize
-    f.PlaneBottom *= (1.0 / Vector3f(f.PlaneBottom).norm());
+    f.PlaneBottom *= (1.0 / Vector3f(f.PlaneBottom.head<3>()).norm());
 
     // [vec.xyz 1][mat.col2] / [vec.xyz 1][mat.col3] < z_near
     // [vec.xyz 1][mat.col3*z_near - mat.col2] > 0
-    f.PlaneNear = (Vector4f(mat_column[3]) * z_near) - Vector4f(mat_column[2]);
-    f.PlaneNear *= (1.0 / Vector3f(f.PlaneNear).norm());
+    f.PlaneNear = (Vector4f(mat_column.row(3)) * z_near) - Vector4f(mat_column.row(2));
+    f.PlaneNear *= (1.0 / Vector3f(f.PlaneNear.head<3>()).norm());
 
     // [vec.xyz 1][mat.col2] / [vec.xyz 1][mat.col3] > z_far
     // [vec.xyz 1][mat.col2 - mat.col3*z_far] > 0
-    f.PlaneFar = Vector4f(mat_column[2]) - (Vector4f(mat_column[3]) * z_far);
-    f.PlaneFar *= (1.0 / Vector3f(f.PlaneFar).norm());
+    f.PlaneFar = Vector4f(mat_column.row(2)) - (Vector4f(mat_column.row(3)) * z_far);
+    f.PlaneFar *= (1.0 / Vector3f(f.PlaneFar.head<3>()).norm());
 
     return f;
 }
@@ -86,7 +86,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // we follow the "DirectX::BoundingFrustum::Intersects"
 
     // Center of the box.
-    Vector4f box_center(b.center(), 1.0);
+    Vector4f box_center(b.center().homogeneous());
 
     // Distance from the center to each side.
     // half extent //more exactly
@@ -95,7 +95,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // plane_right
     {
         float signed_distance_from_plane_right = f.PlaneRight.dot(box_center);
-        float radius_project_plane_right       = Vector3f(f.PlaneRight).cwiseAbs().dot(box_extents);
+        float radius_project_plane_right       = Vector3f(f.PlaneRight.head<3>()).cwiseAbs().dot(box_extents);
 
         bool intersecting_or_inside_right = signed_distance_from_plane_right < radius_project_plane_right;
         if (!intersecting_or_inside_right)
@@ -107,7 +107,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // plane_left
     {
         float signed_distance_from_plane_left = f.PlaneLeft.dot(box_center);
-        float radius_project_plane_left       = Vector3f(f.PlaneLeft).cwiseAbs().dot(box_extents);
+        float radius_project_plane_left       = Vector3f(f.PlaneLeft.head<3>()).cwiseAbs().dot(box_extents);
 
         bool intersecting_or_inside_left = signed_distance_from_plane_left < radius_project_plane_left;
         if (!intersecting_or_inside_left)
@@ -119,7 +119,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // plane_top
     {
         float signed_distance_from_plane_top = f.PlaneTop.dot(box_center);
-        float radius_project_plane_top       = Vector3f(f.PlaneTop).cwiseAbs().dot(box_extents);
+        float radius_project_plane_top       = Vector3f(f.PlaneTop.head<3>()).cwiseAbs().dot(box_extents);
 
         bool intersecting_or_inside_top = signed_distance_from_plane_top < radius_project_plane_top;
         if (!intersecting_or_inside_top)
@@ -131,7 +131,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // plane_bottom
     {
         float signed_distance_from_plane_bottom = f.PlaneBottom.dot(box_center);
-        float radius_project_plane_bottom       = Vector3f(f.PlaneBottom).cwiseAbs()
+        float radius_project_plane_bottom       = Vector3f(f.PlaneBottom.head<3>()).cwiseAbs()
                 .dot(box_extents);
 
         bool intersecting_or_inside_bottom = signed_distance_from_plane_bottom < radius_project_plane_bottom;
@@ -144,7 +144,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // plane_near
     {
         float signed_distance_from_plane_near = f.PlaneNear.dot(box_center);
-        float radius_project_plane_near       = Vector3f(f.PlaneNear).cwiseAbs().dot(box_extents);
+        float radius_project_plane_near       = Vector3f(f.PlaneNear.head<3>()).cwiseAbs().dot(box_extents);
 
         bool intersecting_or_inside_near = signed_distance_from_plane_near < radius_project_plane_near;
         if (!intersecting_or_inside_near)
@@ -156,7 +156,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // plane_far
     {
         float signed_distance_from_plane_far = f.PlaneFar.dot(box_center);
-        float radius_project_plane_far       = Vector3f(f.PlaneFar).cwiseAbs().dot(box_extents);
+        float radius_project_plane_far       = Vector3f(f.PlaneFar.head<3>()).cwiseAbs().dot(box_extents);
 
         bool intersecting_or_inside_far = signed_distance_from_plane_far < radius_project_plane_far;
         if (!intersecting_or_inside_far)
@@ -170,7 +170,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
 
 BoundingBox BoundingBoxTransform(BoundingBox const& b, Matrix4x4 const& m)
 {
-    return b.transformed(Eigen::Transform<float, 3, Eigen::Affine>(m));
+    return b.transformed(Eigen::Affine3f(m));
 }
 
 bool BoxIntersectsWithSphere(BoundingBox const& b, BoundingSphere const& s)
@@ -226,8 +226,8 @@ Matrix4x4 CalculateDirectionalLightCamera(RenderScene& scene, RenderCamera& came
         size_t const CORNER_COUNT = 8;
         for (size_t i = 0; i < CORNER_COUNT; ++i)
         {
-            Vector4f frustum_point_with_w = inverse_proj_view_matrix * Vector4f(g_frustum_points_ndc_space[i], 1.f);
-            Vector3f frustum_point        = Vector3f(frustum_point_with_w) / frustum_point_with_w.w();
+            Vector4f frustum_point_with_w = inverse_proj_view_matrix * Vector4f(g_frustum_points_ndc_space[i].homogeneous());
+            Vector3f frustum_point        = Vector3f(frustum_point_with_w.head<3>()) / frustum_point_with_w.w();
 
             frustum_bounding_box.extend(frustum_point);
         }

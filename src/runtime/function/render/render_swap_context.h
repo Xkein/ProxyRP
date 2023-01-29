@@ -68,6 +68,10 @@ class RenderSwapContext
 public:
     RenderSwapData& GetLogicSwapData();
     RenderSwapData& GetRenderSwapData();
+    void            ResetLevelRsourceSwapData();
+    void            ResetGameObjectResourceSwapData();
+    void            ResetGameObjectToDelete();
+    void            ResetCameraSwapData();
 
     void SwapLogicRenderData();
 

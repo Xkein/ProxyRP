@@ -32,6 +32,7 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     Camera = std::make_shared<RenderCamera>();
 
     Scene = std::make_shared<RenderScene>();
+    Scene->ResourceManager = ResourceManager;
 
     Renderer = std::make_shared<ForwardSceneRenderer>();
     Renderer->RHI    = RHI;
@@ -42,6 +43,7 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     Pipeline->RHI = RHI;
     Pipeline->Initialize(&pipeline_init_info);
 
+    ResourceManager->PassCommon = Pipeline->PassCommon;
 }
 
 void RenderSystem::Clear()
@@ -100,7 +102,7 @@ RenderSwapContext& RenderSystem::GetSwapContext()
     return SwapContext;
 }
 
-std::shared_ptr<VulkanRHI> RenderSystem::GetRHI() const
+std::shared_ptr<RHI> RenderSystem::GetRHI() const
 {
     return RHI;
 }
@@ -116,4 +118,63 @@ void RenderSystem::ProcessSwapData()
 
     std::shared_ptr<AssetManager> asset_manager = GAssetManager;
 
+    if (swap_data.LevelResource.has_value())
+    {
+        ResourceManager->UploadGlobalRenderResource(swap_data.LevelResource.value());
+
+        // reset level resource swap data to a clean state
+        SwapContext.ResetLevelRsourceSwapData();
+    }
+
+    // update game object if needed
+    if (swap_data.GameObjectResource.has_value())
+    {
+        while (!swap_data.GameObjectToDelete->IsEmpty())
+        {
+            GameObjectDesc gobject = swap_data.GameObjectToDelete->PopAndGetNextProcessObject();
+
+            for (size_t part_index = 0; part_index < gobject.GetObjectParts().size(); part_index++)
+            {
+                const GameObjectPartDesc& game_object_part = gobject.GetObjectParts()[part_index];
+                GameObjectPartId          part_id          = {gobject.GetId(), part_index};
+
+                bool is_entity_in_scene = Scene->GetInstanceIdAllocator().HasElement(part_id);
+
+                RenderEntity render_entity;
+                render_entity.InstanceId = 
+
+            }
+        }
+
+
+        SwapContext.ResetGameObjectResourceSwapData();
+    }
+
+    // remove deleted objects
+    if (swap_data.GameObjectToDelete.has_value())
+    {
+        while (!swap_data.GameObjectToDelete->IsEmpty())
+        {
+            GameObjectDesc gobject = swap_data.GameObjectToDelete->PopAndGetNextProcessObject();
+            Scene->DeleteEntityByGObjectID(gobject.GetId());
+        }
+
+        SwapContext.ResetGameObjectToDelete();
+    }
+
+    // process camera swap data
+    if (swap_data.CameraSwapData.has_value())
+    {
+        if (swap_data.CameraSwapData->FovX.has_value())
+        {
+            Camera->SetFovX(swap_data.CameraSwapData->FovX.value());
+        }
+
+        if (swap_data.CameraSwapData->ViewMatrix.has_value())
+        {
+            Camera->SetMainViewMatrix(swap_data.CameraSwapData->ViewMatrix.value());
+        }
+
+        SwapContext.ResetCameraSwapData();
+    }
 }

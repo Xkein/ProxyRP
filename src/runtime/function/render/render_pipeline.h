@@ -34,5 +34,7 @@ public:
 
 
 public:
-    std::shared_ptr<VulkanRHI> RHI;
+    std::shared_ptr<RHI> RHI;
+
+    std::shared_ptr<RenderPassCommon> PassCommon;
 };

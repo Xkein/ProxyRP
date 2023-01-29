@@ -55,3 +55,10 @@ using RHILogicOp = vk::LogicOp;
 using RHICompareOp = vk::CompareOp;
 
 using RHIDeviceSize = vk::DeviceSize;
+
+
+enum class RHIDefaultSamplerType
+{
+    Linear,
+    Nearest
+};

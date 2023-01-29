@@ -32,8 +32,6 @@ void ForwardPipeline::PreparePassData(RenderPipelinePrepareInfo* prepare_info)
     pass_prepare_info.Scene           = prepare_info->Scene;
     pass_prepare_info.ResourceManager = prepare_info->ResourceManager;
 
-    PassCommon->DirectionalLightShadowPerframeStorageBufferObject.LightProjView = prepare_info->Scene->LightProjView;
-
     DirectionalLightPass->PrepareData(&pass_prepare_info);
     MeshPass->PrepareData(&pass_prepare_info);
 }

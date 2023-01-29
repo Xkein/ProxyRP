@@ -2,7 +2,7 @@
 
 #include <memory>
 
-class VulkanRHI;
+class RHI;
 class RenderScene;
 class RenderCamera;
 class RenderPipeline;
@@ -23,7 +23,7 @@ public:
     virtual void UpdatePerBuffer(std::shared_ptr<RenderCamera> camera);
 
 public:
-    std::shared_ptr<VulkanRHI>      RHI;
+    std::shared_ptr<RHI>      RHI;
     std::shared_ptr<RenderScene>    Scene;
     std::shared_ptr<RenderPipeline> Pipeline;
 };

@@ -54,7 +54,7 @@ void VulkanRHI::Initialize(RHIInitInfo init_info)
 
 void VulkanRHI::PrepareContext()
 {
-    CurrentCommandBuffer = CommandBuffers[CurrentFrame];
+    CurrentCommandBuffer = (VulkanCommandBuffer*)CommandBuffers[CurrentFrame].get();
 }
 
 RHIDescriptorSet* VulkanRHI::AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info)
@@ -216,6 +216,100 @@ RHIPipelineLayout* VulkanRHI::CreatePipelineLayout(const RHIPipelineLayoutCreate
     return new VulkanPipelineLayout(pipeline_layout);
 }
 
+RHISampler* VulkanRHI::GetOrCreateMipmapSampler(uint32_t width, uint32_t height)
+{
+    uint32_t mip_levels = floor(log2(std::max(width, height))) + 1;
+    if (auto iter = MipmapSamplerMap.find(mip_levels); iter != MipmapSamplerMap.end())
+    {
+        return iter->second;
+    }
+
+    vk::PhysicalDeviceProperties properties = PhysicalDevice->getProperties();
+
+    vk::SamplerCreateInfo sampler_info {
+        .magFilter               = vk::Filter::eLinear,
+        .minFilter               = vk::Filter::eLinear,
+        .mipmapMode              = vk::SamplerMipmapMode::eLinear,
+        .addressModeU            = vk::SamplerAddressMode::eRepeat,
+        .addressModeV            = vk::SamplerAddressMode::eRepeat,
+        .addressModeW            = vk::SamplerAddressMode::eRepeat,
+        .mipLodBias              = 0.0f,
+        .anisotropyEnable        = VK_TRUE,
+        .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+        .compareEnable           = VK_FALSE,
+        .compareOp               = vk::CompareOp::eAlways,
+        .minLod                  = 0.0f,
+        .maxLod                  = (float)mip_levels,
+        .borderColor             = vk::BorderColor::eIntOpaqueBlack,
+        .unnormalizedCoordinates = VK_FALSE,
+    };
+
+    RHISampler* sampler = new VulkanSampler(Device->createSampler(sampler_info));
+    MipmapSamplerMap[mip_levels] = sampler;
+
+    return sampler;
+}
+
+RHISampler* VulkanRHI::GetOrCreateDefaultSampler(RHIDefaultSamplerType type)
+{
+    switch (type)
+    {
+        case RHIDefaultSamplerType::Linear:
+            if (LinearSampler == nullptr)
+            {
+                vk::PhysicalDeviceProperties properties = PhysicalDevice->getProperties();
+
+                vk::SamplerCreateInfo sampler_info {
+                    .magFilter               = vk::Filter::eLinear,
+                    .minFilter               = vk::Filter::eLinear,
+                    .mipmapMode              = vk::SamplerMipmapMode::eLinear,
+                    .addressModeU            = vk::SamplerAddressMode::eRepeat,
+                    .addressModeV            = vk::SamplerAddressMode::eRepeat,
+                    .addressModeW            = vk::SamplerAddressMode::eRepeat,
+                    .mipLodBias              = 0.0f,
+                    .anisotropyEnable        = VK_TRUE,
+                    .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+                    .compareEnable           = VK_FALSE,
+                    .compareOp               = vk::CompareOp::eAlways,
+                    .minLod                  = 0.0f,
+                    .maxLod                  = 8,
+                    .borderColor             = vk::BorderColor::eIntOpaqueBlack,
+                    .unnormalizedCoordinates = VK_FALSE,
+                };
+
+                *LinearSampler = Device->createSampler(sampler_info);
+            }
+            return LinearSampler;
+        case RHIDefaultSamplerType::Nearest:
+            if (NearestSampler == nullptr)
+            {
+                vk::PhysicalDeviceProperties properties = PhysicalDevice->getProperties();
+
+                vk::SamplerCreateInfo sampler_info {
+                    .magFilter               = vk::Filter::eNearest,
+                    .minFilter               = vk::Filter::eNearest,
+                    .mipmapMode              = vk::SamplerMipmapMode::eNearest,
+                    .addressModeU            = vk::SamplerAddressMode::eRepeat,
+                    .addressModeV            = vk::SamplerAddressMode::eRepeat,
+                    .addressModeW            = vk::SamplerAddressMode::eRepeat,
+                    .mipLodBias              = 0.0f,
+                    .anisotropyEnable        = VK_TRUE,
+                    .maxAnisotropy           = properties.limits.maxSamplerAnisotropy,
+                    .compareEnable           = VK_FALSE,
+                    .compareOp               = vk::CompareOp::eAlways,
+                    .minLod                  = 0.0f,
+                    .maxLod                  = 8,
+                    .borderColor             = vk::BorderColor::eIntOpaqueBlack,
+                    .unnormalizedCoordinates = VK_FALSE,
+                };
+
+                *NearestSampler = Device->createSampler(sampler_info);
+            }
+            return NearestSampler;
+    }
+    return nullptr;
+}
+
 RHIShader* VulkanRHI::CreateShaderModule(const std::vector<byte>& shader_code)
 {
     vk::ShaderModule shader = VulkanUtil::CreateShaderModule(Device, shader_code);
@@ -255,20 +349,6 @@ void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
     buffer_memory = new VulkanDeviceMemory(vulkan_buffer_memory);
 }
 
-void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
-                             vk::BufferUsageFlags    usage,
-                             vk::MemoryPropertyFlags properties,
-                             RHIBufferRef&           buffer,
-                             RHIDeviceMemoryRef&     buffer_memory)
-{
-    RHIBuffer*       vulkan_buffer;
-    RHIDeviceMemory* vulkan_buffer_memory;
-    CreateBuffer(size, usage, properties, vulkan_buffer, vulkan_buffer_memory);
-
-    buffer        = std::make_shared<VulkanBuffer>(vulkan_buffer);
-    buffer_memory = std::make_shared<VulkanDeviceMemory>(vulkan_buffer_memory);
-}
-
 void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
                                           vk::BufferUsageFlags    usage,
                                           vk::MemoryPropertyFlags properties,
@@ -284,22 +364,6 @@ void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
 
     buffer        = new VulkanBuffer(vulkan_buffer);
     buffer_memory = new VulkanDeviceMemory(vulkan_buffer_memory);
-}
-
-void VulkanRHI::CreateBufferAndInitialize(vk::DeviceSize          size,
-                                          vk::BufferUsageFlags    usage,
-                                          vk::MemoryPropertyFlags properties,
-                                          RHIBufferRef&           buffer,
-                                          RHIDeviceMemoryRef&     buffer_memory,
-                                          void*                   data,
-                                          int                     data_size)
-{
-    RHIBuffer*       vulkan_buffer;
-    RHIDeviceMemory* vulkan_buffer_memory;
-    CreateBufferAndInitialize(size, usage, properties, vulkan_buffer, vulkan_buffer_memory, data, data_size);
-
-    buffer        = std::make_shared<VulkanBuffer>(vulkan_buffer);
-    buffer_memory = std::make_shared<VulkanDeviceMemory>(vulkan_buffer_memory);
 }
 
 void VulkanRHI::CreateImage(uint32_t                width,
@@ -336,38 +400,6 @@ void VulkanRHI::CreateImage(uint32_t                width,
     image_memory = new VulkanDeviceMemory(vulkan_image_memory);
 }
 
-void VulkanRHI::CreateImage(uint32_t                width,
-                            uint32_t                height,
-                            vk::Format              format,
-                            vk::ImageTiling         tiling,
-                            vk::ImageUsageFlags     usage,
-                            vk::MemoryPropertyFlags properties,
-                            RHIImageRef&            image,
-                            RHIDeviceMemoryRef&     image_memory,
-                            vk::ImageCreateFlags    create_flags,
-                            uint32_t                array_layers,
-                            uint32_t                mip_levels,
-                            vk::SampleCountFlagBits sample_count)
-{
-    RHIImage*        vulkan_image;
-    RHIDeviceMemory* vulkan_image_memory;
-    CreateImage(width,
-                height,
-                format,
-                tiling,
-                usage,
-                properties,
-                vulkan_image,
-                vulkan_image_memory,
-                create_flags,
-                array_layers,
-                mip_levels,
-                sample_count);
-
-    image        = std::make_shared<VulkanImage>(vulkan_image);
-    image_memory = std::make_shared<VulkanDeviceMemory>(vulkan_image_memory);
-}
-
 void VulkanRHI::CreateImageView(const RHIImage*      image,
                                 vk::Format           format,
                                 vk::ImageAspectFlags image_aspect_flags,
@@ -380,20 +412,6 @@ void VulkanRHI::CreateImageView(const RHIImage*      image,
     vulkan_image_view = VulkanUtil::CreateImageView(
         Device, *(VulkanImage*)image, format, image_aspect_flags, view_type, layout_count, miplevels);
 
-}
-
-void VulkanRHI::CreateImageView(const RHIImage*      image,
-                                vk::Format           format,
-                                vk::ImageAspectFlags image_aspect_flags,
-                                vk::ImageViewType    view_type,
-                                uint32_t             layout_count,
-                                uint32_t             miplevels,
-                                RHIImageViewRef&     image_view)
-{
-    RHIImageView* vulkan_image_view;
-    CreateImageView(image, format, image_aspect_flags, view_type, layout_count, miplevels, vulkan_image_view);
-
-    image_view = std::make_shared<VulkanImageView>(vulkan_image_view);
 }
 
 void VulkanRHI::CreateTextureImage(RHIImage*&         image,
@@ -412,21 +430,6 @@ void VulkanRHI::CreateTextureImage(RHIImage*&         image,
     image_memory = new VulkanDeviceMemory(vulkan_image_memory);
 }
 
-void VulkanRHI::CreateTextureImage(RHIImageRef&        image,
-                                   RHIImageViewRef&    image_view,
-                                   RHIDeviceMemoryRef& image_memory,
-                                   const TextureData*  texure_data)
-{
-    RHIImage*        vulkan_image;
-    RHIImageView*    vulkan_image_view;
-    RHIDeviceMemory* vulkan_image_memory;
-    CreateTextureImage(vulkan_image, vulkan_image_view, vulkan_image_memory, texure_data);
-
-    image        = std::make_shared<VulkanImage>(vulkan_image);
-    image_view   = std::make_shared<VulkanImageView>(vulkan_image_view);
-    image_memory = std::make_shared<VulkanDeviceMemory>(vulkan_image_memory);
-}
-
 void VulkanRHI::CopyBuffer(RHIBuffer*     src_buffer,
                            RHIBuffer*     dst_buffer,
                            vk::DeviceSize src_offset,
@@ -436,7 +439,7 @@ void VulkanRHI::CopyBuffer(RHIBuffer*     src_buffer,
     VulkanUtil::CopyBuffer(this, *(VulkanBuffer*)src_buffer, *(VulkanBuffer*)dst_buffer, src_offset, dst_offset, size);
 }
 
-vk::CommandBuffer VulkanRHI::BeginSingleTimeCommands()
+RHICommandBuffer* VulkanRHI::BeginSingleTimeCommands()
 {
     vk::CommandBufferAllocateInfo alloc_info {
         .commandPool        = CommandPool,
@@ -452,22 +455,24 @@ vk::CommandBuffer VulkanRHI::BeginSingleTimeCommands()
 
     command_buffer.begin(begin_info);
 
-    return command_buffer;
+    return new VulkanCommandBuffer(command_buffer);
 }
 
-void VulkanRHI::EndSingleTimeCommands(vk::CommandBuffer command_buffer)
+void VulkanRHI::EndSingleTimeCommands(RHICommandBuffer* command_buffer)
 {
-    command_buffer.end();
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+    vk_command_buffer.end();
 
     vk::SubmitInfo submit_info {
         .commandBufferCount = 1,
-        .pCommandBuffers    = &command_buffer,
+        .pCommandBuffers    = &vk_command_buffer,
     };
 
     GraphicsQueue->submit({submit_info});
     GraphicsQueue->waitIdle();
 
-    Device->freeCommandBuffers(CommandPool, {command_buffer});
+    Device->freeCommandBuffers(CommandPool, {vk_command_buffer});
+    delete command_buffer;
 }
 
 void VulkanRHI::UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
@@ -500,12 +505,12 @@ RHIPhysicalDeviceProperties VulkanRHI::GetPhysicalDeviceProperties()
 
 RHICommandBuffer* VulkanRHI::GetCommandBuffer() const
 {
-    return (RHICommandBuffer*)&CurrentCommandBuffer;
+    return CurrentCommandBuffer;
 }
 
 RHIDescriptorPool* VulkanRHI::GetDescriptorPool() const
 {
-    return (RHIDescriptorPool*)&DescriptorPool;
+    return DescriptorPool;
 }
 
 RHIDepthImageDesc VulkanRHI::GetDepthImageInfo() const
@@ -777,7 +782,12 @@ void VulkanRHI::CreateCommandBuffer()
                                                  .level              = vk::CommandBufferLevel::ePrimary,
                                                  .commandBufferCount = (uint32_t)CommandBuffers.size()};
 
-    CommandBuffers = Device->allocateCommandBuffers(allocate_info);
+    std::vector<vk::CommandBuffer> vk_command_buffers = Device->allocateCommandBuffers(allocate_info);
+
+    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        CommandBuffers[i] = RHICommandBufferRef(new VulkanCommandBuffer(vk_command_buffers[i]));
+    }
 }
 
 void VulkanRHI::CreateDescriptorPool() {}

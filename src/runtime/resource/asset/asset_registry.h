@@ -10,8 +10,7 @@ public:
     template<typename AssetType>
     size_t Register(const String& url, const std::shared_ptr<AssetType>& ptr) {
         size_t hash = std::hash<String>()(url);
-        Register(hash);
-
+        Register(hash, ptr);
         return hash;
     }
     template<typename AssetType>
@@ -24,7 +23,7 @@ public:
     template<typename AssetType>
     std::shared_ptr<AssetType> GetAsset(const String& url)
     {
-        return GetAsset<AssetType>(std::hash<String>()(url);
+        return GetAsset<AssetType>(std::hash<String>()(url));
     }
     template<typename AssetType>
     std::shared_ptr<AssetType> GetAsset(size_t hash)
