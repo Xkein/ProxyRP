@@ -42,7 +42,7 @@ struct GameObjectResourceDesc
         return GameObjectDescs.empty() || CurIndex >= GameObjectDescs.size();
     }
 
-    void Add(GameObjectDesc& desc)
+    void Add(const GameObjectDesc& desc)
     {
         GameObjectDescs.push_back(desc);
     }
@@ -59,8 +59,8 @@ struct RenderSwapData
     std::optional<GameObjectResourceDesc> GameObjectToDelete;
     std::optional<CameraSwapDataDesc>     CameraSwapData;
 
-    void AddDirtyGameObject(GameObjectDesc& desc);
-    void AddDeleteGameObject(GameObjectDesc& desc);
+    void AddDirtyGameObject(const GameObjectDesc& desc);
+    void AddDeleteGameObject(const GameObjectDesc& desc);
 };
 
 class RenderSwapContext

@@ -27,9 +27,9 @@ public:
         StorageBuffer NullStorageBuffer;
 
         template<typename T>
-        T* AllocateFromRingbuffer(uint8_t current_frame_index)
+        T* AllocateFromRingbuffer(uint8_t current_frame_index, uint32_t& offset)
         {
-            uint32_t offset = RoundUp(GlobalUploadRingBuffersEnd[current_frame_index], MinStorageBufferAlignment);
+            offset = RoundUp(GlobalUploadRingBuffersEnd[current_frame_index], MinStorageBufferAlignment);
             GlobalUploadRingBuffersEnd[current_frame_index] = offset + sizeof(T);
 
             ASSERT(GlobalUploadRingBuffersEnd[current_frame_index] <=

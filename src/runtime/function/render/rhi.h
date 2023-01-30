@@ -88,6 +88,18 @@ public:
     virtual RHICommandBuffer* BeginSingleTimeCommands() = 0;
     virtual void              EndSingleTimeCommands(RHICommandBuffer* command_buffer) = 0;
 
+    virtual void BeginRenderPass(RHICommandBuffer* command_buffer, const RHIRenderPassBeginInfo* begin_info, RHISubpassContents contents) = 0;
+    virtual void NextSubpass(RHICommandBuffer* command_buffer, RHISubpassContents contents) = 0;
+    virtual void EndRenderPass(RHICommandBuffer* command_buffer) = 0;
+    virtual void BindPipeline(RHICommandBuffer* command_buffer, RHIPipelineBindPoint pipelineBindPoint, RHIPipeline* pipeline) = 0;
+    virtual void BindDescriptorSets(RHICommandBuffer*                             command_buffer,
+                                    RHIPipelineBindPoint                          pipeline_bind_point,
+                                    RHIPipelineLayout*                            layout,
+                                    uint32_t                                      first_set,
+                                    vk::ArrayProxy<const RHIDescriptorSet*> const& descriptor_sets,
+                                    vk::ArrayProxy<const uint32_t> const&         dynamic_offsets) = 0;
+    virtual void BindVertexBuffers(RHICommandBuffer* command_buffer, uint32_t first_binding, vk::ArrayProxy<const RHIBuffer*> const& buffers, vk::ArrayProxy<const RHIDeviceSize> const& offsets) = 0;
+    virtual void BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType)                                                               = 0;
     virtual void UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
                                       const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies) = 0;
 

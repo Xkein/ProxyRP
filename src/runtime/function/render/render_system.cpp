@@ -37,9 +37,11 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     Renderer = std::make_shared<ForwardSceneRenderer>();
     Renderer->RHI    = RHI;
     Renderer->Scene  = Scene;
+    RendererInitInfo renderer_init_info;
+    Renderer->Initialize(&renderer_init_info);
 
     RenderPipelineInitInfo pipeline_init_info;
-    Pipeline = std::static_pointer_cast<RenderPipeline>(std::make_shared<ForwardPipeline>());
+    Pipeline = std::make_shared<ForwardPipeline>();
     Pipeline->RHI = RHI;
     Pipeline->Initialize(&pipeline_init_info);
 
@@ -129,7 +131,7 @@ void RenderSystem::ProcessSwapData()
     // update game object if needed
     if (swap_data.GameObjectResource.has_value())
     {
-        while (!swap_data.GameObjectToDelete->IsEmpty())
+        while (!swap_data.GameObjectResource->IsEmpty())
         {
             GameObjectDesc gobject = swap_data.GameObjectToDelete->PopAndGetNextProcessObject();
 
@@ -141,11 +143,93 @@ void RenderSystem::ProcessSwapData()
                 bool is_entity_in_scene = Scene->GetInstanceIdAllocator().HasElement(part_id);
 
                 RenderEntity render_entity;
-                render_entity.InstanceId = 
+                render_entity.InstanceId = Scene->GetInstanceIdAllocator().AllocGuid(part_id);
+                render_entity.ModelMatrix = game_object_part.TransformDesc.TransformMatrix;
+                 
+                Scene->AddInstanceIdToMap(render_entity.InstanceId, gobject.GetId());
 
+                // mesh properties
+                MeshSourceDesc mesh_source    = {game_object_part.MeshDesc.MeshFile};
+                bool           is_mesh_loaded = Scene->GetMeshAssetIdAllocator().HasElement(mesh_source);
+
+                std::shared_ptr<RenderMeshData> mesh_data;
+                if (!is_mesh_loaded)
+                {
+                    mesh_data = ResourceManager->LoadMeshData(mesh_source, render_entity.BoundingBox);
+                    Scene->CachedBoundingBox[mesh_source] = render_entity.BoundingBox;
+                }
+                else
+                {
+                    render_entity.BoundingBox = Scene->CachedBoundingBox[mesh_source];
+                }
+
+                render_entity.MeshAssetId = Scene->GetMeshAssetIdAllocator().AllocGuid(mesh_source);
+                render_entity.EnableVertexBlending = game_object_part.SkeletonAnimationResult.Transforms.size() > 1;
+                render_entity.JointMatrices.resize(game_object_part.SkeletonAnimationResult.Transforms.size());
+
+                for (size_t i = 0; i < game_object_part.SkeletonAnimationResult.Transforms.size(); i++)
+                {
+                    render_entity.JointMatrices[i] = game_object_part.SkeletonAnimationResult.Transforms[i].Matrix;
+                }
+
+                // material properties
+                MaterialSourceDesc material_source;
+                if (game_object_part.MaterialDesc.WithTexture)
+                {
+                    material_source.BaseColorFile         = game_object_part.MaterialDesc.BaseColorTexture;
+                    material_source.NormalFile            = game_object_part.MaterialDesc.NormalTexture;
+                    material_source.MetallicRoughnessFile = game_object_part.MaterialDesc.MetallicRoughnessTexture;
+                    material_source.OcclusionFile         = game_object_part.MaterialDesc.OcclusionTexture;
+                    material_source.EmissiveFile          = game_object_part.MaterialDesc.EmissiveTexture;
+                }
+                else
+                {
+                    material_source.BaseColorFile         = "asset/texture/default/albedo.jpg";
+                    material_source.NormalFile            = "asset/texture/default/normal.jpg";
+                    material_source.MetallicRoughnessFile = "asset/texture/default/mr.jpg";
+                    material_source.OcclusionFile         = "";
+                    material_source.EmissiveFile          = "";
+                }
+
+                bool is_material_load = Scene->GetMaterialAssetdAllocator().HasElement(material_source);
+
+                std::shared_ptr<RenderMaterialData> material_data;
+                if (!is_material_load)
+                {
+                    material_data = ResourceManager->LoadMaterialData(material_source);
+                }
+
+                render_entity.MaterialAssetId = Scene->GetMaterialAssetdAllocator().AllocGuid(material_source);
+
+                //  create game object on the graphics api side
+                if (!is_mesh_loaded)
+                {
+                    ResourceManager->UploadGameObjectRenderResource(render_entity, *mesh_data);
+                }
+
+                if (!is_material_load)
+                {
+                    ResourceManager->UploadGameObjectRenderResource(render_entity, *material_data);
+                }
+
+                // add object to render scene
+                if (!is_entity_in_scene)
+                {
+                    Scene->RenderEntities.push_back(render_entity);
+                }
+                else
+                {
+                    for (auto& entity : Scene->RenderEntities)
+                    {
+                        if (entity.InstanceId == render_entity.InstanceId)
+                        {
+                            entity = render_entity;
+                            break;
+                        }
+                    }
+                }
             }
         }
-
 
         SwapContext.ResetGameObjectResourceSwapData();
     }

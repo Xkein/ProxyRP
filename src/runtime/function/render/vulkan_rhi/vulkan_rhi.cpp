@@ -475,6 +475,72 @@ void VulkanRHI::EndSingleTimeCommands(RHICommandBuffer* command_buffer)
     delete command_buffer;
 }
 
+void VulkanRHI::BeginRenderPass(RHICommandBuffer* command_buffer, const RHIRenderPassBeginInfo* begin_info, RHISubpassContents contents)
+{
+    vk::RenderPassBeginInfo vk_begin_info = VulkanRHIConverter::Convert(*begin_info);
+    vk::CommandBuffer       vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+
+    vk_command_buffer.beginRenderPass(vk_begin_info, contents);
+}
+
+void VulkanRHI::NextSubpass(RHICommandBuffer* command_buffer, RHISubpassContents contents)
+{
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+
+    vk_command_buffer.nextSubpass(contents);
+}
+
+void VulkanRHI::EndRenderPass(RHICommandBuffer* command_buffer)
+{
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+
+    vk_command_buffer.endRenderPass();
+}
+
+void VulkanRHI::BindPipeline(RHICommandBuffer* command_buffer, RHIPipelineBindPoint pipelineBindPoint, RHIPipeline* pipeline)
+{
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+
+    vk_command_buffer.bindPipeline(pipelineBindPoint, *(VulkanPipeline*)pipeline);
+}
+void VulkanRHI::BindDescriptorSets(RHICommandBuffer*                              command_buffer,
+                                   RHIPipelineBindPoint                           pipeline_bind_point,
+                                   RHIPipelineLayout*                             layout,
+                                   uint32_t                                       first_set,
+                                   vk::ArrayProxy<const RHIDescriptorSet*> const& descriptor_sets,
+                                   vk::ArrayProxy<const uint32_t> const&          dynamic_offsets)
+{
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+    
+    std::vector<vk::DescriptorSet> vk_descriptor_sets(descriptor_sets.size());
+    for (uint32_t i = 0; i < descriptor_sets.size(); i++)
+    {
+        vk_descriptor_sets[i] = (vk::DescriptorSet) * (VulkanDescriptorSet*)descriptor_sets.data()[i];
+    }
+
+    vk_command_buffer.bindDescriptorSets(pipeline_bind_point, *(VulkanPipelineLayout*)layout, first_set, vk_descriptor_sets, dynamic_offsets);
+}
+
+void VulkanRHI::BindVertexBuffers(RHICommandBuffer* command_buffer, uint32_t first_binding, vk::ArrayProxy<const RHIBuffer*> const& buffers, vk::ArrayProxy<const RHIDeviceSize> const& offsets)
+{
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+
+    std::vector<vk::Buffer> vk_buffers(buffers.size());
+    for (uint32_t i = 0; i < buffers.size(); i++)
+    {
+        vk_buffers[i] = (vk::Buffer) * (VulkanBuffer*)buffers.data()[i];
+    }
+
+    vk_command_buffer.bindVertexBuffers(first_binding, vk_buffers, offsets);
+}
+
+void VulkanRHI::BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType)
+{
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+
+    vk_command_buffer.bindIndexBuffer(*(VulkanBuffer*)buffer, offset, indexType);
+}
+
 void VulkanRHI::UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
                                      const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies)
 {
@@ -491,11 +557,11 @@ void VulkanRHI::PushEvent(RHICommandBuffer* commond_buffer, const Char* name, st
         .color      = color,
     };
 
-    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.beginDebugUtilsLabelEXT(label_info);
+    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.beginDebugUtilsLabelEXT(label_info, DispatchDynamic);
 }
 void VulkanRHI::PopEvent(RHICommandBuffer* commond_buffer)
 {
-    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.endDebugUtilsLabelEXT();
+    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.endDebugUtilsLabelEXT(DispatchDynamic);
 }
 
 RHIPhysicalDeviceProperties VulkanRHI::GetPhysicalDeviceProperties()
@@ -566,6 +632,11 @@ void VulkanRHI::ClearSwapChain()
         DestroyImageView(image_view);
     }
     Device->destroySwapchainKHR(SwapChain);
+}
+
+void VulkanRHI::DestroyBuffer(RHIBuffer* buffer)
+{
+    Device->destroyBuffer(*(VulkanBuffer*)buffer);
 }
 
 void VulkanRHI::DestroyImage(RHIImage* image)
@@ -790,7 +861,35 @@ void VulkanRHI::CreateCommandBuffer()
     }
 }
 
-void VulkanRHI::CreateDescriptorPool() {}
+void VulkanRHI::CreateDescriptorPool()
+{
+    std::array<vk::DescriptorPoolSize, 7> pool_sizes;
+    pool_sizes[0].type            = vk::DescriptorType::eStorageBufferDynamic;
+    pool_sizes[0].descriptorCount = 15;
+    pool_sizes[1].type            = vk::DescriptorType::eStorageBuffer;
+    pool_sizes[1].descriptorCount = 2 + MaxVertexBlendingMeshCount; // global ring buffer + null buffer
+    pool_sizes[2].type            = vk::DescriptorType::eUniformBuffer;
+    pool_sizes[2].descriptorCount = MaxMaterialCount;
+    pool_sizes[3].type            = vk::DescriptorType::eCombinedImageSampler;
+    pool_sizes[3].descriptorCount = 5 * MaxMaterialCount + 5;
+    pool_sizes[4].type            = vk::DescriptorType::eInputAttachment;
+    pool_sizes[4].descriptorCount = 10;
+    pool_sizes[5].type            = vk::DescriptorType::eUniformBufferDynamic;
+    pool_sizes[5].descriptorCount = 3;
+    pool_sizes[6].type            = vk::DescriptorType::eStorageImage;
+    pool_sizes[6].descriptorCount = 2;
+
+    vk::DescriptorPoolCreateInfo pool_create_info {
+        .flags         = {},
+        .maxSets       = MaxVertexBlendingMeshCount + MaxVertexBlendingMeshCount + 5,
+        .poolSizeCount = pool_sizes.size(),
+        .pPoolSizes    = pool_sizes.data(),
+    };
+
+    vk::DescriptorPool descriptor_pool = Device->createDescriptorPool(pool_create_info);
+
+    DescriptorPool = new VulkanDescriptorPool(descriptor_pool);
+}
 
 void VulkanRHI::CreateSyncObjects()
 {
@@ -861,15 +960,14 @@ void VulkanRHI::CreateDepthResources()
                 1,
                 MsaaSamples);
 
-    CreateImageView(
-        DepthImage, DepthImageFormat, vk::ImageAspectFlagBits::eDepth, vk::ImageViewType::e2D, 1, 1, DepthImageView);
+    CreateImageView(DepthImage, DepthImageFormat, vk::ImageAspectFlagBits::eDepth, vk::ImageViewType::e2D, 1, 1, DepthImageView);
 
-    VulkanUtil::TransitionImageLayout(this,
-                                      *(VulkanImage*)DepthImage,
-                                      DepthImageFormat,
-                                      vk::ImageLayout::eUndefined,
-                                      vk::ImageLayout::eDepthStencilAttachmentOptimal,
-                                      vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil);
+    //VulkanUtil::TransitionImageLayout(this,
+    //                                  *(VulkanImage*)DepthImage,
+    //                                  DepthImageFormat,
+    //                                  vk::ImageLayout::eUndefined,
+    //                                  vk::ImageLayout::eDepthStencilAttachmentOptimal,
+    //                                  vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil);
 }
 
 bool VulkanRHI::CheckValidationLayerSupport()

@@ -1,12 +1,25 @@
 #pragma once
 
+#include "core/math/transform.h"
 #include "core/reflection/reflection.h"
 #include "platform/string.h"
 
-STRUCT(MeshResource)
+STRUCT(SubMeshResource)
 {
-    REFLECTION_STRUCT_BODY(MeshResource);
+    REFLECTION_STRUCT_BODY(SubMeshResource);
 
     PROPERTY()
-    String MeshFile;
+    String MeshFileRef;
+    PROPERTY()
+    Transformf Transform;
+    PROPERTY()
+    String Material;
+};
+
+STRUCT(MeshComponentResource)
+{
+    REFLECTION_STRUCT_BODY(MeshComponentResource);
+
+    PROPERTY()
+    std::vector<SubMeshResource> SubMeshes;
 };

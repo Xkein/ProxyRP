@@ -57,7 +57,7 @@ bool GameObject::Load(const ObjectInstanceResource& object_instance_res)
     return true;
 }
 
-bool GameObject::HasComponent(const rttr::type& type)
+bool GameObject::HasComponent(const rttr::type& type) const
 {
     for (const auto& component : Components)
     {
@@ -66,6 +66,17 @@ bool GameObject::HasComponent(const rttr::type& type)
     }
 
     return false;
+}
+
+Component* GameObject::GetComponent(const rttr::type& type)
+{
+    for (auto& component : Components)
+    {
+        if (component.GetType() == type)
+            return component.GetPtr();
+    }
+
+    return nullptr;
 }
 
 void GameObject::Clear()

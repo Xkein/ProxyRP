@@ -1,6 +1,7 @@
 #include "render_resource_manager.h"
 #include "core/log/log_system.h"
 #include "resource/asset/asset_manager.h"
+#include "resource/config/config_manager.h"
 #include "platform/file/file_manager.h"
 #include "function/render/vulkan_rhi/vulkan_rhi.h"
 #include "function/render/render_common.h"
@@ -74,7 +75,8 @@ std::shared_ptr<TextureData> RenderResourceManager::LoadTexture(const String& fi
 
     std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
 
-    std::vector<byte> data = FileManager::Read(file_path.c_str());
+    String            full_path = (GConfigManager->EngineRootPath / file_path).string();
+    std::vector<byte> data      = FileManager::Read(full_path.c_str());
 
     int   channels;
     texture->Pixels = stbi_load_from_memory(
@@ -105,7 +107,8 @@ std::shared_ptr<TextureData> RenderResourceManager::LoadTextureHDR(const String&
 
     std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
 
-    std::vector<byte> data = FileManager::Read(file_path.c_str());
+    String            full_path = (GConfigManager->EngineRootPath / file_path).string();
+    std::vector<byte> data      = FileManager::Read(full_path.c_str());
 
     int channels;
     texture->Pixels = stbi_load_from_memory(
@@ -136,7 +139,7 @@ std::shared_ptr<TextureData> RenderResourceManager::LoadTextureHDR(const String&
     return texture;
 }
 
-std::shared_ptr<RenderMaterialData> RenderResourceManager::LoadMaterialData(const MaterialResource& material_res)
+std::shared_ptr<RenderMaterialData> RenderResourceManager::LoadMaterialData(const MaterialSourceDesc& material_res)
 {
     std::shared_ptr<RenderMaterialData> material = std::make_shared<RenderMaterialData>();
 
@@ -149,19 +152,19 @@ std::shared_ptr<RenderMaterialData> RenderResourceManager::LoadMaterialData(cons
     return material;
 }
 
-std::shared_ptr<RenderMeshData> RenderResourceManager::LoadMeshData(const MeshResource&   mesh_res,
-                                                                   const AxisAlignedBox& bounding_box)
+std::shared_ptr<RenderMeshData> RenderResourceManager::LoadMeshData(const MeshSourceDesc& mesh_source,
+                                                                   AxisAlignedBox& bounding_box)
 {
-    std::shared_ptr<RenderMeshData> cached_asset = Registry->GetAsset<RenderMeshData>(mesh_res.MeshFile);
+    std::shared_ptr<RenderMeshData> cached_asset = Registry->GetAsset<RenderMeshData>(mesh_source.MeshFile);
     if (cached_asset)
     {
         return cached_asset;
     }
 
     std::shared_ptr<RenderMeshData> mesh = std::make_shared<RenderMeshData>();
-    mesh->MeshData                       = LoadStaticMesh(mesh_res.MeshFile, bounding_box);
+    mesh->MeshData                       = LoadStaticMesh(mesh_source.MeshFile, bounding_box);
 
-    Registry->Register(mesh_res.MeshFile, mesh);
+    Registry->Register(mesh_source.MeshFile, mesh);
 
     return mesh;
 }
@@ -220,11 +223,11 @@ std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const
 
     std::shared_ptr<PBRMaterial> material = std::make_shared<PBRMaterial>();
 
-    byte        empty_color[] {0.5f, 0.5f, 0.5f, 0.5f};
+    float       empty_color[] {0.5f, 0.5f, 0.5f, 0.5f};
     TextureData empty_texture {
         .Width  = 1,
         .Height = 1,
-        .Pixels = empty_color,
+        .Pixels = (byte*)empty_color,
         .Format = RHIFormat::eR8G8B8A8Unorm,
     };
 
@@ -691,9 +694,10 @@ struct Model
 void ProcessModel(const aiScene* scene, const aiNode* node, Model* model);
 void ProcessMesh(const aiScene* scene, const aiMesh* mesh, Model* model, Model::SubMesh* out_mesh);
 
-StaticMeshData RenderResourceManager::LoadStaticMesh(const String& mesh_file, const AxisAlignedBox& bounding_box)
+StaticMeshData RenderResourceManager::LoadStaticMesh(const String& mesh_file, AxisAlignedBox& bounding_box)
 {
-    std::vector<byte> data = FileManager::Read(mesh_file.c_str());
+    String            full_path = (GConfigManager->EngineRootPath / mesh_file).string();
+    std::vector<byte> data      = FileManager::Read(full_path.c_str());
 
     Assimp::Importer importer;
     const aiScene*   scene = importer.ReadFileFromMemory(data.data(), data.size(), aiProcess_Triangulate);
@@ -716,6 +720,11 @@ StaticMeshData RenderResourceManager::LoadStaticMesh(const String& mesh_file, co
 
     std::copy(merged_mesh.Vertices.begin(), merged_mesh.Vertices.end(), (MeshVertexDataDefinition*)mesh_data.VertexBuffer->Data);
     std::copy(merged_mesh.Indices.begin(), merged_mesh.Indices.end(), (uint16_t*)mesh_data.IndexBuffer->Data);
+
+    for (auto& vertex : merged_mesh.Vertices)
+    {
+        bounding_box.extend(vertex.Position);
+    }
 
     return mesh_data;
 }

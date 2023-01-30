@@ -1536,9 +1536,9 @@ void CreateTextureSampler() {
 }
 
 void LoadModel() {
-    MeshResource   mesh_res;
-    mesh_res.MeshFile = "D:/Works/YR/ProxyRP/src/temp/viking_room.obj";
-    auto mesh_data    = ResourceLoader.LoadMeshData(mesh_res);
+    //MeshResource   mesh_res;
+    //mesh_res.MeshFile = "D:/Works/YR/ProxyRP/src/temp/viking_room.obj";
+    //auto mesh_data    = ResourceLoader.LoadMeshData(mesh_res);
 
     //for (auto& mesh : model.Meshes)
     //{

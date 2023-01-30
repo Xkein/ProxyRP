@@ -54,12 +54,103 @@ void DirectionalLightPass::Draw()
 {
     struct MeshNode
     {
-        const Matrix4x4* model_matrix {nullptr};
-        const Matrix4x4* joint_matrices {nullptr};
-        uint32_t         joint_count {0};
+        const Matrix4x4* ModelMatrix {nullptr};
+        const Matrix4x4* JointMatrices {nullptr};
+        uint32_t         JointCount {0};
     };
 
+    std::map<PBRMaterial*, std::map<RenderMesh*, std::vector<MeshNode>>> mesh_drawcall_batch;
 
+    // reorganize mesh
+    for (RenderMeshNode& node : *VisiableNodes->DirectionalLightVisibleMeshNodes)
+    {
+        auto& mesh_instanced = mesh_drawcall_batch[node.RefMaterial];
+        auto& mesh_nodes     = mesh_instanced[node.RefMesh];
+
+        MeshNode temp;
+        temp.ModelMatrix = node.ModelMatrix;
+        if (node.EnableVertexBlending)
+        {
+            temp.JointMatrices = node.JointMatrices;
+            temp.JointCount    = node.JointCount;
+        }
+
+        mesh_nodes.push_back(temp);
+    }
+
+    // directional light shadow begin pass
+    std::array<RHIClearValue, 2> clear_values {};
+    clear_values[0].color.setFloat32({1.f});
+    clear_values[1].depthStencil = RHIClearDepthStencilValue {1.f, 0};
+
+    RHIRenderPassBeginInfo render_pass_begin_info {
+        .renderPass      = *(VulkanRenderPass*)Framebuffer.RenderPass.get(),
+        .framebuffer     = *(VulkanFramebuffer*)Framebuffer.Framebuffer.get(),
+        .renderArea      = {0, 0, DirectionalLightShadowMapSize, DirectionalLightShadowMapSize},
+        .clearValueCount = clear_values.size(),
+        .pClearValues    = clear_values.data(),
+    };
+
+    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
+
+    RHI->PushEvent(RHI->GetCommandBuffer(), "Directional Light Shadow", {1.f, 1.f, 1.f, 1.f});
+
+    // Mesh
+    RHI->PushEvent(RHI->GetCommandBuffer(), "Mesh", {1.f, 1.f, 1.f, 1.f});
+
+    RHI->BindPipeline(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].PipelineRHI.get());
+
+    uint32_t perframe_dynamic_offset;
+    MeshDirectionalLightShadowPerframeStorageBufferObject* perframe_storage_buffer_object = reinterpret_cast<MeshDirectionalLightShadowPerframeStorageBufferObject*>(
+        PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshPerframeStorageBufferObject>(RHI->GetCurrentFrameIndex(), perframe_dynamic_offset));
+    *perframe_storage_buffer_object = PerframeStorageBufferObject;
+    
+    for (auto& [material, mesh_instanced] : mesh_drawcall_batch)
+    {
+        // TODO: render from near to far
+
+       for (auto& [mesh, mesh_nodes] : mesh_instanced)
+       {
+            uint32_t total_instance_count = mesh_nodes.size();
+            if (total_instance_count)
+            {
+                // bind per mesh
+                RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 1, {mesh->VertexBlendingDescriptorSet.get()}, {});
+
+                const RHIBuffer* vertex_buffers[] {mesh->VertexPositionBuffer.VertexBufferRHI.get()};
+                RHI->BindVertexBuffers(RHI->GetCommandBuffer(), 0, vertex_buffers, {0});
+                RHI->BindIndexBuffer(RHI->GetCommandBuffer(), mesh->IndexBuffer.IndexBufferRHI.get(), 0, RHIIndexType::eUint16);
+
+                
+                uint32_t drawcall_max_instance_count = GMeshPerDrawcallMaxInstanceCount;
+                uint32_t drawcall_count = RoundUp(total_instance_count, drawcall_max_instance_count) / drawcall_max_instance_count;
+
+                for (uint32_t drawcall_index = 0; drawcall_index < drawcall_count; drawcall_index++)
+                {
+                    uint32_t current_instance_count = std::min(total_instance_count - drawcall_max_instance_count * drawcall_index, drawcall_max_instance_count);
+
+                    uint32_t perdrawcall_dynamic_offset;
+                    MeshDirectionalLightShadowPerdrawcallStorageBufferObject* perdrawcall_storage_buffer_object =
+                        PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshDirectionalLightShadowPerdrawcallStorageBufferObject>(RHI->GetCurrentFrameIndex(),
+                                                                                                                                                          perdrawcall_dynamic_offset);
+                    
+                    for (uint32_t i = 0; i < current_instance_count; i++)
+                    {
+                        perdrawcall_storage_buffer_object->MeshInstances[i].ModelMatrix = *mesh_nodes[drawcall_max_instance_count * drawcall_index + i].ModelMatrix;
+                        perdrawcall_storage_buffer_object->MeshInstances[i].EnableVertexBlending = *mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices ? 1.f : -1.f;
+
+                    }
+
+                    // per drawcall vertex blending storage buffer
+
+
+                }
+            }
+       }
+    }
+    
+    
+    
 }
 
 void DirectionalLightPass::SetupAttachments()
@@ -86,7 +177,7 @@ void DirectionalLightPass::SetupAttachments()
                          color_texture.ImageViewRHI);
 
     Texture& depth_texture            = Framebuffer.Attachments[1];
-    depth_texture.Format   = RHIFormat::eR32Sfloat;
+    depth_texture.Format   = RHI->GetDepthImageInfo().DepthImageFormat;
     RHI->CreateImage(DirectionalLightShadowMapSize,
                      DirectionalLightShadowMapSize,
                      depth_texture.Format,

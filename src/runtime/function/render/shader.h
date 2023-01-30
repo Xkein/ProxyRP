@@ -20,7 +20,10 @@ enum EShaderFrequency : uint8_t
 
 class ShaderType
 {
+    static std::vector<ShaderType*>& GetAllShaderTypeVector();
 public:
+    static std::vector<ShaderType*> GetAllShaderTypes();
+
     ShaderType(const String&    name,
                const String&    source_filename,
                const String&    enter_point,
@@ -62,5 +65,4 @@ struct ShaderPermutationDomain
 #define IMPLEMENT_SHADER_TYPE(ShaderClass, SourceFilename, EntryPoint, Frequency) \
     ShaderType ShaderClass::StaticType(#ShaderClass, SourceFilename, EntryPoint, Frequency);
 
-std::vector<ShaderType*> __AllShaderTypes;
 

@@ -20,9 +20,13 @@ void ForwardPipeline::Initialize(RenderPipelineInitInfo* init_info)
     DirectionalLightPass->SetCommonInfo(&pass_common_info);
     MeshPass->SetCommonInfo(&pass_common_info);
 
+    DirectionalLightPassInitInfo directional_light_pass_init_info;
+    DirectionalLightPass->Initialize(&directional_light_pass_init_info);
+
     MeshPassInitInfo mesh_pass_init_info;
     MeshPass->Initialize(&mesh_pass_init_info);
 
+    DirectionalLightPass->PostInitialize();
     MeshPass->PostInitialize();
 }
 

@@ -44,6 +44,7 @@ tf::Future<void> ShaderCompiler::BeginCompileShaders(std::vector<ShaderType*>   
 
     for (ShaderType* shader_type : shader_types)
     {
+        //Compile(shader_type, shader_map);
         taskflow.emplace([shader_type, shader_map]() { Compile(shader_type, shader_map); });
     }
 
@@ -81,24 +82,37 @@ ShaderCompiledInfo ShaderCompiler::Compile(ShaderType* shader_type, std::shared_
         .language = ShadingLanguage::SpirV
     };
 
-    Compiler::ResultDesc result = Compiler::Compile(source_desc, options, target_desc);
+    try
+    {
+        Compiler::ResultDesc result = Compiler::Compile(source_desc, options, target_desc);
+        std::vector<byte>    shader_data(result.target.Size());
+        memcpy(shader_data.data(), result.target.Data(), result.target.Size());
 
-    std::vector<byte> shader_data(result.target.Size());
-    memcpy(shader_data.data(), result.target.Data(), result.target.Size());
+        ShaderCompiledInfo compiled_info {
+            .ShaderData = std::move(shader_data),
+            .Message    = String((const char*)result.errorWarningMsg.Data(), result.errorWarningMsg.Size()),
+            .HasError   = result.hasError,
+        };
 
-    ShaderCompiledInfo compiled_info {
-        .ShaderData = std::move(shader_data),
-        .Message    = String((const char*)result.errorWarningMsg.Data(), result.errorWarningMsg.Size()),
-        .HasError   = result.hasError,
-    };
+        LOG_INFO("Shader {} Compile finished, Message: {}", shader_type->Name, compiled_info.Message);
 
-    LOG_INFO("Shader {} Compile finished, Message: {}", shader_type->Name, compiled_info.Message);
+        return compiled_info;
+    }
+    catch (const std::exception& e)
+    {
+        ShaderCompiledInfo compiled_info {
+            .Message  = e.what(),
+            .HasError = true,
+        };
 
-    return compiled_info;
+        LOG_ERROR("Shader {} Compile error, Message: {}", shader_type->Name, compiled_info.Message);
+
+        return compiled_info;
+    }
 }
 
 tf::Future<void> __CompileAllShaders()
 {
     LOG_INFO("Begin compiling all shaders.");
-    return ShaderCompiler::BeginCompileShaders(__AllShaderTypes, nullptr);
+    return ShaderCompiler::BeginCompileShaders(ShaderType::GetAllShaderTypes(), nullptr);
 }

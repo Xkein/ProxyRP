@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/log/log_system.h"
 #include "platform/string.h"
 #include "core/serializer/serializer.h"
 #include "platform/file/file_manager.h"
@@ -20,6 +21,11 @@ public:
     {
         String asset_path = GetFullPath(asset_url);
         auto   text       = FileManager::ReadString(asset_path.c_str());
+        if (text.empty())
+        {
+            LOG_ERROR("could not open asset: {}", asset_url);
+            return false;
+        }
 
         json asset_json = json::parse(text);
         bool ret        = Serializer::Read(asset_json, out_asset);
@@ -88,3 +94,6 @@ private:
 
     std::shared_ptr<AssetRegistry> Registry;
 };
+
+extern std::shared_ptr<AssetManager> GAssetManager;
+

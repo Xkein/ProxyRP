@@ -58,7 +58,7 @@ void RenderSwapContext::Swap()
     std::swap(LogicSwapDataIndex, RenderSwapDataIndex);
 }
 
-void RenderSwapData::AddDirtyGameObject(GameObjectDesc& desc)
+void RenderSwapData::AddDirtyGameObject(const GameObjectDesc& desc)
 {
     if (GameObjectResource.has_value())
     {
@@ -72,7 +72,7 @@ void RenderSwapData::AddDirtyGameObject(GameObjectDesc& desc)
     }
 }
 
-void RenderSwapData::AddDeleteGameObject(GameObjectDesc& desc)
+void RenderSwapData::AddDeleteGameObject(const GameObjectDesc& desc)
 {
     if (GameObjectToDelete.has_value())
     {

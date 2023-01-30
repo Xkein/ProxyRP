@@ -7,8 +7,6 @@
 #include "platform/string.h"
 
 class AssetRegistry;
-struct MaterialResource;
-struct MeshResource;
 class RHI;
 
 class RenderResourceManager final
@@ -31,11 +29,11 @@ public:
 
     std::shared_ptr<TextureData>        LoadTexture(const String& file_path, bool is_srgb = false);
     std::shared_ptr<TextureData>        LoadTextureHDR(const String& file_path, int desired_channels = 4);
-    std::shared_ptr<RenderMaterialData> LoadMaterialData(const MaterialResource& material_res);
-    std::shared_ptr<RenderMeshData> LoadMeshData(const MeshResource& mesh_res, const AxisAlignedBox& bounding_box = {});
+    std::shared_ptr<RenderMaterialData> LoadMaterialData(const MaterialSourceDesc& material_res);
+    std::shared_ptr<RenderMeshData>     LoadMeshData(const MeshSourceDesc& mesh_source, AxisAlignedBox& bounding_box);
 
 private:
-    StaticMeshData LoadStaticMesh(const String& mesh_file, const AxisAlignedBox& bounding_box);
+    StaticMeshData LoadStaticMesh(const String& mesh_file, AxisAlignedBox& bounding_box);
 
     std::shared_ptr<RenderMesh> GetOrCreateRenderMesh(const RenderEntity& entity, const RenderMeshData& mesh_data);
     std::shared_ptr<PBRMaterial> GetOrCreatePBRMaterial(const RenderEntity& entity, const RenderMaterialData& material_data);

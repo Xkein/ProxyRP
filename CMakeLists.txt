@@ -35,4 +35,5 @@ include(src/precompile/precompile.cmake)
 set_target_properties(PreCompile PROPERTIES FOLDER "Engine")
 
 add_dependencies(ProxyRP PreCompile)
+add_dependencies(ProxyRP Shaders)
 add_dependencies(PreCompile HeaderTool)

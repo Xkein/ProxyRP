@@ -12,7 +12,7 @@ bool Serializer::Read(const json& context, {{class_name}}& instance) {
     ret &= Serializer::Read(context, *({{class_base_class_name}}*)&instance);
 {{/class_base_class_defines}}
 {{#class_field_defines}}
-    if(!context["{{class_field_display_name}}"].is_null()) {
+    if(context.contains("{{class_field_display_name}}")) {
 {{#class_field_is_vector}}
         ASSERT(context["{{class_field_display_name}}"].is_array());
         const json& array_{{class_field_name}} = context["{{class_field_display_name}}"];

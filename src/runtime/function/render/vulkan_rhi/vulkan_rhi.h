@@ -82,7 +82,19 @@ public:
     // command
     virtual RHICommandBuffer* BeginSingleTimeCommands() override;
     virtual void              EndSingleTimeCommands(RHICommandBuffer* command_buffer) override;
-
+    
+    virtual void BeginRenderPass(RHICommandBuffer* command_buffer, const RHIRenderPassBeginInfo* begin_info, RHISubpassContents contents) override;
+    virtual void NextSubpass(RHICommandBuffer* command_buffer, RHISubpassContents contents) override;
+    virtual void EndRenderPass(RHICommandBuffer* command_buffer) override;
+    virtual void BindPipeline(RHICommandBuffer* command_buffer, RHIPipelineBindPoint pipelineBindPoint, RHIPipeline* pipeline) override;
+    virtual void BindDescriptorSets(RHICommandBuffer*                              command_buffer,
+                                    RHIPipelineBindPoint                           pipeline_bind_point,
+                                    RHIPipelineLayout*                             layout,
+                                    uint32_t                                       first_set,
+                                    vk::ArrayProxy<const RHIDescriptorSet*> const& descriptor_sets,
+                                    vk::ArrayProxy<const uint32_t> const&          dynamic_offsets) override;
+    virtual void BindVertexBuffers(RHICommandBuffer* command_buffer, uint32_t first_binding, vk::ArrayProxy<const RHIBuffer*> const& buffers, vk::ArrayProxy<const RHIDeviceSize> const& offsets) override;
+    virtual void BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType) override;
     virtual void UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
                                       const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies) override;
 
@@ -177,6 +189,8 @@ public:
 
     std::vector<char const*> DeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
+    uint32_t MaxVertexBlendingMeshCount {256};
+    uint32_t MaxMaterialCount {256};
 
 private:
     void CreateInstance();

@@ -1,20 +1,11 @@
 #pragma once
 
 #include "core/math/matrix.h"
+#include "core/math/axis_aligned.h"
 #include "function/framework/object/object_id_allocator.h"
 #include "platform/string.h"
 
 #include <boost/functional/hash/hash.hpp>
-
-enum class EGameObjectDescType
-{
-    Invalid,
-    Mesh,
-    Material,
-    Transform,
-    SkeletonBinding,
-    SkeletonAnimation,
-};
 
 struct GameObjectMeshDesc
 {
@@ -43,6 +34,7 @@ struct GameObjectMaterialDesc
     String MetallicRoughnessTexture;
     String OcclusionTexture;
     String EmissiveTexture;
+    bool   WithTexture {false};
 };
 
 struct GameObjectTransformDesc
@@ -52,49 +44,12 @@ struct GameObjectTransformDesc
 
 struct GameObjectPartDesc
 {
-    GameObjectPartDesc(const GameObjectMeshDesc& mesh_desc) : Type(EGameObjectDescType::Mesh), MeshDesc(mesh_desc) {}
-
-    GameObjectPartDesc(const GameObjectMaterialDesc& material_desc) :
-        Type(EGameObjectDescType::Material), MaterialDesc(material_desc)
-    {}
-
-    GameObjectPartDesc(const GameObjectTransformDesc& transform_desc) :
-        Type(EGameObjectDescType::Transform), TransformDesc(transform_desc)
-    {}
-
-    GameObjectPartDesc(const GameObjectPartDesc& other) {
-        *this = other;
-    }
-
-    ~GameObjectPartDesc()
-    {
-        if (Type == EGameObjectDescType::Mesh)
-            MeshDesc.~GameObjectMeshDesc();
-        else if (Type == EGameObjectDescType::Material)
-            MaterialDesc.~GameObjectMaterialDesc();
-        else if (Type == EGameObjectDescType::Transform)
-            TransformDesc.~GameObjectTransformDesc();
-    }
-
-    GameObjectPartDesc& operator=(const GameObjectPartDesc& other)
-    {
-        if (Type == EGameObjectDescType::Mesh)
-            MeshDesc = other.MeshDesc;
-        else if (Type == EGameObjectDescType::Material)
-            MaterialDesc = other.MaterialDesc;
-        else if (Type == EGameObjectDescType::Transform)
-            TransformDesc = other.TransformDesc;
-
-        return *this;
-    }
-
-    EGameObjectDescType Type {EGameObjectDescType::Invalid};
-    union
-    {
-        GameObjectMeshDesc      MeshDesc;
-        GameObjectMaterialDesc  MaterialDesc;
-        GameObjectTransformDesc TransformDesc;
-    };
+    GameObjectMeshDesc      MeshDesc;
+    GameObjectMaterialDesc  MaterialDesc;
+    GameObjectTransformDesc TransformDesc;
+    bool                    WithAnimation {false};
+    SkeletonBindingDesc     SkeletonBindingDesc;
+    SkeletonAnimationResult SkeletonAnimationResult;
 };
 
 struct GameObjectDesc
@@ -135,35 +90,35 @@ struct GameObjectPartId
 
 struct MeshSourceDesc
 {
-    String m_mesh_file;
+    String MeshFile;
 
     bool operator==(const MeshSourceDesc& rhs) const
     {
-        return m_mesh_file == rhs.m_mesh_file;
+        return MeshFile == rhs.MeshFile;
     }
     size_t GetHashValue() const
     {
-        return std::hash<String> {}(m_mesh_file);
+        return std::hash<String> {}(MeshFile);
     }
 };
 
 struct MaterialSourceDesc
 {
-    String m_base_color_file;
-    String m_metallic_roughness_file;
-    String m_normal_file;
-    String m_occlusion_file;
-    String m_emissive_file;
+    String BaseColorFile;
+    String NormalFile;
+    String MetallicRoughnessFile;
+    String OcclusionFile;
+    String EmissiveFile;
 
     bool operator==(const MaterialSourceDesc& rhs) const
     {
-        return m_base_color_file == rhs.m_base_color_file && m_metallic_roughness_file == rhs.m_metallic_roughness_file && m_normal_file == rhs.m_normal_file &&
-               m_occlusion_file == rhs.m_occlusion_file && m_emissive_file == rhs.m_emissive_file;
+        return BaseColorFile == rhs.BaseColorFile && MetallicRoughnessFile == rhs.MetallicRoughnessFile && NormalFile == rhs.NormalFile && OcclusionFile == rhs.OcclusionFile &&
+               EmissiveFile == rhs.EmissiveFile;
     }
 
     size_t GetHashValue() const
     {
-        return boost::hash_value(std::tuple(m_base_color_file, m_metallic_roughness_file, m_normal_file, m_occlusion_file, m_emissive_file));
+        return boost::hash_value(std::tuple(BaseColorFile, MetallicRoughnessFile, NormalFile, OcclusionFile, EmissiveFile));
     }
 };
 

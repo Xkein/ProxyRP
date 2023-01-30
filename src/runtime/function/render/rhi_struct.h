@@ -12,6 +12,7 @@ using RHISubpassDescription = vk::SubpassDescription;
 using RHISubpassDependency = vk::SubpassDependency;
 
 using RHIRenderPassCreateInfo = vk::RenderPassCreateInfo;
+using RHIRenderPassBeginInfo = vk::RenderPassBeginInfo;
 
 using RHIFramebufferCreateInfo = vk::FramebufferCreateInfo;
 
@@ -46,6 +47,9 @@ using RHIVertexInputAttributeDescription = vk::VertexInputAttributeDescription;
 using RHIExtent2D = vk::Extent2D;
 using RHIViewport = vk::Viewport;
 using RHIRect2D = vk::Rect2D;
+using RHIClearValue = vk::ClearValue;
+using RHIClearColorValue = vk::ClearColorValue;
+using RHIClearDepthStencilValue = vk::ClearDepthStencilValue;
 
 struct RHISwapchainDesc
 {

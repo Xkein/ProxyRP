@@ -23,6 +23,7 @@ public:
         ParentObject = parent_object;
     }
 
+    FUNCTION()
     virtual void Tick(float delta_time) {}
 
 protected:

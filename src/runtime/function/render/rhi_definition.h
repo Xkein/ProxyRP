@@ -33,6 +33,8 @@ using RHIAttachmentDescriptionFlagBits = vk::AttachmentDescriptionFlagBits;
 using RHIAttachmentLoadOp = vk::AttachmentLoadOp;
 using RHIAttachmentStoreOp = vk::AttachmentStoreOp;
 
+using RHISubpassContents = vk::SubpassContents;
+
 using RHIPipelineBindPoint = vk::PipelineBindPoint;
 using RHIPipelineStageFlags = vk::PipelineStageFlags;
 using RHIPipelineStageFlagBits = vk::PipelineStageFlagBits;
@@ -55,6 +57,7 @@ using RHILogicOp = vk::LogicOp;
 using RHICompareOp = vk::CompareOp;
 
 using RHIDeviceSize = vk::DeviceSize;
+using RHIIndexType = vk::IndexType;
 
 
 enum class RHIDefaultSamplerType

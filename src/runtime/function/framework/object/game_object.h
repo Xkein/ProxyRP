@@ -20,12 +20,33 @@ public:
 
     bool Load(const ObjectInstanceResource& object_instance_res);
 
-    bool HasComponent(const rttr::type& type);
+    GameObjectID GetID() const
+    {
+        return ID;
+    }
 
-    GameObjectID GetID() const { return ID; }
+    void SetName(const String& name)
+    {
+        Name = name;
+    }
+    const String& GetName() const
+    {
+        return Name;
+    }
 
-    void          SetName(const String& name) { Name = name; }
-    const String& GetName() const { return Name; }
+    bool HasComponent(const rttr::type& type) const;
+
+    Component* GetComponent(const rttr::type& type);
+
+    template<typename TComponent>
+    TComponent* GetComponent()
+    {
+        return static_cast<TComponent*>(GetComponent(rttr::type::get<TComponent>()));
+    }
+
+    std::vector<Instance<Component>> GetComponents() {
+        return Components;
+    }
 
 private:
     void Clear();

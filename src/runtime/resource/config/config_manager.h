@@ -45,3 +45,6 @@ public:
     EngineConfig   Engine;
     GraphicsConfig Graphics;
 };
+
+extern std::shared_ptr<ConfigManager> GConfigManager;
+

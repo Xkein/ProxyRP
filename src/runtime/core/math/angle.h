@@ -4,15 +4,9 @@
 
 #include <Eigen/Geometry>
 
-float DegreesToRadians(float degrees)
-{
-    return degrees * Math_fDeg2Rad;
-}
+float DegreesToRadians(float degrees);
 
-float RadiansToDegrees(float radians)
-{
-    return radians * Math_fRad2Deg;
-}
+float RadiansToDegrees(float radians);
 
 using AngleAxisf = Eigen::AngleAxisf;
 
