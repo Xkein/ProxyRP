@@ -29,7 +29,8 @@ public:
                const String&    enter_point,
                EShaderFrequency frequency);
 
-    const String& GetHashedName() const ;
+    const String& GetHashedName() const;
+    String        GetCachedFilePath() const;
 
 	String           Name;
     String           TypeName;

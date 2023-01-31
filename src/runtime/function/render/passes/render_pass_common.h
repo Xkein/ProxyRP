@@ -7,7 +7,7 @@
 class RenderPassCommon
 {
 public:
-    void Initialize();
+    void Initialize(const RenderPassCommonInfo* common_info);
 
     void SetupDescriptorSetLayout();
 

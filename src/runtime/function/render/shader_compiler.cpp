@@ -45,7 +45,10 @@ tf::Future<void> ShaderCompiler::BeginCompileShaders(std::vector<ShaderType*>   
     for (ShaderType* shader_type : shader_types)
     {
         //Compile(shader_type, shader_map);
-        taskflow.emplace([shader_type, shader_map]() { Compile(shader_type, shader_map); });
+        taskflow.emplace([shader_type, shader_map]() {
+            ShaderCompiledInfo compiled_info = Compile(shader_type, shader_map);
+            SaveShader(shader_type, compiled_info);
+        });
     }
 
     return GExecutor.run(taskflow);
@@ -76,39 +79,53 @@ ShaderCompiledInfo ShaderCompiler::Compile(ShaderType* shader_type, std::shared_
         .fileName   = shader_source_filename.c_str(),
         .entryPoint = shader_type->EntryPoint.c_str(),
         .stage      = GetShaderStage(shader_type->Frequency),
+        .loadIncludeCallback =
+            [](const Char* include_name) {
+                String            filename = (GConfigManager->ShaderPath / include_name).string();
+                std::vector<byte> data     = FileManager::Read(filename);
+                return ShaderConductor::Blob(data.data(), data.size());
+            },
     };
 
     Compiler::TargetDesc target_desc {
         .language = ShadingLanguage::SpirV
     };
 
+    ShaderCompiledInfo compiled_info;
     try
     {
         Compiler::ResultDesc result = Compiler::Compile(source_desc, options, target_desc);
         std::vector<byte>    shader_data(result.target.Size());
         memcpy(shader_data.data(), result.target.Data(), result.target.Size());
 
-        ShaderCompiledInfo compiled_info {
-            .ShaderData = std::move(shader_data),
-            .Message    = String((const char*)result.errorWarningMsg.Data(), result.errorWarningMsg.Size()),
-            .HasError   = result.hasError,
-        };
-
-        LOG_INFO("Shader {} Compile finished, Message: {}", shader_type->Name, compiled_info.Message);
-
-        return compiled_info;
+        compiled_info.ShaderData = std::move(shader_data);
+        compiled_info.Message    = String((const char*)result.errorWarningMsg.Data(), result.errorWarningMsg.Size());
+        compiled_info.HasError   = result.hasError;
     }
     catch (const std::exception& e)
     {
-        ShaderCompiledInfo compiled_info {
-            .Message  = e.what(),
-            .HasError = true,
-        };
-
-        LOG_ERROR("Shader {} Compile error, Message: {}", shader_type->Name, compiled_info.Message);
-
-        return compiled_info;
+        compiled_info.Message  = e.what();
+        compiled_info.HasError = true;
     }
+
+    if (compiled_info.HasError)
+    {
+        LOG_ERROR("Shader {} Compile error, Message: {}", shader_type->SourceFile, compiled_info.Message);
+    }
+    else
+    {
+        LOG_INFO("Shader {} Compile finished, Message: {}", shader_type->Name, compiled_info.Message);
+    }
+
+    return compiled_info;
+}
+
+void ShaderCompiler::SaveShader(ShaderType* shader_type, ShaderCompiledInfo compiled_info)
+{
+    if (compiled_info.HasError)
+        return;
+
+    FileManager::Write(shader_type->GetCachedFilePath(), compiled_info.ShaderData);
 }
 
 tf::Future<void> __CompileAllShaders()

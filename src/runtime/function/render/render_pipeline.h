@@ -32,6 +32,8 @@ public:
     virtual void PreparePassData(RenderPipelinePrepareInfo* prepare_info) = 0;
     virtual void PassUpdateAfterRecreateSwapchain()                       = 0;
 
+    virtual void Draw() = 0;
+
 
 public:
     std::shared_ptr<RHI> RHI;

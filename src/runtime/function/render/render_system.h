@@ -45,7 +45,6 @@ private:
     std::shared_ptr<RenderScene>    Scene;
     std::shared_ptr<RenderCamera>   Camera;
     std::shared_ptr<SceneRenderer>  Renderer;
-    std::shared_ptr<RenderPipeline> Pipeline;
 
     std::shared_ptr<RenderResourceManager> ResourceManager;
 };

@@ -4,6 +4,11 @@
       "Name": "ProxyManager",
       "DefinitionUrl": "asset/objects/proxy.object.json",
       "InstancedComponents": []
+    },
+    {
+      "Name": "MeshTestObject",
+      "DefinitionUrl": "asset/objects/mesh_test.object.json",
+      "InstancedComponents": []
     }
   ]
 }

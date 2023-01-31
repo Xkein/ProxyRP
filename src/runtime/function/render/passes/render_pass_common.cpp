@@ -2,7 +2,13 @@
 #include "function/render/vulkan_rhi/vulkan_rhi.h"
 #include "function/render/rhi_struct.h"
 
-void RenderPassCommon::Initialize() {}
+void RenderPassCommon::Initialize(const RenderPassCommonInfo* common_info)
+{
+    RHI = common_info->RHI;
+
+    SetupDescriptorSetLayout();
+    CreateAndMapStorageBuffer();
+}
 
 void RenderPassCommon::SetupDescriptorSetLayout()
 {

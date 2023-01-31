@@ -11,18 +11,26 @@ public:
     static std::vector<byte> Read(const Char* path);
     static String            ReadString(const Char* path);
 
-    static std::vector<byte> Read(const String& path)
+    static bool Write(const Char* path, byte* data, size_t count);
+    static bool WriteString(const Char* path, const Char* str);
+
+
+
+    static std::vector<byte> Read(StringView path)
     {
-        return Read(path.c_str());
+        return Read(path.data());
     }
-    static String ReadString(const String& path)
+    static String ReadString(StringView path)
     {
-        return ReadString(path.c_str());
+        return ReadString(path.data());
     }
 
-    static bool WriteString(const Char* path, const Char* str);
-    static bool WriteString(const String& path, const String& str)
+    static bool Write(StringView path, std::vector<byte> data)
     {
-        return WriteString(path.c_str(), str.c_str());
+        return Write(path.data(), data.data(), data.size());
+    }
+    static bool WriteString(StringView path, StringView str)
+    {
+        return WriteString(path.data(), str.data());
     }
 };

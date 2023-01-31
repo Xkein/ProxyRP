@@ -1,41 +1,36 @@
 
-struct VS_INPUT
+#include "common/constants.hlsl"
+#include "common/structures.hlsl"
+
+StructuredBuffer<float4x4> LightProjView : register(t0);
+StructuredBuffer<MeshInstance> MeshInstances : register(t1);
+StructuredBuffer<float4x4> JointMatrices : register(t2);
+
+StructuredBuffer<MeshVertexJointBinding> JointBindings : register(t0, space1);
+
+float4 vert(float3 position : POSITION, uint vertex_index: SV_VertexID/*, uint instance_index : SV_InstanceID*/) : SV_Position
 {
-    float3 Position : POSITION;
-    float3 Color : COLOR;
-    float2 TexCoord : TEXCOORD;
-};
-
-struct VS_OUTPUT
-{
-    float4 vPosition : SV_Position;
-    float3 vColor : COLOR;
-    float2 TexCoord : TEXCOORD;
-};
-
-StructuredBuffer<float4x4> LightProjView;
-
-float4x4 Model;
-float4x4 View;
-float4x4 Projection;
-
-Texture2D Tex : register(t1);
-SamplerState TexSampler : register(s1);
-
-VS_OUTPUT vert(VS_INPUT input)
-{
-    VS_OUTPUT output;
+    uint instance_index = 0;
+    float4x4 model_matrix = MeshInstances[instance_index].ModelMatrix;
+    float enable_vertex_blending = MeshInstances[instance_index].EnableVertexBlending;
     
-    //float4x4 mvp = Projection * View * Model;
-    float4x4 mvp = mul(mul(Projection, View), Model);
-    output.vPosition = mul(mvp, float4(input.Position, 1.0));
-    output.vColor = input.Color;
-    output.TexCoord = input.TexCoord;
+    float3 model_position;
+    if (enable_vertex_blending > 0.0)
+    {
+        // TODO
+    }
+    else
+    {
+        model_position = position;
+    }
     
-    return output;
+    float3 position_world_space = mul(model_matrix, float4(model_position, 1.0)).xyz;
+    
+    return mul(LightProjView[0], float4(position_world_space, 1.0));
 }
 
-float4 frag(float4 position) : SV_Target
+[earlydepthstencil]
+float4 frag(float4 position : SV_Position) : SV_Target
 {
     return position.z;
 }

@@ -79,27 +79,40 @@ public:
                             RHIDeviceSize dst_offset,
                             RHIDeviceSize size) override;
 
+
     // command
+    virtual bool              PrepareBeforePass(std::function<void()> on_recreate_swapchain) override;
+    virtual void              SubmitRendering(std::function<void()> on_recreate_swapchain) override;
     virtual RHICommandBuffer* BeginSingleTimeCommands() override;
     virtual void              EndSingleTimeCommands(RHICommandBuffer* command_buffer) override;
+    virtual void              BlitImage(RHICommandBuffer*             command_buffer,
+                                        RHIImage*                     src_image,
+                                        RHIImageLayout                src_image_layout,
+                                        RHIImage*                     dst_image,
+                                        RHIImageLayout                dst_image_layout,
+                                        std::span<const RHIImageBlit> regions,
+                                        RHIFilter                     filter) override;
     
     virtual void BeginRenderPass(RHICommandBuffer* command_buffer, const RHIRenderPassBeginInfo* begin_info, RHISubpassContents contents) override;
     virtual void NextSubpass(RHICommandBuffer* command_buffer, RHISubpassContents contents) override;
     virtual void EndRenderPass(RHICommandBuffer* command_buffer) override;
     virtual void BindPipeline(RHICommandBuffer* command_buffer, RHIPipelineBindPoint pipelineBindPoint, RHIPipeline* pipeline) override;
-    virtual void BindDescriptorSets(RHICommandBuffer*                              command_buffer,
-                                    RHIPipelineBindPoint                           pipeline_bind_point,
-                                    RHIPipelineLayout*                             layout,
-                                    uint32_t                                       first_set,
-                                    vk::ArrayProxy<const RHIDescriptorSet*> const& descriptor_sets,
-                                    vk::ArrayProxy<const uint32_t> const&          dynamic_offsets) override;
-    virtual void BindVertexBuffers(RHICommandBuffer* command_buffer, uint32_t first_binding, vk::ArrayProxy<const RHIBuffer*> const& buffers, vk::ArrayProxy<const RHIDeviceSize> const& offsets) override;
+    virtual void BindDescriptorSets(RHICommandBuffer*                  command_buffer,
+                                    RHIPipelineBindPoint               pipeline_bind_point,
+                                    RHIPipelineLayout*                 layout,
+                                    uint32_t                           first_set,
+                                    std::span<const RHIDescriptorSet*> descriptor_sets,
+                                    std::span<const uint32_t>          dynamic_offsets) override;
+    virtual void BindVertexBuffers(RHICommandBuffer* command_buffer, uint32_t first_binding, std::span<const RHIBuffer*> buffers, std::span<const RHIDeviceSize> offsets) override;
     virtual void BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType) override;
-    virtual void UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
-                                      const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies) override;
+    virtual void UpdateDescriptorSets(std::span<const RHIWriteDescriptorSet> escriptor_writes, std::span<const RHICopyDescriptorSet> escriptor_copies) override;
+    virtual void DrawIndexed(RHICommandBuffer* commandBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) override;
 
     virtual void PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color) override;
     virtual void PopEvent(RHICommandBuffer* commond_buffer) override;
+
+    virtual void ResetCommandPool() override;
+    virtual void WaitForFences() override;
 
     // query
     virtual RHIPhysicalDeviceProperties GetPhysicalDeviceProperties() override;
@@ -141,11 +154,13 @@ public:
     VulkanQueue ComputeQueue;
     VulkanQueue PresentQueue;
 
-    vk::SwapchainKHR               SwapChain;
-    vk::Format                     SwapChainImageFormat;
+    vk::SwapchainKHR             SwapChain;
+    vk::Format                   SwapChainImageFormat;
     std::vector<RHIImage*>       SwapChainImages;
     std::vector<RHIImageView*>   SwapChainImageViews;
     std::vector<vk::Framebuffer> SwapChainFrameBuffers;
+
+    uint32_t CurrentSwapchainImageIndex;
 
     RHIImage*        ColorImage;
     RHIDeviceMemory* ColorImageMemory;
@@ -162,7 +177,8 @@ public:
 
     VulkanDescriptorPool* DescriptorPool;
 
-    VulkanCommandPool              CommandPool;
+    VulkanCommandPool                DefaultCommandPool;
+    std::vector<VulkanCommandPool>   CommandPools;
     std::vector<RHICommandBufferRef> CommandBuffers;
 
     VulkanCommandBuffer*            CurrentCommandBuffer;
@@ -187,7 +203,9 @@ public:
     bool                     EnableValidationLayers {false};
     bool                     EnableDebugUtilsLabel {false};
 
-    std::vector<char const*> DeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    uint32_t VulkanApiVersion {VK_API_VERSION_1_3};
+
+    std::vector<char const*> DeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME};
 
     uint32_t MaxVertexBlendingMeshCount {256};
     uint32_t MaxMaterialCount {256};

@@ -1,0 +1,32 @@
+{
+  "Components": [
+    {
+      "$type_name": "TransformComponent",
+      "$context": {
+        "Transform": {
+          "Position": [0, 0, 0],
+          "Scale": [1, 1, 1],
+          "Quaternionf": [0, 0, 0, 1]
+        }
+      }
+    },
+    {
+      "$type_name": "MeshComponent",
+      "$context": {
+        "MeshRes": {
+          "SubMeshes": [
+            {
+              "MeshFileRef": "asset/objects/resource/viking_room.obj",
+              "Material": "asset/objects/Material/mesh_test.material.json",
+              "Transform": {
+                "Position": [0, 0, 0],
+                "Scale": [1, 1, 1],
+                "Quaternionf": [0, 0, 0, 1]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

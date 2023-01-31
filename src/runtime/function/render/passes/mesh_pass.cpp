@@ -9,6 +9,10 @@ void MeshPass::Initialize(const RenderPassInitInfo* init_info)
     SetupDescriptorSet();
 }
 
+void MeshPass::PostInitialize() {}
+
+void MeshPass::SetCommonInfo(RenderPassCommonInfo* common_info) {}
+
 void MeshPass::PrepareData(RenderPassPrepareInfo* prepare_info) {}
 
 void MeshPass::UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info) {}
@@ -17,6 +21,8 @@ void MeshPass::Draw() {}
 
 
 void MeshPass::SetupAttachments() {}
+
+void MeshPass::SetupFramebuffer() {}
 
 void MeshPass::SetupDescriptorSetLayout() {}
 

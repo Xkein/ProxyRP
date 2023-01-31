@@ -40,17 +40,36 @@ String FileManager::ReadString(const Char* path)
     return text;
 }
 
+bool FileManager::Write(const Char* path, byte* data, size_t count)
+{
+    std::ofstream file(path, std::ios::binary);
+
+    if (!file.is_open())
+    {
+        LOG_ERROR("failed to write {}", path);
+        return false;
+    }
+
+    file.write((char*)data, count);
+
+    file.flush();
+    file.close();
+
+    return true;
+}
+
 bool FileManager::WriteString(const Char* path, const Char* str)
 {
     std::ofstream file(path);
     if (!file)
     {
-        LOG_ERROR("failed to open {}", path);
+        LOG_ERROR("failed to write {}", path);
         return false;
     }
 
     file << str;
     file.flush();
+    file.close();
 
     return true;
 }

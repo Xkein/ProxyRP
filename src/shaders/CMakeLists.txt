@@ -10,7 +10,13 @@ set_source_files_properties(${SHADER_FILES} PROPERTIES VS_TOOL_OVERRIDE "None")
 
 set_target_properties("${TARGET_NAME}" PROPERTIES FOLDER "Engine" )
 
+set(_SHADER_FILES ${SHADER_FILES})
+set(_SHADER_HEADERS ${SHADER_FILES})
+list(FILTER _SHADER_FILES EXCLUDE REGEX "shaders/common/")
+list(FILTER _SHADER_HEADERS INCLUDE REGEX "shaders/common/")
+
 add_custom_command(TARGET ${TARGET_NAME} POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E make_directory "${ENGINE_OUTPUT_DIR}/shaders/common"
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SHADER_FILES} "${ENGINE_OUTPUT_DIR}/shaders"
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_SHADER_FILES} "${ENGINE_OUTPUT_DIR}/shaders"
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_SHADER_HEADERS} "${ENGINE_OUTPUT_DIR}/shaders/common"
 )

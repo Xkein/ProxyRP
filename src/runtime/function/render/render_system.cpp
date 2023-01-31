@@ -18,6 +18,8 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     RHIInitInfo rhi_init_info;
     rhi_init_info.WindowSystem = init_info.WindowSystem;
 
+    auto compiler_work = __CompileAllShaders();
+
     RHI = std::make_shared<VulkanRHI>();
     RHI->Initialize(rhi_init_info);
 
@@ -27,25 +29,22 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     GlobalRenderingResource global_rendering_res;
     GAssetManager->LoadAsset(GConfigManager->Global.GlobalRenderingResourceUrl, global_rendering_res);
 
-    __CompileAllShaders().wait();
+    compiler_work.wait();
 
     Camera = std::make_shared<RenderCamera>();
 
     Scene = std::make_shared<RenderScene>();
     Scene->ResourceManager = ResourceManager;
+    Scene->SetVisibleNodesReference();
 
     Renderer = std::make_shared<ForwardSceneRenderer>();
-    Renderer->RHI    = RHI;
-    Renderer->Scene  = Scene;
     RendererInitInfo renderer_init_info;
+    renderer_init_info.RHI = RHI;
+    renderer_init_info.Scene = Scene;
+    renderer_init_info.ResourceManager = ResourceManager;
     Renderer->Initialize(&renderer_init_info);
 
-    RenderPipelineInitInfo pipeline_init_info;
-    Pipeline = std::make_shared<ForwardPipeline>();
-    Pipeline->RHI = RHI;
-    Pipeline->Initialize(&pipeline_init_info);
-
-    ResourceManager->PassCommon = Pipeline->PassCommon;
+    ResourceManager->PassCommon = Renderer->Pipeline->PassCommon;
 }
 
 void RenderSystem::Clear()
@@ -81,17 +80,14 @@ void RenderSystem::Tick(float delta_time)
 
     Scene->UpdateVisibleObjects(Camera);
 
-    RenderPipelinePrepareInfo pipeline_prepare_info;
-    pipeline_prepare_info.Scene           = Scene;
-    pipeline_prepare_info.ResourceManager = ResourceManager;
-    Pipeline->PreparePassData(&pipeline_prepare_info);
+    Renderer->PrepareData();
 
     Renderer->Render();
 }
 
 void RenderSystem::InitializeUIRenderBackend(WindowUI* window_ui)
 {
-    Pipeline->InitializeUIRenderBackend(window_ui);
+    Renderer->InitializeUIRenderBackend(window_ui);
 }
 
 void RenderSystem::SwapLogicRenderData()
@@ -133,7 +129,7 @@ void RenderSystem::ProcessSwapData()
     {
         while (!swap_data.GameObjectResource->IsEmpty())
         {
-            GameObjectDesc gobject = swap_data.GameObjectToDelete->PopAndGetNextProcessObject();
+            GameObjectDesc gobject = swap_data.GameObjectResource->PopAndGetNextProcessObject();
 
             for (size_t part_index = 0; part_index < gobject.GetObjectParts().size(); part_index++)
             {

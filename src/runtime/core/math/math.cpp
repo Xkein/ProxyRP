@@ -10,9 +10,9 @@ Matrix4x4 LookAt(const Vector3f& eye_position, const Vector3f& target_position, 
     Vector3f u = s.cross(f);
 
     Matrix4x4 view_mat;
-    view_mat << s, -s.dot(eye_position),
-                u, -u.dot(eye_position),
-                -f, f.dot(eye_position),
+    view_mat << s.x(), s.y(), s.z(), -s.dot(eye_position),
+                u.x(), u.y(), u.z(), -u.dot(eye_position),
+                -f.x(), -f.y(), -f.z(), f.dot(eye_position),
                 0, 0, 0, 1;
     return view_mat;
 }

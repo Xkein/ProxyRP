@@ -18,6 +18,7 @@ using RHIImageAspectFlags = vk::ImageAspectFlags;
 using RHIImageAspectFlagBits = vk::ImageAspectFlagBits;
 using RHIImageViewType = vk::ImageViewType;
 using RHIImageLayout = vk::ImageLayout;
+using RHIFilter = vk::Filter;
 
 using RHIBufferUsageFlags = vk::BufferUsageFlags;
 using RHIBufferUsageFlagBits = vk::BufferUsageFlagBits;

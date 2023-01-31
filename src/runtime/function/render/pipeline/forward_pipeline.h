@@ -11,6 +11,8 @@ public:
     virtual void PreparePassData(RenderPipelinePrepareInfo* prepare_info) override;
     virtual void PassUpdateAfterRecreateSwapchain() override;
 
+    virtual void Draw() override;
+
 public:
 
     std::shared_ptr<RenderPass> DirectionalLightPass;

@@ -109,48 +109,84 @@ void DirectionalLightPass::Draw()
     {
         // TODO: render from near to far
 
-       for (auto& [mesh, mesh_nodes] : mesh_instanced)
-       {
+        for (auto& [mesh, mesh_nodes] : mesh_instanced)
+        {
             uint32_t total_instance_count = mesh_nodes.size();
             if (total_instance_count)
             {
                 // bind per mesh
-                RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 1, {mesh->VertexBlendingDescriptorSet.get()}, {});
+                const RHIDescriptorSet* vertex_blending_descriptor_sets[] {mesh->VertexBlendingDescriptorSet.get()};
+                RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 1, vertex_blending_descriptor_sets, {});
 
                 const RHIBuffer* vertex_buffers[] {mesh->VertexPositionBuffer.VertexBufferRHI.get()};
-                RHI->BindVertexBuffers(RHI->GetCommandBuffer(), 0, vertex_buffers, {0});
+                RHI->BindVertexBuffers(RHI->GetCommandBuffer(), 0, vertex_buffers, std::array {0ull});
                 RHI->BindIndexBuffer(RHI->GetCommandBuffer(), mesh->IndexBuffer.IndexBufferRHI.get(), 0, RHIIndexType::eUint16);
 
-                
                 uint32_t drawcall_max_instance_count = GMeshPerDrawcallMaxInstanceCount;
-                uint32_t drawcall_count = RoundUp(total_instance_count, drawcall_max_instance_count) / drawcall_max_instance_count;
+                uint32_t drawcall_count              = RoundUp(total_instance_count, drawcall_max_instance_count) / drawcall_max_instance_count;
 
                 for (uint32_t drawcall_index = 0; drawcall_index < drawcall_count; drawcall_index++)
                 {
                     uint32_t current_instance_count = std::min(total_instance_count - drawcall_max_instance_count * drawcall_index, drawcall_max_instance_count);
 
-                    uint32_t perdrawcall_dynamic_offset;
+                    // perdrawcall storage buffer
+                    uint32_t                                                  perdrawcall_dynamic_offset;
                     MeshDirectionalLightShadowPerdrawcallStorageBufferObject* perdrawcall_storage_buffer_object =
                         PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshDirectionalLightShadowPerdrawcallStorageBufferObject>(RHI->GetCurrentFrameIndex(),
                                                                                                                                                           perdrawcall_dynamic_offset);
-                    
+
                     for (uint32_t i = 0; i < current_instance_count; i++)
                     {
-                        perdrawcall_storage_buffer_object->MeshInstances[i].ModelMatrix = *mesh_nodes[drawcall_max_instance_count * drawcall_index + i].ModelMatrix;
-                        perdrawcall_storage_buffer_object->MeshInstances[i].EnableVertexBlending = *mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices ? 1.f : -1.f;
-
+                        perdrawcall_storage_buffer_object->MeshInstances[i].ModelMatrix          = *mesh_nodes[drawcall_max_instance_count * drawcall_index + i].ModelMatrix;
+                        perdrawcall_storage_buffer_object->MeshInstances[i].EnableVertexBlending = mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices ? 1.f : -1.f;
                     }
 
                     // per drawcall vertex blending storage buffer
+                    bool all_enable_vertex_blending = true;
+                    for (uint32_t i = 0; i < current_instance_count; i++)
+                    {
+                        if (!mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices)
+                        {
+                            all_enable_vertex_blending = false;
+                            break;
+                        }
+                    }
 
+                    uint32_t per_drawcall_vertex_blending_dynamic_offset = 0;
+                    if (all_enable_vertex_blending)
+                    {
+                        MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject* per_drawcall_vertex_blending_storage_buffer_object =
+                            PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject>(
+                                RHI->GetCurrentFrameIndex(), per_drawcall_vertex_blending_dynamic_offset);
 
+                        for (uint32_t i = 0; i < current_instance_count; i++)
+                        {
+                            if (mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices)
+                            {
+                                for (uint32_t joint_index = 0; joint_index < mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointCount; joint_index++)
+                                {
+                                    per_drawcall_vertex_blending_storage_buffer_object->JointMatrices[GMeshVertexBlendingMaxJointCount * i + joint_index] =
+                                        mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices[joint_index];
+                                }
+                            }
+                        }
+                    }
+
+                    std::array<uint32_t, 3> dynamic_offsets {perframe_dynamic_offset, perdrawcall_dynamic_offset, per_drawcall_vertex_blending_dynamic_offset};
+                    const RHIDescriptorSet* descriptor_sets[] {DescriptorInfos[0].DescriptorSetRHI.get()};
+                    RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 0, descriptor_sets, dynamic_offsets);
+
+                    RHI->DrawIndexed(RHI->GetCommandBuffer(), mesh->IndexCount, current_instance_count, 0, 0, 0);
                 }
             }
-       }
+        }
     }
     
+    RHI->PopEvent(RHI->GetCommandBuffer());
+
+    RHI->PopEvent(RHI->GetCommandBuffer());
     
-    
+    RHI->EndRenderPass(RHI->GetCommandBuffer());
 }
 
 void DirectionalLightPass::SetupAttachments()
@@ -293,7 +329,7 @@ void DirectionalLightPass::SetupDescriptorSet()
     perdrawcall_storage_buffer_write.descriptorCount        = 1;
     perdrawcall_storage_buffer_write.pBufferInfo            = &perdrawcall_storage_buffer_info;
 
-    RHIWriteDescriptorSet& perdrawcall_vertex_blending_storage_buffer_write = descriptor_writes[1];
+    RHIWriteDescriptorSet& perdrawcall_vertex_blending_storage_buffer_write = descriptor_writes[2];
     perdrawcall_vertex_blending_storage_buffer_write.dstSet                 = (vk::DescriptorSet)*(VulkanDescriptorSet*)descriptor_set;
     perdrawcall_vertex_blending_storage_buffer_write.dstBinding             = 2;
     perdrawcall_vertex_blending_storage_buffer_write.dstArrayElement        = 0;
@@ -318,8 +354,8 @@ void DirectionalLightPass::SetupRenderPass()
     color_attachment.initialLayout             = RHIImageLayout::eUndefined;
     color_attachment.finalLayout               = RHIImageLayout::eShaderReadOnlyOptimal;
 
-    RHIAttachmentDescription& depth_attachment = attachments[0];
-    depth_attachment.format                    = Framebuffer.Attachments[0].Format;
+    RHIAttachmentDescription& depth_attachment = attachments[1];
+    depth_attachment.format                    = Framebuffer.Attachments[1].Format;
     depth_attachment.samples                   = RHISampleCountFlagBits::e1;
     depth_attachment.loadOp                    = RHIAttachmentLoadOp::eClear;
     depth_attachment.storeOp                   = RHIAttachmentStoreOp::eDontCare;
@@ -377,15 +413,13 @@ void DirectionalLightPass::SetupPipelines()
 
     RenderPipelines[0].LayoutRHI = RHIPipelineLayoutRef(RHI->CreatePipelineLayout(&pipeline_layout_create_info));
 
-    RHIShader* vert_shader_module =
-        RHI->CreateShaderModule(FileManager::Read(DirectionalLightShadowVS::StaticType.SourceFile));
-    RHIShader* frag_shader_module =
-        RHI->CreateShaderModule(FileManager::Read(DirectionalLightShadowPS::StaticType.SourceFile));
+    RHIShader* vert_shader_module = RHI->CreateShaderModule(FileManager::Read(DirectionalLightShadowVS::StaticType.GetCachedFilePath()));
+    RHIShader* frag_shader_module = RHI->CreateShaderModule(FileManager::Read(DirectionalLightShadowPS::StaticType.GetCachedFilePath()));
 
     RHIPipelineShaderStageCreateInfo vert_pipeline_shader_stage_create_info {
         .stage  = RHIShaderStageFlagBits::eVertex,
         .module = *(VulkanShader*)vert_shader_module,
-        .pName  = DirectionalLightShadowPS::StaticType.EntryPoint.c_str(),
+        .pName  = DirectionalLightShadowVS::StaticType.EntryPoint.c_str(),
     };
     RHIPipelineShaderStageCreateInfo frag_pipeline_shader_stage_create_info {
         .stage  = RHIShaderStageFlagBits::eFragment,

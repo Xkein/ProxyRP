@@ -1,6 +1,15 @@
 #include "scene_renderer.h"
 #include "function/render/render_camera.h"
 #include "function/render/render_scene.h"
+#include "function/render/render_pipeline.h"
+
+void SceneRenderer::PrepareData()
+{
+    RenderPipelinePrepareInfo pipeline_prepare_info;
+    pipeline_prepare_info.Scene           = Scene;
+    pipeline_prepare_info.ResourceManager = ResourceManager;
+    Pipeline->PreparePassData(&pipeline_prepare_info);
+}
 
 void SceneRenderer::UpdatePerBuffer(std::shared_ptr<RenderCamera> camera)
 {
@@ -13,4 +22,9 @@ void SceneRenderer::UpdatePerBuffer(std::shared_ptr<RenderCamera> camera)
     uint32_t point_light_num = Scene->Light.PointList.Lights.size();
 
     
+}
+
+void SceneRenderer::InitializeUIRenderBackend(WindowUI* window_ui)
+{
+    Pipeline->InitializeUIRenderBackend(window_ui);
 }

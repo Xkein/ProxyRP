@@ -6,6 +6,7 @@
 #include "platform/platform.h"
 #include "platform/string.h"
 
+#include <functional>
 
 class WindowSystem;
 class TextureData;
@@ -23,7 +24,7 @@ public:
     virtual void Initialize(RHIInitInfo init_info) = 0;
     virtual void PrepareContext()                  = 0;
     
-    // allocate and 
+    // allocate and create
     
     virtual RHIDescriptorSet* AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info) = 0;
 
@@ -85,26 +86,38 @@ public:
                             RHIDeviceSize size) = 0;
 
     // command
+    virtual bool              PrepareBeforePass(std::function<void()> on_recreate_swapchain) = 0;
+    virtual void              SubmitRendering(std::function<void()> on_recreate_swapchain) = 0;
     virtual RHICommandBuffer* BeginSingleTimeCommands() = 0;
     virtual void              EndSingleTimeCommands(RHICommandBuffer* command_buffer) = 0;
+
+    virtual void BlitImage(RHICommandBuffer*             command_buffer,
+                           RHIImage*                     src_image,
+                           RHIImageLayout                src_image_layout,
+                           RHIImage*                     dst_image,
+                           RHIImageLayout                dst_image_layout,
+                           std::span<const RHIImageBlit> regions,
+                           RHIFilter                     filter) = 0;
 
     virtual void BeginRenderPass(RHICommandBuffer* command_buffer, const RHIRenderPassBeginInfo* begin_info, RHISubpassContents contents) = 0;
     virtual void NextSubpass(RHICommandBuffer* command_buffer, RHISubpassContents contents) = 0;
     virtual void EndRenderPass(RHICommandBuffer* command_buffer) = 0;
     virtual void BindPipeline(RHICommandBuffer* command_buffer, RHIPipelineBindPoint pipelineBindPoint, RHIPipeline* pipeline) = 0;
-    virtual void BindDescriptorSets(RHICommandBuffer*                             command_buffer,
-                                    RHIPipelineBindPoint                          pipeline_bind_point,
-                                    RHIPipelineLayout*                            layout,
-                                    uint32_t                                      first_set,
-                                    vk::ArrayProxy<const RHIDescriptorSet*> const& descriptor_sets,
-                                    vk::ArrayProxy<const uint32_t> const&         dynamic_offsets) = 0;
-    virtual void BindVertexBuffers(RHICommandBuffer* command_buffer, uint32_t first_binding, vk::ArrayProxy<const RHIBuffer*> const& buffers, vk::ArrayProxy<const RHIDeviceSize> const& offsets) = 0;
-    virtual void BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType)                                                               = 0;
-    virtual void UpdateDescriptorSets(const vk::ArrayProxy<const RHIWriteDescriptorSet>& descriptor_writes,
-                                      const vk::ArrayProxy<const RHICopyDescriptorSet>&  descriptor_copies) = 0;
-
+    virtual void BindDescriptorSets(RHICommandBuffer*                  command_buffer,
+                                    RHIPipelineBindPoint               pipeline_bind_point,
+                                    RHIPipelineLayout*                 layout,
+                                    uint32_t                           first_set,
+                                    std::span<const RHIDescriptorSet*> descriptor_sets,
+                                    std::span<const uint32_t>          dynamic_offsets)  = 0;
+    virtual void BindVertexBuffers(RHICommandBuffer* command_buffer, uint32_t first_binding, std::span<const RHIBuffer*> buffers, std::span<const RHIDeviceSize> offsets)     = 0;
+    virtual void BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType) = 0;
+    virtual void UpdateDescriptorSets(std::span<const RHIWriteDescriptorSet> descriptor_writes, std::span<const RHICopyDescriptorSet> descriptor_copies)                      = 0;
+    virtual void DrawIndexed(RHICommandBuffer* commandBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) = 0;
     virtual void PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color) = 0;
     virtual void PopEvent(RHICommandBuffer* commond_buffer) = 0;
+
+    virtual void ResetCommandPool() = 0;
+    virtual void WaitForFences() = 0;
 
     // query
     virtual RHIPhysicalDeviceProperties GetPhysicalDeviceProperties() = 0;

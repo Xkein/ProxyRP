@@ -24,6 +24,7 @@ public:
 
 private:
     static ShaderCompiledInfo Compile(ShaderType* shader_type, std::shared_ptr<ShaderMap> shader_map);
+    static void               SaveShader(ShaderType* shader_type, ShaderCompiledInfo compiled_info);
 };
 
 

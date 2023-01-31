@@ -11,5 +11,7 @@ public:
 
     PROPERTY()
     String PipeName;
+
+    std::vector<std::shared_ptr<GameObject>> ProxyGObjects;
 };
 

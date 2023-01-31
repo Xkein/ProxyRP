@@ -17,10 +17,10 @@ public:
      * \return 
      */
     template <typename AssetType>
-    bool LoadAsset(const String& asset_url, AssetType& out_asset)
+    bool LoadAsset(StringView asset_url, AssetType& out_asset)
     {
         String asset_path = GetFullPath(asset_url);
-        auto   text       = FileManager::ReadString(asset_path.c_str());
+        auto   text       = FileManager::ReadString(asset_path);
         if (text.empty())
         {
             LOG_ERROR("could not open asset: {}", asset_url);
@@ -40,13 +40,13 @@ public:
      * \return 
      */
     template<typename AssetType>
-    bool SaveAsset(const AssetType& asset, const String& asset_url)
+    bool SaveAsset(const AssetType& asset, StringView asset_url)
     {
         String asset_path = GetFullPath(asset_url);
 
         json asset_json;
         bool ret = Serializer::Write(asset, asset_json);
-        ret &= FileManager::WriteString(asset_url.c_str(), asset_json.dump());
+        ret &= FileManager::WriteString(asset_url, asset_json.dump());
 
         return ret;
     }
@@ -59,7 +59,7 @@ public:
      * \return 
      */
     template<typename AssetType>
-    bool LoadAsset(const String& asset_url, std::shared_ptr<AssetType>& out_asset)
+    bool LoadAsset(StringView asset_url, std::shared_ptr<AssetType>& out_asset)
     {
         std::shared_ptr<AssetType> cached_asset = Registry->GetAsset<AssetType>(asset_url);
         if (cached_asset)
@@ -84,13 +84,13 @@ public:
      * \return 
      */
     template<typename AssetType>
-    bool SaveAsset(const std::shared_ptr<AssetType>& asset, const String& asset_url)
+    bool SaveAsset(const std::shared_ptr<AssetType>& asset, StringView asset_url)
     {
         return Save(*asset, asset_url);
     }
 
 private:
-    String GetFullPath(const String& rel_path) const;
+    String GetFullPath(StringView rel_path) const;
 
     std::shared_ptr<AssetRegistry> Registry;
 };

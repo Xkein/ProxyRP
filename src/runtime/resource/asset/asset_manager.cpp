@@ -4,7 +4,7 @@
 
 #include <filesystem>
 
-String AssetManager::GetFullPath(const String& rel_path) const
+String AssetManager::GetFullPath(StringView rel_path) const
 {
     return std::filesystem::absolute(GConfigManager->EngineRootPath / rel_path).string();
 }

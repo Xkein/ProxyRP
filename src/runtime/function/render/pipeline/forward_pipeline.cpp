@@ -15,7 +15,7 @@ void ForwardPipeline::Initialize(RenderPipelineInitInfo* init_info)
     pass_common_info.RHI        = RHI;
     pass_common_info.PassCommon = PassCommon;
 
-    PassCommon->Initialize();
+    PassCommon->Initialize(&pass_common_info);
 
     DirectionalLightPass->SetCommonInfo(&pass_common_info);
     MeshPass->SetCommonInfo(&pass_common_info);
@@ -46,4 +46,14 @@ void ForwardPipeline::PassUpdateAfterRecreateSwapchain()
 
     DirectionalLightPass->UpdateAfterFramebufferRecreate(&recreate_info);
     MeshPass->UpdateAfterFramebufferRecreate(&recreate_info);
+}
+
+void ForwardPipeline::Draw()
+{
+
+    DirectionalLightPass->Draw();
+
+    MeshPass->Draw();
+
+
 }

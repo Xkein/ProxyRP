@@ -26,7 +26,6 @@ using RHICopyDescriptorSet = vk::CopyDescriptorSet;
 using RHIDescriptorImageInfo = vk::DescriptorImageInfo;
 
 using RHIPipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo;
-
 using RHIPipelineShaderStageCreateInfo = vk::PipelineShaderStageCreateInfo;
 using RHIPipelineVertexInputStateCreateInfo = vk::PipelineVertexInputStateCreateInfo;
 using RHIPipelineInputAssemblyStateCreateInfo = vk::PipelineInputAssemblyStateCreateInfo;
@@ -43,6 +42,8 @@ using RHIDynamicState = vk::DynamicState;
 
 using RHIVertexInputBindingDescription = vk::VertexInputBindingDescription;
 using RHIVertexInputAttributeDescription = vk::VertexInputAttributeDescription;
+
+using RHIImageBlit = vk::ImageBlit;
 
 using RHIExtent2D = vk::Extent2D;
 using RHIViewport = vk::Viewport;

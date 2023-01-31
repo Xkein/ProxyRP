@@ -46,7 +46,7 @@ public:
     virtual void Draw() = 0;
 
 public:
-    struct Framebuffer
+    struct _Framebuffer
     {
         int               Width;
         int               Height;
@@ -59,5 +59,5 @@ public:
 protected:
     std::shared_ptr<RHI> RHI;
 
-    Framebuffer Framebuffer;
+    _Framebuffer Framebuffer;
 };

@@ -11,6 +11,10 @@ void ConfigManager::Initialize()
     AssetPath       = root_path / "asset";
     ShaderPath      = root_path / "shaders";
     ShaderCachePath = root_path / "shaders" / "cache";
+    if (!std::filesystem::exists(ShaderCachePath))
+    {
+        std::filesystem::create_directory(ShaderCachePath);
+    }
 
     GAssetManager->LoadAsset("asset/config/global.config.json", Global);
     GAssetManager->LoadAsset("asset/config/engine.config.json", Engine);
