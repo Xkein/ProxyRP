@@ -2,7 +2,6 @@
 #include "function/render/vulkan_rhi/vulkan_rhi.h"
 #include "render_pass_common.h"
 #include "function/render/shader.h"
-#include "function/render/shader_map.h"
 #include "function/render/render_mesh.h"
 #include "function/render/render_scene.h"
 #include "platform/file/file_manager.h"
@@ -25,23 +24,16 @@ IMPLEMENT_SHADER_TYPE(DirectionalLightShadowPS, "directional_light_shadow.hlsl",
 
 void DirectionalLightPass::Initialize(const RenderPassInitInfo* init_info)
 {
+    SetupDescriptorSetLayout();
     SetupAttachments();
     SetupRenderPass();
     SetupFramebuffer();
-    SetupDescriptorSetLayout();
 }
 
 void DirectionalLightPass::PostInitialize()
 {
     SetupPipelines();
     SetupDescriptorSet();
-}
-
-void DirectionalLightPass::SetCommonInfo(RenderPassCommonInfo* common_info)
-{
-    RenderPass::SetCommonInfo(common_info);
-
-    PassCommon = common_info->PassCommon;
 }
 
 void DirectionalLightPass::PrepareData(RenderPassPrepareInfo* prepare_info)
@@ -187,6 +179,11 @@ void DirectionalLightPass::Draw()
     RHI->PopEvent(RHI->GetCommandBuffer());
     
     RHI->EndRenderPass(RHI->GetCommandBuffer());
+}
+
+RHIImageViewRef DirectionalLightPass::GetDirectionalLightShadowMap() const
+{
+    return Framebuffer.Attachments[0].ImageViewRHI;
 }
 
 void DirectionalLightPass::SetupAttachments()
@@ -486,6 +483,7 @@ void DirectionalLightPass::SetupPipelines()
         .srcAlphaBlendFactor = RHIBlendFactor::eOne,
         .dstAlphaBlendFactor = RHIBlendFactor::eZero,
         .alphaBlendOp        = RHIBlendOp::eAdd,
+        .colorWriteMask      = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
     };
 
     RHIPipelineColorBlendStateCreateInfo color_blend_state_create_info {

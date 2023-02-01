@@ -179,6 +179,7 @@ std::shared_ptr<RenderMesh> RenderResourceManager::GetOrCreateRenderMesh(const R
     }
 
     std::shared_ptr<RenderMesh> mesh = std::make_shared<RenderMesh>();
+    mesh->MeshBoundingBox            = entity.BoundingBox;
 
     size_t index_buffer_size = mesh_data.MeshData.IndexBuffer->Size;
     byte*  index_buffer_data = mesh_data.MeshData.IndexBuffer->Data;

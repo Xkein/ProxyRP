@@ -152,11 +152,11 @@ void RenderSystem::ProcessSwapData()
                 if (!is_mesh_loaded)
                 {
                     mesh_data = ResourceManager->LoadMeshData(mesh_source, render_entity.BoundingBox);
-                    Scene->CachedBoundingBox[mesh_source] = render_entity.BoundingBox;
                 }
                 else
                 {
-                    render_entity.BoundingBox = Scene->CachedBoundingBox[mesh_source];
+                    auto render_mesh = ResourceManager->GetEntityMesh(render_entity);
+                    render_entity.BoundingBox = render_mesh->MeshBoundingBox;
                 }
 
                 render_entity.MeshAssetId = Scene->GetMeshAssetIdAllocator().AllocGuid(mesh_source);

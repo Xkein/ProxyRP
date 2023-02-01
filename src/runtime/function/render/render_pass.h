@@ -59,5 +59,11 @@ public:
 protected:
     std::shared_ptr<RHI> RHI;
 
+    std::shared_ptr<RenderPassCommon> PassCommon;
+
     _Framebuffer Framebuffer;
+
+    std::vector<Descriptor> DescriptorInfos;
+    std::vector<Pipeline>   RenderPipelines;
+
 };

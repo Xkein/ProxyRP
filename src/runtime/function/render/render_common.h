@@ -26,6 +26,12 @@ struct ScenePointLight
     alignas(16) Vector3f Intensity;
 };
 
+struct MeshInstance
+{
+    float EnableVertexBlending;
+    alignas(16) Matrix4x4 ModelMatrix;
+};
+
 struct MeshPerframeStorageBufferObject
 {
     Matrix4x4 ProjViewMatrix;
@@ -37,12 +43,15 @@ struct MeshPerframeStorageBufferObject
     alignas(16) Matrix4x4 DirectionalLightProjView;
 };
 
-struct MeshInstance
+struct MeshPerdrawcallStorageBufferObject
 {
-    float EnableVertexBlending;
-    alignas(16) Matrix4x4 ModelMatrix;
+    MeshInstance MeshInstances[GMeshPerDrawcallMaxInstanceCount];
 };
 
+struct MeshPerdrawcallVertexBlendingStorageBufferObject
+{
+    Matrix4x4 JointMatrices[GMeshVertexBlendingMaxJointCount * GMeshPerDrawcallMaxInstanceCount];
+};
 
 struct MeshDirectionalLightShadowPerframeStorageBufferObject
 {

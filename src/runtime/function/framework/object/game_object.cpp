@@ -79,6 +79,15 @@ Component* GameObject::GetComponent(const rttr::type& type)
     return nullptr;
 }
 
+void GameObject::RemoveComponent(const rttr::type& type)
+{
+    auto iter = std::find_if(Components.begin(), Components.end(), [&](const Instance<Component>& instance) { return instance.GetType() == type; });
+    if (iter == Components.end())
+        return;
+
+    Components.erase(iter);
+}
+
 void GameObject::Clear()
 {
     for (auto& component : Components)

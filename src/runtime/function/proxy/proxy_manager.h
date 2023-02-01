@@ -8,6 +8,8 @@ CLASS(ProxyManager)
     REFLECTION_CLASS_BODY(ProxyManager);
 
 public:
+    void CreateProxyGameObject();
+
 
     PROPERTY()
     String PipeName;

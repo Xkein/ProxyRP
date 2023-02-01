@@ -5,6 +5,7 @@
 #include "function/render/render_type.h"
 #include "function/render/render_entity.h"
 #include "function/render/render_object.h"
+#include "function/render/render_common.h"
 #include "function/render/guid_allocator.h"
 #include "function/framework/object/object_id_allocator.h"
 
@@ -33,7 +34,9 @@ public:
         PointLightList   PointList;
     } Light;
 
+    // storage buffer objects
     Matrix4x4 LightProjView;
+    MeshPerframeStorageBufferObject PerframeStorageBufferObject;
     
     std::vector<RenderEntity> RenderEntities;
     
@@ -66,8 +69,6 @@ private:
     GuidAllocator<MaterialSourceDesc> MaterialAssetIdAllocator;
 
     std::unordered_map<uint32_t, GameObjectID> MeshObjectIdMap;
-
-    std::unordered_map<MeshSourceDesc, BoundingBox> CachedBoundingBox;
 
     std::shared_ptr<RenderResourceManager> ResourceManager;
 };

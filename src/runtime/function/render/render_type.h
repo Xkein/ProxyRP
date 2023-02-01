@@ -2,6 +2,7 @@
 
 #include "rhi_definition.h"
 #include "render_resource.h"
+#include "core/math/axis_aligned.h"
 #include "core/math/vector.h"
 #include "core/math/matrix.h"
 #include "platform/platform.h"
@@ -119,6 +120,8 @@ struct RenderMesh
     uint32_t IndexCount;
 
     IndexBuffer IndexBuffer;
+
+    BoundingBox MeshBoundingBox;
 };
 
 struct PBRMaterial

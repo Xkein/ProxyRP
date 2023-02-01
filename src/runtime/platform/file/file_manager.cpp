@@ -11,6 +11,7 @@ std::vector<byte> FileManager::Read(const Char* path)
     if (!file.is_open())
     {
         LOG_ERROR("failed to open {}", path);
+        return {};
     }
 
     size_t            fileSize = (size_t)file.tellg();
@@ -31,6 +32,7 @@ String FileManager::ReadString(const Char* path)
     if (!file.is_open())
     {
         LOG_ERROR("failed to open {}", path);
+        return "";
     }
 
     std::stringstream buffer;

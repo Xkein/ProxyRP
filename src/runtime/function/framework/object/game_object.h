@@ -48,6 +48,21 @@ public:
         return Components;
     }
 
+    template<typename TComponent>
+    TComponent* AddComponent()
+    {
+        Instance<Component> instance(rttr::type::get<TComponent>(), new TComponent());
+        Components.emplace_back(std::move(instance));
+    }
+
+    void RemoveComponent(const rttr::type& type);
+    template<typename TComponent>
+    void RemoveComponent()
+    {
+        RemoveComponent(rttr::type::get<TComponent>());
+    }
+
+
 private:
     void Clear();
 

@@ -649,7 +649,7 @@ void VulkanRHI::DrawIndexed(RHICommandBuffer* command_buffer, uint32_t indexCoun
     vk_command_buffer.drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
-void VulkanRHI::PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color)
+void VulkanRHI::PushEvent(RHICommandBuffer* command_buffer, const Char* name, std::array<float, 4> color)
 {
     if (!EnableDebugUtilsLabel)
         return;
@@ -659,11 +659,23 @@ void VulkanRHI::PushEvent(RHICommandBuffer* commond_buffer, const Char* name, st
         .color      = color,
     };
 
-    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.beginDebugUtilsLabelEXT(label_info, DispatchDynamic);
+    static_cast<VulkanCommandBuffer*>(command_buffer)->Resource.beginDebugUtilsLabelEXT(label_info, DispatchDynamic);
 }
-void VulkanRHI::PopEvent(RHICommandBuffer* commond_buffer)
+void VulkanRHI::PopEvent(RHICommandBuffer* command_buffer)
 {
-    static_cast<VulkanCommandBuffer*>(commond_buffer)->Resource.endDebugUtilsLabelEXT(DispatchDynamic);
+    static_cast<VulkanCommandBuffer*>(command_buffer)->Resource.endDebugUtilsLabelEXT(DispatchDynamic);
+}
+
+void VulkanRHI::SetViewport(RHICommandBuffer* command_buffer, uint32_t first_viewpor, std::span<const RHIViewport> viewports)
+{
+    vk::CommandBuffer vk_command_buffer = VulkanRHIConverter::Convert(*command_buffer);
+    vk_command_buffer.setViewport(first_viewpor, viewports);
+}
+
+void VulkanRHI::SetScissor(RHICommandBuffer* command_buffer, uint32_t first_scissor, std::span<const RHIRect2D> scissors)
+{
+    vk::CommandBuffer vk_command_buffer = VulkanRHIConverter::Convert(*command_buffer);
+    vk_command_buffer.setScissor(first_scissor, scissors);
 }
 
 void VulkanRHI::ResetCommandPool()
@@ -725,6 +737,12 @@ uint8_t VulkanRHI::GetCurrentFrameIndex() const
     return CurrentFrame;
 }
 
+RHISampleCountFlagBits VulkanRHI::GetMsaaSampleCount() const
+{
+    //return MsaaSamples;
+    return RHISampleCountFlagBits::e1;
+}
+
 void VulkanRHI::Clear()
 {
     if (EnableValidationLayers)
@@ -768,6 +786,11 @@ void VulkanRHI::DestroyImageView(RHIImageView* image_view)
 void VulkanRHI::DestroyShaderModule(RHIShader* shader)
 {
     Device->destroyShaderModule(*(VulkanShader*)shader);
+}
+
+void VulkanRHI::DestroyFramebuffer(RHIFramebuffer* framebuffer)
+{
+    Device->destroyFramebuffer(VulkanRHIConverter::Convert(*framebuffer));
 }
 
 void VulkanRHI::FreeMemory(RHIDeviceMemory* memory)
@@ -1067,7 +1090,7 @@ void VulkanRHI::CreateColorResources()
                 {},
                 1,
                 1,
-                MsaaSamples);
+                GetMsaaSampleCount());
 
     CreateImageView(ColorImage, format, vk::ImageAspectFlagBits::eColor, vk::ImageViewType::e2D, 1, 1, ColorImageView);
 }
@@ -1085,7 +1108,7 @@ void VulkanRHI::CreateDepthResources()
                 {},
                 1,
                 1,
-                MsaaSamples);
+                GetMsaaSampleCount());
 
     CreateImageView(DepthImage, DepthImageFormat, vk::ImageAspectFlagBits::eDepth, vk::ImageViewType::e2D, 1, 1, DepthImageView);
 

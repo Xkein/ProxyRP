@@ -10,34 +10,42 @@ void MeshComponent::PostLoadResource(std::weak_ptr<GameObject> parent_object)
 {
     Component::PostLoadResource(parent_object);
 
-    std::shared_ptr<AssetManager> asset_manager = GAssetManager;
-
-    RawMeshes.resize(MeshRes.SubMeshes.size());
+    RawMeshes.reserve(MeshRes.SubMeshes.size());
 
     for (size_t index = 0; index < MeshRes.SubMeshes.size(); index++)
     {
-        const SubMeshResource& sub_mesh       = MeshRes.SubMeshes[index];
-        GameObjectPartDesc&    mesh_part_desc = RawMeshes[index];
-
-        mesh_part_desc.MeshDesc.MeshFile        = sub_mesh.MeshFileRef;
-        mesh_part_desc.MaterialDesc.WithTexture = !sub_mesh.Material.empty();
-
-        if (mesh_part_desc.MaterialDesc.WithTexture)
-        {
-            MaterialResource material_res;
-            asset_manager->LoadAsset(sub_mesh.Material, material_res);
-
-            mesh_part_desc.MaterialDesc.BaseColorTexture         = material_res.BaseColorFile;
-            mesh_part_desc.MaterialDesc.NormalTexture            = material_res.NormalFile;
-            mesh_part_desc.MaterialDesc.MetallicRoughnessTexture = material_res.MetallicRoughnessFile;
-            mesh_part_desc.MaterialDesc.OcclusionTexture         = material_res.OcclusionFile;
-            mesh_part_desc.MaterialDesc.EmissiveTexture          = material_res.EmissiveFile;
-        }
-
-        Matrix4x4 object_space_transform             = sub_mesh.Transform.GetMatrix();
-        mesh_part_desc.TransformDesc.TransformMatrix = object_space_transform;
+        LoadMeshResource(MeshRes.SubMeshes[index]);
     }
 
+}
+
+void MeshComponent::AddMeshResource(SubMeshResource sub_mesh_res) {
+    LoadMeshResource(MeshRes.SubMeshes.emplace_back(std::move(sub_mesh_res)));
+}
+
+
+void MeshComponent::LoadMeshResource(const SubMeshResource& sub_mesh_res)
+{
+    std::shared_ptr<AssetManager> asset_manager  = GAssetManager;
+    GameObjectPartDesc& mesh_part_desc = RawMeshes.emplace_back();
+
+    mesh_part_desc.MeshDesc.MeshFile        = sub_mesh_res.MeshFileRef;
+    mesh_part_desc.MaterialDesc.WithTexture = !sub_mesh_res.Material.empty();
+
+    if (mesh_part_desc.MaterialDesc.WithTexture)
+    {
+        MaterialResource material_res;
+        asset_manager->LoadAsset(sub_mesh_res.Material, material_res);
+
+        mesh_part_desc.MaterialDesc.BaseColorTexture         = material_res.BaseColorFile;
+        mesh_part_desc.MaterialDesc.NormalTexture            = material_res.NormalFile;
+        mesh_part_desc.MaterialDesc.MetallicRoughnessTexture = material_res.MetallicRoughnessFile;
+        mesh_part_desc.MaterialDesc.OcclusionTexture         = material_res.OcclusionFile;
+        mesh_part_desc.MaterialDesc.EmissiveTexture          = material_res.EmissiveFile;
+    }
+
+    Matrix4x4 object_space_transform             = sub_mesh_res.Transform.GetMatrix();
+    mesh_part_desc.TransformDesc.TransformMatrix = object_space_transform;
 }
 
 void MeshComponent::Tick(float delta_time)

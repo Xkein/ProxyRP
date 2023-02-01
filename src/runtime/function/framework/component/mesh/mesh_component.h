@@ -13,7 +13,11 @@ public:
 
     virtual void Tick(float delta_time) override;
 
+    void AddMeshResource(SubMeshResource sub_mesh_res);
+
 private:
+    void LoadMeshResource(const SubMeshResource& sub_mesh_res);
+
     PROPERTY()
     MeshComponentResource MeshRes;
 

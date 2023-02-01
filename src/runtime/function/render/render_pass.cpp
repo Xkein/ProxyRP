@@ -2,5 +2,6 @@
 
 void RenderPass::SetCommonInfo(RenderPassCommonInfo* common_info)
 {
-    RHI = common_info->RHI;
+    RHI        = common_info->RHI;
+    PassCommon = common_info->PassCommon;
 }

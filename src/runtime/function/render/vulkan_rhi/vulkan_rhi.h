@@ -108,8 +108,10 @@ public:
     virtual void UpdateDescriptorSets(std::span<const RHIWriteDescriptorSet> escriptor_writes, std::span<const RHICopyDescriptorSet> escriptor_copies) override;
     virtual void DrawIndexed(RHICommandBuffer* commandBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) override;
 
-    virtual void PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color) override;
-    virtual void PopEvent(RHICommandBuffer* commond_buffer) override;
+    virtual void PushEvent(RHICommandBuffer* command_buffer, const Char* name, std::array<float, 4> color) override;
+    virtual void PopEvent(RHICommandBuffer* command_buffer) override;
+    virtual void SetViewport(RHICommandBuffer* command_buffer, uint32_t first_viewpor, std::span<const RHIViewport> viewports) override;
+    virtual void SetScissor(RHICommandBuffer* command_buffer, uint32_t first_scissor, std::span<const RHIRect2D> scissors) override;
 
     virtual void ResetCommandPool() override;
     virtual void WaitForFences() override;
@@ -122,6 +124,7 @@ public:
     virtual RHIDepthImageDesc  GetDepthImageInfo() const override;
     virtual uint8_t            GetMaxFramesInFlight() const override;
     virtual uint8_t            GetCurrentFrameIndex() const override;
+    virtual RHISampleCountFlagBits GetMsaaSampleCount() const override;
     
     // destroy
     virtual void Clear() override;
@@ -130,6 +133,7 @@ public:
     virtual void DestroyImage(RHIImage* image) override;
     virtual void DestroyImageView(RHIImageView* image_view) override;
     virtual void DestroyShaderModule(RHIShader* shader) override;
+    virtual void DestroyFramebuffer(RHIFramebuffer* framebuffer) override;
 
     // memory
     virtual void FreeMemory(RHIDeviceMemory* memory) override;

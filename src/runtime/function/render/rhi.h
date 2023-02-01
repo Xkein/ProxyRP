@@ -113,8 +113,10 @@ public:
     virtual void BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType) = 0;
     virtual void UpdateDescriptorSets(std::span<const RHIWriteDescriptorSet> descriptor_writes, std::span<const RHICopyDescriptorSet> descriptor_copies)                      = 0;
     virtual void DrawIndexed(RHICommandBuffer* commandBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) = 0;
-    virtual void PushEvent(RHICommandBuffer* commond_buffer, const Char* name, std::array<float, 4> color) = 0;
-    virtual void PopEvent(RHICommandBuffer* commond_buffer) = 0;
+    virtual void PushEvent(RHICommandBuffer* command_buffer, const Char* name, std::array<float, 4> color) = 0;
+    virtual void PopEvent(RHICommandBuffer* command_buffer) = 0;
+    virtual void SetViewport(RHICommandBuffer* command_buffer, uint32_t first_viewpor, std::span<const RHIViewport> viewports)                                                = 0;
+    virtual void SetScissor(RHICommandBuffer* command_buffer, uint32_t first_scissor, std::span<const RHIRect2D> scissors)                                                      = 0;
 
     virtual void ResetCommandPool() = 0;
     virtual void WaitForFences() = 0;
@@ -127,6 +129,7 @@ public:
     virtual RHIDepthImageDesc           GetDepthImageInfo() const = 0;
     virtual uint8_t                     GetMaxFramesInFlight() const = 0;
     virtual uint8_t                     GetCurrentFrameIndex() const = 0;
+    virtual RHISampleCountFlagBits      GetMsaaSampleCount() const    = 0;
 
     // destroy
     virtual void Clear() = 0;
@@ -135,6 +138,7 @@ public:
     virtual void DestroyImage(RHIImage* image) = 0;
     virtual void DestroyImageView(RHIImageView* image_view) = 0;
     virtual void DestroyShaderModule(RHIShader* shader) = 0;
+    virtual void DestroyFramebuffer(RHIFramebuffer* framebuffer) = 0;
 
     // memory
     virtual void FreeMemory(RHIDeviceMemory* memory) = 0;

@@ -24,6 +24,7 @@ void ForwardPipeline::Initialize(RenderPipelineInitInfo* init_info)
     DirectionalLightPass->Initialize(&directional_light_pass_init_info);
 
     MeshPassInitInfo mesh_pass_init_info;
+    mesh_pass_init_info.DirectionalLightShadowMap = static_cast<::DirectionalLightPass*>(DirectionalLightPass.get())->GetDirectionalLightShadowMap();
     MeshPass->Initialize(&mesh_pass_init_info);
 
     DirectionalLightPass->PostInitialize();

@@ -16,11 +16,12 @@ class DirectionalLightPass : public RenderPass
 public:
     virtual void Initialize(const RenderPassInitInfo* init_info) override;
     virtual void PostInitialize() override;
-    virtual void SetCommonInfo(RenderPassCommonInfo* common_info) override;
     virtual void PrepareData(RenderPassPrepareInfo* prepare_info) override;
     virtual void UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info) override {};
 
     virtual void Draw() override;
+
+    RHIImageViewRef GetDirectionalLightShadowMap() const;
 
 private:
     void SetupAttachments();
@@ -29,11 +30,6 @@ private:
     void SetupDescriptorSet();
     void SetupRenderPass();
     void SetupPipelines();
-
-    std::shared_ptr<RenderPassCommon> PassCommon;
-
-    std::vector<Descriptor> DescriptorInfos;
-    std::vector<Pipeline>   RenderPipelines;
 
     MeshDirectionalLightShadowPerframeStorageBufferObject PerframeStorageBufferObject;
     VisiableNodes*                                        VisiableNodes;

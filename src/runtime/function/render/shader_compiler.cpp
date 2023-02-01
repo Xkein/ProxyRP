@@ -110,7 +110,7 @@ ShaderCompiledInfo ShaderCompiler::Compile(ShaderType* shader_type, std::shared_
 
     if (compiled_info.HasError)
     {
-        LOG_ERROR("Shader {} Compile error, Message: {}", shader_type->SourceFile, compiled_info.Message);
+        LOG_ERROR("Shader {} Compile error, EntryPoint: {}, Message: {}", shader_type->SourceFile, shader_type->EntryPoint, compiled_info.Message);
     }
     else
     {
