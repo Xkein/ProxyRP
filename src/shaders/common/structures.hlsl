@@ -1,11 +1,11 @@
 #pragma once
 
+#include "constants.hlsl"
+
 struct MeshInstance
 {
     float EnableVertexBlending;
-    float _padding_enable_vertex_blending_1;
-    float _padding_enable_vertex_blending_2;
-    float _padding_enable_vertex_blending_3;
+    
     float4x4 ModelMatrix;
 };
 
@@ -13,4 +13,28 @@ struct MeshVertexJointBinding
 {
     float4 Indices;
     float4 Weights;
+};
+
+struct SceneDirectionalLight
+{
+    float3 Direction;
+    float3 Color;
+};
+
+struct ScenePointLight
+{
+    float3 Position;
+    float  Radius;
+    float3 Intensity;
+};
+
+struct MeshPerframeStorageBufferObject
+{
+    float4x4 ProjViewMatrix;
+    float3   CameraPosition;
+    float3   AmbientLight;
+    uint     PointLightNum;
+    ScenePointLight       PointLights[MaxPointLightCount];
+    SceneDirectionalLight DirectionalLight;
+    float4x4              DirectionalLightProjView;
 };

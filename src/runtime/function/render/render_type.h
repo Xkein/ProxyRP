@@ -52,7 +52,10 @@ public:
 
     ~TextureData()
     {
-        free(this->Pixels);
+        if (Pixels)
+        {
+            free(Pixels);
+        }
     }
 
     operator bool() const

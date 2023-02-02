@@ -277,7 +277,7 @@ RHISampler* VulkanRHI::GetOrCreateDefaultSampler(RHIDefaultSamplerType type)
                     .unnormalizedCoordinates = VK_FALSE,
                 };
 
-                *LinearSampler = Device->createSampler(sampler_info);
+                LinearSampler = new VulkanSampler(Device->createSampler(sampler_info));
             }
             return LinearSampler;
         case RHIDefaultSamplerType::Nearest:
@@ -303,7 +303,7 @@ RHISampler* VulkanRHI::GetOrCreateDefaultSampler(RHIDefaultSamplerType type)
                     .unnormalizedCoordinates = VK_FALSE,
                 };
 
-                *NearestSampler = Device->createSampler(sampler_info);
+                NearestSampler = new VulkanSampler(Device->createSampler(sampler_info));
             }
             return NearestSampler;
     }

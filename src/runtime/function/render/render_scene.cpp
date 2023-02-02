@@ -2,6 +2,7 @@
 #include "render_common.h"
 #include "render_util.h"
 #include "render_resource_manager.h"
+#include "function/render/render_camera.h"
 #include "core/macro.h"
 
 void RenderScene::UpdateVisibleObjects(std::shared_ptr<RenderCamera> camera)
@@ -62,7 +63,39 @@ void RenderScene::UpdateVisibleObjectsLights(std::shared_ptr<RenderCamera> camer
 
 void RenderScene::UpdateVisibleObjectsCamera(std::shared_ptr<RenderCamera> camera)
 {
+    Matrix4x4 view_matrix      = camera->GetViewMatrix();
+    Matrix4x4 proj_matrix      = camera->GetPerspectiveMatrix();
+    Matrix4x4 proj_view_matrix = proj_matrix * view_matrix;
 
+    ClusterFrustum frustum = CreateClusterFrustumFromMatrix(proj_view_matrix, -1.f, 1.f, -1.f, 1.f, 0.f, 1.f);
+
+    for (const auto& entity : RenderEntities)
+    {
+        BoundingBox mesh_bounding_box = entity.BoundingBox;
+
+        if (TiledFrustumIntersectBox(frustum, BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix)))
+        {
+            RenderMeshNode& node = MainCameraVisibleMeshNodes.emplace_back();
+
+            node.ModelMatrix = &entity.ModelMatrix;
+
+            ASSERT(entity.JointMatrices.size() <= MeshVertexBlendingMaxJointCount);
+
+            if (!entity.JointMatrices.empty())
+            {
+                node.JointCount    = entity.JointMatrices.size();
+                node.JointMatrices = entity.JointMatrices.data();
+            }
+            node.NodeId = entity.InstanceId;
+
+            std::shared_ptr<RenderMesh> mesh = ResourceManager->GetEntityMesh(entity);
+            node.RefMesh                     = mesh.get();
+            node.EnableVertexBlending        = entity.EnableVertexBlending;
+
+            std::shared_ptr<PBRMaterial> material = ResourceManager->GetEntityMaterial(entity);
+            node.RefMaterial                      = material.get();
+        }
+    }
 }
 
 

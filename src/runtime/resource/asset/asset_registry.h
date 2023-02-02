@@ -7,6 +7,10 @@
 class AssetRegistry
 {
 public:
+    AssetRegistry() : Name("Unnamed AssetRegistry") {}
+
+    AssetRegistry(StringView name) : Name(name) {}
+
     template<typename AssetType>
     size_t Register(const String& url, const std::shared_ptr<AssetType>& ptr) {
         size_t hash = std::hash<String>()(url);
@@ -16,6 +20,7 @@ public:
     template<typename AssetType>
     void Register(size_t hash, const std::shared_ptr<AssetType>& ptr)
     {
+        RegisterCheck(hash);
         AssetData data(hash, ptr);
         Data[hash] = data;
     }
@@ -39,5 +44,9 @@ public:
     void Clean();
 
 private:
+    void RegisterCheck(size_t hash);
+
+    String Name;
+
     std::map<size_t, AssetData> Data;
 };

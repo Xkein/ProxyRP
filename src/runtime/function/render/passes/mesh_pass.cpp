@@ -61,6 +61,7 @@ void MeshPass::PostInitialize()
 void MeshPass::PrepareData(RenderPassPrepareInfo* prepare_info)
 {
     PerframeStorageBufferObject = prepare_info->Scene->PerframeStorageBufferObject;
+    VisiableNodes               = &prepare_info->Scene->VisiableNodes;
 }
 
 void MeshPass::UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info)
@@ -92,7 +93,7 @@ void MeshPass::Draw()
 
     RHIRenderPassBeginInfo render_pass_begin_info {
         .renderPass      = VulkanRHIConverter::Convert(*Framebuffer.RenderPass),
-        .framebuffer     = VulkanRHIConverter::Convert(*Framebuffer.Framebuffer),
+        .framebuffer     = VulkanRHIConverter::Convert(*SwapchainFramebuffers[RHI->GetCurrentFrameIndex()]),
         .renderArea      = {0, 0, swapchain_info.Extent},
         .clearValueCount = clear_values.size(),
         .pClearValues    = clear_values.data(),
@@ -155,29 +156,41 @@ void MeshPass::SetupDescriptorSetLayout()
 
     DescriptorInfos[_layout_per_mesh].LayoutRHI = PassCommon->PerMeshLayout;
 
-    std::array<RHIDescriptorSetLayoutBinding, 3> mesh_env_layout_bindings;
+    std::array<RHIDescriptorSetLayoutBinding, 5> mesh_global_layout_bindings;
 
-    RHIDescriptorSetLayoutBinding& perframe_storage_buffer_binding = mesh_env_layout_bindings[0];
+    RHIDescriptorSetLayoutBinding& perframe_storage_buffer_binding = mesh_global_layout_bindings[0];
     perframe_storage_buffer_binding.binding                        = 0;
     perframe_storage_buffer_binding.descriptorType                 = RHIDescriptorType::eStorageBufferDynamic;
     perframe_storage_buffer_binding.descriptorCount                = 1;
-    perframe_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eVertex;
+    perframe_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eVertex | RHIShaderStageFlagBits::eFragment;
 
-    RHIDescriptorSetLayoutBinding& perdrawcall_storage_buffer_binding = mesh_env_layout_bindings[1];
+    RHIDescriptorSetLayoutBinding& perdrawcall_storage_buffer_binding = mesh_global_layout_bindings[1];
     perdrawcall_storage_buffer_binding.binding                        = 1;
     perdrawcall_storage_buffer_binding.descriptorType                 = RHIDescriptorType::eStorageBufferDynamic;
     perdrawcall_storage_buffer_binding.descriptorCount                = 1;
     perdrawcall_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eVertex;
 
-    RHIDescriptorSetLayoutBinding& vertex_blending_storage_buffer_binding = mesh_env_layout_bindings[2];
+    RHIDescriptorSetLayoutBinding& vertex_blending_storage_buffer_binding = mesh_global_layout_bindings[2];
     vertex_blending_storage_buffer_binding.binding                        = 2;
     vertex_blending_storage_buffer_binding.descriptorType                 = RHIDescriptorType::eStorageBufferDynamic;
     vertex_blending_storage_buffer_binding.descriptorCount                = 1;
     vertex_blending_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eVertex;
 
+    RHIDescriptorSetLayoutBinding& point_light_shadow_binding = mesh_global_layout_bindings[3];
+    point_light_shadow_binding.binding                        = 3;
+    point_light_shadow_binding.descriptorType                 = RHIDescriptorType::eCombinedImageSampler;
+    point_light_shadow_binding.descriptorCount                = 1;
+    point_light_shadow_binding.stageFlags                     = RHIShaderStageFlagBits::eFragment;
+
+    RHIDescriptorSetLayoutBinding& directional_light_shadow_binding = mesh_global_layout_bindings[4];
+    directional_light_shadow_binding.binding                        = 4;
+    directional_light_shadow_binding.descriptorType                 = RHIDescriptorType::eCombinedImageSampler;
+    directional_light_shadow_binding.descriptorCount                = 1;
+    directional_light_shadow_binding.stageFlags                     = RHIShaderStageFlagBits::eFragment;
+
     RHIDescriptorSetLayoutCreateInfo layout_create_info {
-        .bindingCount = mesh_env_layout_bindings.size(),
-        .pBindings    = mesh_env_layout_bindings.data(),
+        .bindingCount = mesh_global_layout_bindings.size(),
+        .pBindings    = mesh_global_layout_bindings.data(),
     };
 
     DescriptorInfos[_layout_mesh_global].LayoutRHI = RHIDescriptorSetLayoutRef(RHI->CreateDescriptorSetLayout(&layout_create_info));
@@ -214,6 +227,11 @@ void MeshPass::SetupDescriptorSet()
         .range  = sizeof(MeshPerdrawcallVertexBlendingStorageBufferObject),
     };
 
+    RHIDescriptorImageInfo point_light_shadow_texture_image_info {};
+    point_light_shadow_texture_image_info.sampler     = VulkanRHIConverter::Convert(*RHI->GetOrCreateDefaultSampler(RHIDefaultSamplerType::Nearest));
+    point_light_shadow_texture_image_info.imageView   = VulkanRHIConverter::Convert(*DirectionalLightShadowMap);
+    point_light_shadow_texture_image_info.imageLayout = RHIImageLayout::eShaderReadOnlyOptimal;
+
     RHIDescriptorImageInfo directional_light_shadow_texture_image_info {};
     directional_light_shadow_texture_image_info.sampler     = VulkanRHIConverter::Convert(*RHI->GetOrCreateDefaultSampler(RHIDefaultSamplerType::Nearest));
     directional_light_shadow_texture_image_info.imageView   = VulkanRHIConverter::Convert(*DirectionalLightShadowMap);
@@ -221,7 +239,7 @@ void MeshPass::SetupDescriptorSet()
 
     RHIDescriptorSet* mesh_globaldescriptor_set = DescriptorInfos[_layout_mesh_global].DescriptorSetRHI.get();
 
-    std::array<RHIWriteDescriptorSet, 3> descriptor_writes {};
+    std::array<RHIWriteDescriptorSet, 5> descriptor_writes {};
 
     RHIWriteDescriptorSet& perframe_storage_buffer_write = descriptor_writes[0];
     perframe_storage_buffer_write.dstSet                 = VulkanRHIConverter::Convert(*mesh_globaldescriptor_set);
@@ -247,9 +265,17 @@ void MeshPass::SetupDescriptorSet()
     perdrawcall_vertex_blending_storage_buffer_write.descriptorCount        = 1;
     perdrawcall_vertex_blending_storage_buffer_write.pBufferInfo            = &perdrawcall_vertex_blending_storage_buffer_info;
 
-    RHIWriteDescriptorSet& directional_light_shadow_texture_image_write = descriptor_writes[3];
+    RHIWriteDescriptorSet& point_light_shadow_texture_image_write = descriptor_writes[3];
+    point_light_shadow_texture_image_write.dstSet                 = VulkanRHIConverter::Convert(*mesh_globaldescriptor_set);
+    point_light_shadow_texture_image_write.dstBinding             = 3;
+    point_light_shadow_texture_image_write.dstArrayElement        = 0;
+    point_light_shadow_texture_image_write.descriptorType         = RHIDescriptorType::eCombinedImageSampler;
+    point_light_shadow_texture_image_write.descriptorCount        = 1;
+    point_light_shadow_texture_image_write.pImageInfo             = &point_light_shadow_texture_image_info;
+
+    RHIWriteDescriptorSet& directional_light_shadow_texture_image_write = descriptor_writes[4];
     directional_light_shadow_texture_image_write.dstSet                 = VulkanRHIConverter::Convert(*mesh_globaldescriptor_set);
-    directional_light_shadow_texture_image_write.dstBinding             = 3;
+    directional_light_shadow_texture_image_write.dstBinding             = 4;
     directional_light_shadow_texture_image_write.dstArrayElement        = 0;
     directional_light_shadow_texture_image_write.descriptorType         = RHIDescriptorType::eCombinedImageSampler;
     directional_light_shadow_texture_image_write.descriptorCount        = 1;

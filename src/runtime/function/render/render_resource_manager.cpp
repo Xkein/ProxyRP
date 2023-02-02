@@ -13,8 +13,14 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-void RenderResourceManager::Clear()
-{}
+RenderResourceManager::RenderResourceManager()
+{
+    DefaultRegistry  = std::make_shared<AssetRegistry>("RenderResourceManager::Default");
+    MeshRegistry     = std::make_shared<AssetRegistry>("RenderResourceManager::Mesh");
+    MaterialRegistry = std::make_shared<AssetRegistry>("RenderResourceManager::Material");
+}
+
+void RenderResourceManager::Clear() {}
 
 void RenderResourceManager::UploadGlobalRenderResource(const LevelResourceDesc& level_resource_desc)
 {
@@ -45,7 +51,7 @@ void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&  
 
 std::shared_ptr<RenderMesh> RenderResourceManager::GetEntityMesh(const RenderEntity& entity)
 {
-    std::shared_ptr<RenderMesh> cached_asset = Registry->GetAsset<RenderMesh>(entity.MeshAssetId);
+    std::shared_ptr<RenderMesh> cached_asset = MeshRegistry->GetAsset<RenderMesh>(entity.MeshAssetId);
     if (cached_asset)
     {
         return cached_asset;
@@ -56,7 +62,7 @@ std::shared_ptr<RenderMesh> RenderResourceManager::GetEntityMesh(const RenderEnt
 
 std::shared_ptr<PBRMaterial> RenderResourceManager::GetEntityMaterial(const RenderEntity& entity)
 {
-    std::shared_ptr<PBRMaterial> cached_asset = Registry->GetAsset<PBRMaterial>(entity.MaterialAssetId);
+    std::shared_ptr<PBRMaterial> cached_asset = MaterialRegistry->GetAsset<PBRMaterial>(entity.MaterialAssetId);
     if (cached_asset)
     {
         return cached_asset;
@@ -67,11 +73,14 @@ std::shared_ptr<PBRMaterial> RenderResourceManager::GetEntityMaterial(const Rend
 
 std::shared_ptr<TextureData> RenderResourceManager::LoadTexture(const String& file_path, bool is_srgb)
 {
-    std::shared_ptr<TextureData> cached_asset = Registry->GetAsset<TextureData>(file_path);
+    std::shared_ptr<TextureData> cached_asset = DefaultRegistry->GetAsset<TextureData>(file_path);
     if (cached_asset)
     {
         return cached_asset;
     }
+
+    if (file_path.empty())
+        return nullptr;
 
     std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
 
@@ -92,18 +101,21 @@ std::shared_ptr<TextureData> RenderResourceManager::LoadTexture(const String& fi
     texture->MipLevels = std::floor(std::log2(std::max(texture->Width, texture->Height))) + 1;
     texture->Format      = is_srgb ? RHIFormat::eR8G8B8A8Srgb : RHIFormat::eR8G8B8A8Unorm;
 
-    Registry->Register(file_path, texture);
+    DefaultRegistry->Register(file_path, texture);
 
     return texture;
 }
 
 std::shared_ptr<TextureData> RenderResourceManager::LoadTextureHDR(const String& file_path, int desired_channels)
 {
-    std::shared_ptr<TextureData> cached_asset = Registry->GetAsset<TextureData>(file_path);
+    std::shared_ptr<TextureData> cached_asset = DefaultRegistry->GetAsset<TextureData>(file_path);
     if (cached_asset)
     {
         return cached_asset;
     }
+
+    if (file_path.empty())
+        return nullptr;
 
     std::shared_ptr<TextureData> texture = std::make_shared<TextureData>();
 
@@ -134,7 +146,7 @@ std::shared_ptr<TextureData> RenderResourceManager::LoadTextureHDR(const String&
             break;
     }
 
-    Registry->Register(file_path, texture);
+    DefaultRegistry->Register(file_path, texture);
 
     return texture;
 }
@@ -155,16 +167,19 @@ std::shared_ptr<RenderMaterialData> RenderResourceManager::LoadMaterialData(cons
 std::shared_ptr<RenderMeshData> RenderResourceManager::LoadMeshData(const MeshSourceDesc& mesh_source,
                                                                    AxisAlignedBox& bounding_box)
 {
-    std::shared_ptr<RenderMeshData> cached_asset = Registry->GetAsset<RenderMeshData>(mesh_source.MeshFile);
+    std::shared_ptr<RenderMeshData> cached_asset = DefaultRegistry->GetAsset<RenderMeshData>(mesh_source.MeshFile);
     if (cached_asset)
     {
         return cached_asset;
     }
 
+    if (mesh_source.MeshFile.empty())
+        return nullptr;
+
     std::shared_ptr<RenderMeshData> mesh = std::make_shared<RenderMeshData>();
     mesh->MeshData                       = LoadStaticMesh(mesh_source.MeshFile, bounding_box);
 
-    Registry->Register(mesh_source.MeshFile, mesh);
+    DefaultRegistry->Register(mesh_source.MeshFile, mesh);
 
     return mesh;
 }
@@ -172,7 +187,7 @@ std::shared_ptr<RenderMeshData> RenderResourceManager::LoadMeshData(const MeshSo
 std::shared_ptr<RenderMesh> RenderResourceManager::GetOrCreateRenderMesh(const RenderEntity&   entity,
                                                                          const RenderMeshData& mesh_data)
 {
-    std::shared_ptr<RenderMesh> cached_asset = Registry->GetAsset<RenderMesh>(entity.MeshAssetId);
+    std::shared_ptr<RenderMesh> cached_asset = MeshRegistry->GetAsset<RenderMesh>(entity.MeshAssetId);
     if (cached_asset)
     {
         return cached_asset;
@@ -208,7 +223,7 @@ std::shared_ptr<RenderMesh> RenderResourceManager::GetOrCreateRenderMesh(const R
     }
 
 
-    Registry->Register(entity.MeshAssetId, mesh);
+    MeshRegistry->Register(entity.MeshAssetId, mesh);
 
     return mesh;
 }
@@ -216,7 +231,7 @@ std::shared_ptr<RenderMesh> RenderResourceManager::GetOrCreateRenderMesh(const R
 std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const RenderEntity&       entity,
                                                                            const RenderMaterialData& material_data)
 {
-    std::shared_ptr<PBRMaterial> cached_asset = Registry->GetAsset<PBRMaterial>(entity.MaterialAssetId);
+    std::shared_ptr<PBRMaterial> cached_asset = MaterialRegistry->GetAsset<PBRMaterial>(entity.MaterialAssetId);
     if (cached_asset)
     {
         return cached_asset;
@@ -286,31 +301,31 @@ std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const
     };
 
     RHIDescriptorImageInfo base_color_image_info {
-        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(material_data.BaseColorTexture->Width, material_data.BaseColorTexture->Height),
+        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(update_texture_data.BaseColorTexture->Width, update_texture_data.BaseColorTexture->Height),
         .imageView   = *(VulkanImageView*)material->BaseColor->ImageViewRHI.get(),
         .imageLayout = RHIImageLayout::eShaderReadOnlyOptimal,
     };
 
     RHIDescriptorImageInfo metallic_roughness_image_info {
-        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(material_data.MetallicRoughnessTexture->Width, material_data.MetallicRoughnessTexture->Height),
+        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(update_texture_data.MetallicRoughnessTexture->Width, update_texture_data.MetallicRoughnessTexture->Height),
         .imageView   = *(VulkanImageView*)material->MetallicRoughness->ImageViewRHI.get(),
         .imageLayout = RHIImageLayout::eShaderReadOnlyOptimal,
     };
 
     RHIDescriptorImageInfo normal_image_info {
-        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(material_data.NormalTexture->Width, material_data.NormalTexture->Height),
+        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(update_texture_data.NormalTexture->Width, update_texture_data.NormalTexture->Height),
         .imageView   = *(VulkanImageView*)material->Normal->ImageViewRHI.get(),
         .imageLayout = RHIImageLayout::eShaderReadOnlyOptimal,
     };
 
     RHIDescriptorImageInfo occlusion_image_info {
-        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(material_data.OcclusionTexture->Width, material_data.OcclusionTexture->Height),
+        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(update_texture_data.OcclusionTexture->Width, update_texture_data.OcclusionTexture->Height),
         .imageView   = *(VulkanImageView*)material->Occlusion->ImageViewRHI.get(),
         .imageLayout = RHIImageLayout::eShaderReadOnlyOptimal,
     };
 
     RHIDescriptorImageInfo emissive_image_info {
-        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(material_data.EmissiveTexture->Width, material_data.EmissiveTexture->Height),
+        .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(update_texture_data.EmissiveTexture->Width, update_texture_data.EmissiveTexture->Height),
         .imageView   = *(VulkanImageView*)material->Emissive->ImageViewRHI.get(),
         .imageLayout = RHIImageLayout::eShaderReadOnlyOptimal,
     };
@@ -349,8 +364,9 @@ std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const
 
     RHI->UpdateDescriptorSets(mesh_descriptor_writes_info, {});
     
-    Registry->Register(entity.MaterialAssetId, material);
+    MaterialRegistry->Register(entity.MaterialAssetId, material);
 
+    empty_texture.Pixels = nullptr;
     return material;
 }
 
@@ -646,6 +662,18 @@ void RenderResourceManager::UpdateIndexBuffer(uint32_t index_buffer_size, void* 
 
 void RenderResourceManager::UpdateTextureImageData(const TextureDataToUpdate& texture_data)
 {
+    texture_data.Material->BaseColor         = TextureRef(new Texture());
+    texture_data.Material->Normal            = TextureRef(new Texture());
+    texture_data.Material->MetallicRoughness = TextureRef(new Texture());
+    texture_data.Material->Occlusion         = TextureRef(new Texture());
+    texture_data.Material->Emissive          = TextureRef(new Texture());
+
+    texture_data.Material->BaseColor->Format         = texture_data.BaseColorTexture->Format;
+    texture_data.Material->Normal->Format            = texture_data.NormalTexture->Format;
+    texture_data.Material->MetallicRoughness->Format = texture_data.MetallicRoughnessTexture->Format;
+    texture_data.Material->Occlusion->Format         = texture_data.OcclusionTexture->Format;
+    texture_data.Material->Emissive->Format          = texture_data.EmissiveTexture->Format;
+
     RHI->CreateTextureImage(
         texture_data.Material->BaseColor->ImageRHI, texture_data.Material->BaseColor->ImageViewRHI, texture_data.Material->BaseColor->DeviceMemoryRHI, texture_data.BaseColorTexture);
     RHI->CreateTextureImage(

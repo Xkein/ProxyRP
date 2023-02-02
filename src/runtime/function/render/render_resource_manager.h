@@ -15,6 +15,8 @@ class RenderResourceManager final
 
 
 public:
+    RenderResourceManager();
+
     void Clear();
 
     void UploadGlobalRenderResource(const LevelResourceDesc& level_resource_desc);
@@ -59,7 +61,10 @@ private:
     void UpdateTextureImageData(const TextureDataToUpdate& texture_data);
 
     std::shared_ptr<RHI>     RHI;
-    std::shared_ptr<AssetRegistry> Registry;
+
+    std::shared_ptr<AssetRegistry> DefaultRegistry;
+    std::shared_ptr<AssetRegistry> MeshRegistry;
+    std::shared_ptr<AssetRegistry> MaterialRegistry;
 
     std::vector<std::shared_ptr<void*>> __PersistentResources;
 

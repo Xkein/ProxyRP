@@ -37,6 +37,7 @@ public:
     // storage buffer objects
     Matrix4x4 LightProjView;
     MeshPerframeStorageBufferObject PerframeStorageBufferObject;
+    MeshPointLightShadowPerframeStorageBufferObject PointLightShadowPerframeStorageBufferObject;
     
     std::vector<RenderEntity> RenderEntities;
     

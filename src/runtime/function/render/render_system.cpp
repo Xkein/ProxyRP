@@ -29,11 +29,22 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     GlobalRenderingResource global_rendering_res;
     GAssetManager->LoadAsset(GConfigManager->Global.GlobalRenderingResourceUrl, global_rendering_res);
 
-    compiler_work.wait();
+    LevelResourceDesc level_resource_desc;
+    ResourceManager->UploadGlobalRenderResource(level_resource_desc);
 
+    compiler_work.wait();
+    
     Camera = std::make_shared<RenderCamera>();
+    const auto& camera_pose = global_rendering_res.CameraConfig.Pose;
+    Camera->LookAt(camera_pose.Position, camera_pose.Target, camera_pose.Up);
+    Camera->ZFar = global_rendering_res.CameraConfig.ZFar;
+    Camera->ZNear = global_rendering_res.CameraConfig.ZNear;
+    Camera->SetAspect(global_rendering_res.CameraConfig.Aspect.x() / global_rendering_res.CameraConfig.Aspect.y());
 
     Scene = std::make_shared<RenderScene>();
+    Scene->Light.Ambient               = {global_rendering_res.AmbientLight};
+    Scene->Light.Directional.Direction = global_rendering_res.DirectionalLight.Direction;
+    Scene->Light.Directional.Color     = global_rendering_res.DirectionalLight.Color;
     Scene->ResourceManager = ResourceManager;
     Scene->SetVisibleNodesReference();
 

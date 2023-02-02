@@ -8,9 +8,8 @@ StructuredBuffer<float4x4> JointMatrices : register(t2);
 
 StructuredBuffer<MeshVertexJointBinding> JointBindings : register(t0, space1);
 
-float4 vert(float3 position : POSITION, uint vertex_index: SV_VertexID/*, uint instance_index : SV_InstanceID*/) : SV_Position
+float4 vert(float3 position : POSITION, uint vertex_index: SV_VertexID, uint instance_index : SV_InstanceID) : SV_Position
 {
-    uint instance_index = 0;
     float4x4 model_matrix = MeshInstances[instance_index].ModelMatrix;
     float enable_vertex_blending = MeshInstances[instance_index].EnableVertexBlending;
     

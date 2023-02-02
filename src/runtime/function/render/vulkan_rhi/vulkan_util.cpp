@@ -84,16 +84,16 @@ vk::DeviceSize VulkanUtil::GetTextureSize(uint32_t width, uint32_t height, vk::F
     vk::DeviceSize texture_size;
     switch (format)
     {
-        case vk::Format::eB8G8R8Unorm:
+        case vk::Format::eR8G8B8Unorm:
             texture_size = width * height * 3;
             break;
-        case vk::Format::eB8G8R8Srgb:
+        case vk::Format::eR8G8B8Srgb:
             texture_size = width * height * 3;
             break;
-        case vk::Format::eB8G8R8A8Unorm:
+        case vk::Format::eR8G8B8A8Unorm:
             texture_size = width * height * 4;
             break;
-        case vk::Format::eB8G8R8A8Srgb:
+        case vk::Format::eR8G8B8A8Srgb:
             texture_size = width * height * 4;
             break;
         case vk::Format::eR32Sfloat:

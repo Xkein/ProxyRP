@@ -16,8 +16,8 @@
         "MeshRes": {
           "SubMeshes": [
             {
-              "MeshFileRef": "asset/objects/resource/viking_room.obj",
-              "Material": "asset/objects/Material/mesh_test.material.json",
+              "MeshFileRef": "asset/resource/viking_room.obj",
+              "Material": "asset/objects/material/mesh_test.material.json",
               "Transform": {
                 "Position": [0, 0, 0],
                 "Scale": [1, 1, 1],

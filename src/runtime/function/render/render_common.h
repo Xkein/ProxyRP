@@ -23,7 +23,7 @@ struct ScenePointLight
 {
     Vector3f Position;
     float    Radius;
-    alignas(16) Vector3f Intensity;
+    Vector3f Intensity;
 };
 
 struct MeshInstance
@@ -38,8 +38,8 @@ struct MeshPerframeStorageBufferObject
     Vector3f  CameraPosition;
     alignas(16) Vector3f AmbientLight;
     alignas(16) uint32_t PointLightNum;
-    alignas(16) ScenePointLight scenePointLights[GMaxPointLightCount];
-    alignas(16) SceneDirectionalLight sceneDirectionalLight;
+    alignas(16) ScenePointLight PointLights[GMaxPointLightCount];
+    alignas(16) SceneDirectionalLight DirectionalLight;
     alignas(16) Matrix4x4 DirectionalLightProjView;
 };
 
@@ -80,4 +80,10 @@ struct MeshPerMaterialUniformBufferObject
     Vector3f emissiveFactor  = {0.0f, 0.0f, 0.0f};
     uint32_t is_blend        = 0;
     uint32_t is_double_sided = 0;
+};
+
+struct MeshPointLightShadowPerframeStorageBufferObject
+{
+    uint32_t PointLightNum;
+    alignas(16) Vector4f PointLightsPositionAndRadius[MaxPointLightCount];
 };

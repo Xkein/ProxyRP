@@ -1,6 +1,6 @@
 #pragma once
 
-#define PI 3.14159265359
+#include "constants.hlsl"
 
 float Pow4(float x)
 {
@@ -24,6 +24,44 @@ struct BxDFContext
     half YoV;
     half YoL;
     half YoH;
+    
+    void Init(half3 N, half3 V, half3 L)
+    {
+        NoL = dot(N, L);
+        NoV = dot(N, V);
+        VoL = dot(V, L);
+        float InvLenH = rsqrt(2 + 2 * VoL);
+        NoH = saturate((NoL + NoV) * InvLenH);
+        VoH = saturate(InvLenH + InvLenH * VoL);
+		//NoL = saturate( NoL );
+		//NoV = saturate( abs( NoV ) + 1e-5 );
+
+        XoV = 0.0f;
+        XoL = 0.0f;
+        XoH = 0.0f;
+        YoV = 0.0f;
+        YoL = 0.0f;
+        YoH = 0.0f;
+    }
+
+    void Init(half3 N, half3 X, half3 Y, half3 V, half3 L)
+    {
+        NoL = dot(N, L);
+        NoV = dot(N, V);
+        VoL = dot(V, L);
+        float InvLenH = rsqrt(2 + 2 * VoL);
+        NoH = saturate((NoL + NoV) * InvLenH);
+        VoH = saturate(InvLenH + InvLenH * VoL);
+		//NoL = saturate( NoL );
+		//NoV = saturate( abs( NoV ) + 1e-5 );
+
+        XoV = dot(X, V);
+        XoL = dot(X, L);
+        XoH = (XoL + XoV) * InvLenH;
+        YoV = dot(Y, V);
+        YoL = dot(Y, L);
+        YoH = (YoL + YoV) * InvLenH;
+    }
 };
 
 
@@ -80,17 +118,29 @@ float3 F_Schlick(float3 SpecularColor, float VoH)
 }
 
 
-
-float3 SpecularGGX(float Roughness, float3 SpecularColor, BxDFContext Context, half NoL, FAreaLight AreaLight)
+float3 BRDF(float3 N, float3 V, float3 L, float3 SpecularColor, float3 BaseColor, float Metallic, float Roughness)
 {
+    BxDFContext Context;
+    
+    Context.Init(N, V, L);
+    
+    Context.NoV = saturate(abs(Context.NoV) + 1e-5);
+
+    
     float a2 = Pow4(Roughness);
-    float Energy = EnergyNormalization(a2, Context.VoH, AreaLight);
 	
 	// Generalized microfacet specular
-    float D = D_GGX(a2, Context.NoH) * Energy;
-    float Vis = Vis_SmithJointApprox(a2, Context.NoV, NoL);
+    float D = D_GGX(a2, Context.NoH);
+    float Vis = Vis_SmithJointApprox(a2, Context.NoV, Context.NoL);
     float3 F = F_Schlick(SpecularColor, Context.VoH);
-
-    return (D * Vis) * F;
+    
+    float3 specular = (D * Vis) * F / (4.0 * Context.NoL * Context.NoL + 0.001);
+    
+    float3 diffuse = Diffuse_Lambert(BaseColor);
+   
+    float3 kD = (float3(1.0, 1.0, 1.0) - F) * (1.0 - Metallic);
+    float3 kS = 1.0 - kD;
+    
+    return kD * diffuse + kS * specular;
 }
 

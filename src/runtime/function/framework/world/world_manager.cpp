@@ -69,5 +69,7 @@ bool WorldManager::LoadLevel(const String& level_url)
         return false;
     }
 
+    IsWorldLoaded = true;
+
     return true;
 }
