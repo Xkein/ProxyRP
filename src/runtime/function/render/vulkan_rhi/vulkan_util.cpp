@@ -283,11 +283,9 @@ void VulkanUtil::CreateTextureImage(VulkanRHI*         rhi,
     const uint32_t&  texture_height = texture_data->Height;
     const vk::Format texture_format = texture_data->Format;
 
-    vk::DeviceSize   texture_size   =
-        GetTextureSize(texture_width, texture_height, texture_format);
+    vk::DeviceSize texture_size = GetTextureSize(texture_width, texture_height, texture_format);
 
-    uint32_t mip_levels = (texture_data->MipLevels != 0) ? texture_data->MipLevels :
-                                                           floor(log2(std::max(texture_width, texture_height))) + 1;
+    uint32_t mip_levels = (texture_data->MipLevels != 0) ? texture_data->MipLevels : floor(log2(std::max(texture_width, texture_height))) + 1;
 
     vk::Buffer       inefficient_staging_buffer;
     vk::DeviceMemory inefficient_staging_buffer_memory;
@@ -308,10 +306,9 @@ void VulkanUtil::CreateTextureImage(VulkanRHI*         rhi,
                 rhi->Device,
                 texture_width,
                 texture_height,
-                vk::Format::eR8G8B8A8Srgb,
+                texture_data->Format,
                 vk::ImageTiling::eOptimal,
-                vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
-                    vk::ImageUsageFlagBits::eSampled,
+                vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
                 vk::MemoryPropertyFlagBits::eDeviceLocal,
                 image,
                 image_memory,
@@ -320,27 +317,22 @@ void VulkanUtil::CreateTextureImage(VulkanRHI*         rhi,
                 mip_levels,
                 vk::SampleCountFlagBits::e1);
 
-    TransitionImageLayout(rhi,
-                          image,
-                          vk::Format::eR8G8B8A8Srgb,
-                          vk::ImageLayout::eUndefined,
-                          vk::ImageLayout::eTransferDstOptimal,
-                          vk::ImageAspectFlagBits::eColor,
-                          1,
-                          mip_levels);
+    TransitionImageLayout(rhi, image, texture_data->Format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageAspectFlagBits::eColor, 1, mip_levels);
 
     CopyBufferToImage(rhi, inefficient_staging_buffer, image, texture_width, texture_height);
 
-    GenerateTextureMipMaps(rhi, image, vk::Format::eR8G8B8A8Srgb, texture_width, texture_height, 1, mip_levels);
-
     // TransitionImageLayout(texture_image,
-    //                       vk::Format::eR8G8B8A8Srgb,
+    //                       texture_data->Format,
     //                       vk::ImageLayout::eTransferDstOptimal,
     //                       vk::ImageLayout::eShaderReadOnlyOptimal,
     //                       mip_levels);
 
     device.destroyBuffer(inefficient_staging_buffer);
     device.freeMemory(inefficient_staging_buffer_memory);
+
+    GenerateTextureMipMaps(rhi, image, texture_data->Format, texture_width, texture_height, 1, mip_levels);
+
+    image_view = CreateImageView(device, image, texture_data->Format, vk::ImageAspectFlagBits::eColor, vk::ImageViewType::e2D, 1, mip_levels);
 }
 
 void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,

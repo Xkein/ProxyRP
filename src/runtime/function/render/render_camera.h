@@ -11,6 +11,7 @@ public:
     static constexpr float MIN_FOV = 10.f;
     static constexpr float MAX_FOV = 89.f;
 
+    void SetMainViewMatrix();
     void SetMainViewMatrix(const Matrix4x4& view_matrix);
 
     void Move(Vector3f translation);

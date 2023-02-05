@@ -51,6 +51,8 @@ class VulkanCommandPool : public RHICommandPool
 public:
     vk::CommandPool Resource;
 
+    VulkanCommandPool(vk::CommandPool command_pool) : Resource(command_pool) {}
+
     __VULKAN_RHI_MAKE_OPERATOR();
 };
 

@@ -89,11 +89,11 @@ void MeshPass::Draw()
 
     std::array<RHIClearValue, _pass_attachment_count> clear_values {};
     clear_values[_pass_attachment_depth].depthStencil = RHIClearDepthStencilValue {1.f, 0};
-    clear_values[_pass_attachment_swap_chain_image].color.setFloat32({1.f});
+    clear_values[_pass_attachment_swap_chain_image].color.setFloat32({0.f});
 
     RHIRenderPassBeginInfo render_pass_begin_info {
         .renderPass      = VulkanRHIConverter::Convert(*Framebuffer.RenderPass),
-        .framebuffer     = VulkanRHIConverter::Convert(*SwapchainFramebuffers[RHI->GetCurrentFrameIndex()]),
+        .framebuffer     = VulkanRHIConverter::Convert(*SwapchainFramebuffers[RHI->GetCurrentSwapchainIndex()]),
         .renderArea      = {0, 0, swapchain_info.Extent},
         .clearValueCount = clear_values.size(),
         .pClearValues    = clear_values.data(),
@@ -296,7 +296,7 @@ void MeshPass::SetupRenderPass()
     color_attachment.stencilLoadOp             = RHIAttachmentLoadOp::eDontCare;
     color_attachment.stencilStoreOp            = RHIAttachmentStoreOp::eDontCare;
     color_attachment.initialLayout             = RHIImageLayout::eUndefined;
-    color_attachment.finalLayout               = RHIImageLayout::eShaderReadOnlyOptimal;
+    color_attachment.finalLayout               = RHIImageLayout::ePresentSrcKHR;
 
     RHIAttachmentDescription& depth_attachment = attachments[_pass_attachment_depth];
     depth_attachment.format                    = Framebuffer.Attachments[_pass_attachment_depth].Format;
@@ -515,7 +515,6 @@ void MeshPass::DrawMeshLighting()
     MeshPerframeStorageBufferObject* perframe_storage_buffer_object =
         PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshPerframeStorageBufferObject>(RHI->GetCurrentFrameIndex(), perframe_dynamic_offset);
     *perframe_storage_buffer_object = PerframeStorageBufferObject;
-    
     
     for (auto& [material, mesh_instanced] : mesh_drawcall_batch)
     {

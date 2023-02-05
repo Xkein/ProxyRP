@@ -71,7 +71,8 @@ ShaderCompiledInfo ShaderCompiler::Compile(ShaderType* shader_type, std::shared_
     String shader_source_code     = FileManager::ReadString(shader_source_filename);
 
     Compiler::Options options {
-        .enableDebugInfo = true,
+        .packMatricesInRowMajor = false,
+        .enableDebugInfo        = true,
     };
 
     Compiler::SourceDesc source_desc {

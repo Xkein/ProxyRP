@@ -7,7 +7,7 @@
 #include <vma/vk_mem_alloc.h>
 #include <map>
 
-class GLFWwindow;
+struct GLFWwindow;
 
 class VulkanRHI final : public RHI
 {
@@ -18,6 +18,7 @@ public:
     virtual void PrepareContext() override;
 
     // allocate and create
+    virtual RHICommandBuffer* AllocateCommandBuffers(const RHICommandBufferAllocateInfo* pAllocateInfo) override;
     virtual RHIDescriptorSet* AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info) override;
 
     virtual void CreateSwapChain() override;
@@ -85,6 +86,8 @@ public:
     virtual void              SubmitRendering(std::function<void()> on_recreate_swapchain) override;
     virtual RHICommandBuffer* BeginSingleTimeCommands() override;
     virtual void              EndSingleTimeCommands(RHICommandBuffer* command_buffer) override;
+    virtual bool              BeginCommandBuffer(RHICommandBuffer* command_buffer, const RHICommandBufferBeginInfo* begin_info) override;
+    virtual bool              EndCommandBuffer(RHICommandBuffer* command_buffer) override;
     virtual void              BlitImage(RHICommandBuffer*             command_buffer,
                                         RHIImage*                     src_image,
                                         RHIImageLayout                src_image_layout,
@@ -119,11 +122,13 @@ public:
     // query
     virtual RHIPhysicalDeviceProperties GetPhysicalDeviceProperties() override;
     virtual RHICommandBuffer*  GetCommandBuffer() const override;
+    virtual RHICommandPool*  GetCommandPool() const override;
     virtual RHIDescriptorPool* GetDescriptorPool() const override;
     virtual RHISwapchainDesc   GetSwapchainInfo() override;
     virtual RHIDepthImageDesc  GetDepthImageInfo() const override;
     virtual uint8_t            GetMaxFramesInFlight() const override;
     virtual uint8_t            GetCurrentFrameIndex() const override;
+    virtual uint8_t            GetCurrentSwapchainIndex() const override;
     virtual RHISampleCountFlagBits GetMsaaSampleCount() const override;
     
     // destroy
@@ -181,8 +186,8 @@ public:
 
     VulkanDescriptorPool* DescriptorPool;
 
-    VulkanCommandPool                DefaultCommandPool;
-    std::vector<VulkanCommandPool>   CommandPools;
+    VulkanCommandPool*               DefaultCommandPool;
+    std::vector<RHICommandPoolRef>   CommandPools;
     std::vector<RHICommandBufferRef> CommandBuffers;
 
     VulkanCommandBuffer*            CurrentCommandBuffer;
@@ -191,7 +196,7 @@ public:
     std::vector<vk::Semaphore> RenderFinishedSemaphores;
     std::vector<vk::Fence>     InFlightFences;
 
-    uint32_t CurrentFrame {0};
+    uint32_t CurrentFrameIndex {0};
     bool     FrameBufferResized {false};
 
     QueueFamilyIndices QueueIndices;

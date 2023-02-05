@@ -254,7 +254,7 @@ Matrix4x4 CalculateDirectionalLightCamera(RenderScene& scene, RenderCamera& came
         Vector3f box_center = frustum_bounding_box.center();
         Vector3f box_extents = frustum_bounding_box.sizes() / 2.f;
 
-        Vector3f eye    = box_center + scene.Light.Directional.Direction * box_extents.norm();
+        Vector3f eye    = box_center - scene.Light.Directional.Direction * box_extents.norm();
         Vector3f center = box_center;
         light_view      = LookAt(eye, center, Vector3f(0.0, 0.0, 1.0));
 

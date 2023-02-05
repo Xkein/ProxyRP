@@ -54,7 +54,15 @@ void VulkanRHI::Initialize(RHIInitInfo init_info)
 
 void VulkanRHI::PrepareContext()
 {
-    CurrentCommandBuffer = (VulkanCommandBuffer*)CommandBuffers[CurrentFrame].get();
+    CurrentCommandBuffer = (VulkanCommandBuffer*)CommandBuffers[CurrentFrameIndex].get();
+}
+
+RHICommandBuffer* VulkanRHI::AllocateCommandBuffers(const RHICommandBufferAllocateInfo* pAllocateInfo)
+{
+    vk::CommandBufferAllocateInfo vk_alloc_info = VulkanRHIConverter::Convert(*pAllocateInfo);
+    vk::CommandBuffer             vk_command_buffer = Device->allocateCommandBuffers(vk_alloc_info)[0];
+
+    return new VulkanCommandBuffer(vk_command_buffer);
 }
 
 RHIDescriptorSet* VulkanRHI::AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info)
@@ -443,7 +451,7 @@ void VulkanRHI::CopyBuffer(RHIBuffer*     src_buffer,
 bool VulkanRHI::PrepareBeforePass(std::function<void()> on_recreate_swapchain)
 {
     
-    vk::ResultValue<uint32_t> image_index = Device->acquireNextImageKHR(SwapChain, UINT64_MAX, ImageAvailableSemaphores[CurrentFrame]);
+    vk::ResultValue<uint32_t> image_index = Device->acquireNextImageKHR(SwapChain, UINT64_MAX, ImageAvailableSemaphores[CurrentFrameIndex]);
     if (image_index.result == vk::Result::eErrorOutOfDateKHR)
     {
         RecreateSwapChain();
@@ -458,7 +466,7 @@ bool VulkanRHI::PrepareBeforePass(std::function<void()> on_recreate_swapchain)
     CurrentSwapchainImageIndex = image_index.value;
 
     vk::CommandBufferBeginInfo begin_info { };
-    vk::CommandBuffer          command_buffer = *(VulkanCommandBuffer*)CommandBuffers[CurrentFrame].get();
+    vk::CommandBuffer          command_buffer = *(VulkanCommandBuffer*)CommandBuffers[CurrentFrameIndex].get();
 
     command_buffer.begin(begin_info);
 
@@ -467,16 +475,16 @@ bool VulkanRHI::PrepareBeforePass(std::function<void()> on_recreate_swapchain)
 
 void VulkanRHI::SubmitRendering(std::function<void()> on_recreate_swapchain)
 {
-    vk::CommandBuffer command_buffer = *(VulkanCommandBuffer*)CommandBuffers[CurrentFrame].get();
+    vk::CommandBuffer command_buffer = *(VulkanCommandBuffer*)CommandBuffers[CurrentFrameIndex].get();
 
     command_buffer.end();
 
-    std::array<vk::Semaphore, 1> semaphores {RenderFinishedSemaphores[CurrentFrame]};
+    std::array<vk::Semaphore, 1> semaphores {RenderFinishedSemaphores[CurrentFrameIndex]};
     vk::PipelineStageFlags wait_stages[] {vk::PipelineStageFlagBits::eColorAttachmentOutput};
 
     vk::SubmitInfo submit_info {
         .waitSemaphoreCount   = 1,
-        .pWaitSemaphores      = &ImageAvailableSemaphores[CurrentFrame],
+        .pWaitSemaphores      = &ImageAvailableSemaphores[CurrentFrameIndex],
         .pWaitDstStageMask    = wait_stages,
         .commandBufferCount   = 1,
         .pCommandBuffers      = &command_buffer,
@@ -484,14 +492,14 @@ void VulkanRHI::SubmitRendering(std::function<void()> on_recreate_swapchain)
         .pSignalSemaphores    = semaphores.data(),
     };
 
-    vk::Result reset_fence_result = Device->resetFences(1, &InFlightFences[CurrentFrame]);
+    vk::Result reset_fence_result = Device->resetFences(1, &InFlightFences[CurrentFrameIndex]);
 
-    GraphicsQueue->submit(std::array {submit_info}, InFlightFences[CurrentFrame]);
+    GraphicsQueue->submit(std::array {submit_info}, InFlightFences[CurrentFrameIndex]);
 
     
     vk::PresentInfoKHR present_info {
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores    = &RenderFinishedSemaphores[CurrentFrame],
+        .pWaitSemaphores    = &RenderFinishedSemaphores[CurrentFrameIndex],
         .swapchainCount     = 1,
         .pSwapchains        = &SwapChain,
         .pImageIndices      = &CurrentSwapchainImageIndex,
@@ -519,13 +527,13 @@ void VulkanRHI::SubmitRendering(std::function<void()> on_recreate_swapchain)
         throw std::runtime_error("failed to present swap chain image!");
     }
 
-    CurrentFrame = (CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    CurrentFrameIndex = (CurrentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 RHICommandBuffer* VulkanRHI::BeginSingleTimeCommands()
 {
     vk::CommandBufferAllocateInfo alloc_info {
-        .commandPool        = DefaultCommandPool,
+        .commandPool        = *DefaultCommandPool,
         .level              = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = 1,
     };
@@ -554,8 +562,22 @@ void VulkanRHI::EndSingleTimeCommands(RHICommandBuffer* command_buffer)
     GraphicsQueue->submit({submit_info});
     GraphicsQueue->waitIdle();
 
-    Device->freeCommandBuffers(DefaultCommandPool, {vk_command_buffer});
+    Device->freeCommandBuffers(*DefaultCommandPool, {vk_command_buffer});
     delete command_buffer;
+}
+
+bool VulkanRHI::BeginCommandBuffer(RHICommandBuffer* command_buffer, const RHICommandBufferBeginInfo* begin_info)
+{
+    vk::CommandBuffer vk_command_buffer = VulkanRHIConverter::Convert(*command_buffer);
+    vk_command_buffer.begin(VulkanRHIConverter::Convert(*begin_info));
+    return true;
+}
+
+bool VulkanRHI::EndCommandBuffer(RHICommandBuffer* command_buffer)
+{
+    vk::CommandBuffer vk_command_buffer = VulkanRHIConverter::Convert(*command_buffer);
+    vk_command_buffer.end();
+    return true;
 }
 
 void VulkanRHI::BlitImage(RHICommandBuffer*             command_buffer,
@@ -680,12 +702,12 @@ void VulkanRHI::SetScissor(RHICommandBuffer* command_buffer, uint32_t first_scis
 
 void VulkanRHI::ResetCommandPool()
 {
-    Device->resetCommandPool(CommandPools[CurrentFrame]);
+    Device->resetCommandPool(VulkanRHIConverter::Convert(*CommandPools[CurrentFrameIndex]));
 }
 
 void VulkanRHI::WaitForFences()
 {
-    vk::Result result_wait = Device->waitForFences(1, &InFlightFences[CurrentFrame], VK_TRUE, UINT64_MAX);
+    vk::Result result_wait = Device->waitForFences(1, &InFlightFences[CurrentFrameIndex], VK_TRUE, UINT64_MAX);
     if (result_wait != vk::Result::eSuccess)
     {
         LOG_ERROR("waitForFences failed! failed to synchronize!");
@@ -700,6 +722,11 @@ RHIPhysicalDeviceProperties VulkanRHI::GetPhysicalDeviceProperties()
 RHICommandBuffer* VulkanRHI::GetCommandBuffer() const
 {
     return CurrentCommandBuffer;
+}
+
+RHICommandPool* VulkanRHI::GetCommandPool() const
+{
+    return DefaultCommandPool;
 }
 
 RHIDescriptorPool* VulkanRHI::GetDescriptorPool() const
@@ -734,7 +761,12 @@ uint8_t VulkanRHI::GetMaxFramesInFlight() const
 
 uint8_t VulkanRHI::GetCurrentFrameIndex() const
 {
-    return CurrentFrame;
+    return CurrentFrameIndex;
+}
+
+uint8_t VulkanRHI::GetCurrentSwapchainIndex() const
+{
+    return CurrentSwapchainImageIndex;
 }
 
 RHISampleCountFlagBits VulkanRHI::GetMsaaSampleCount() const
@@ -770,31 +802,43 @@ void VulkanRHI::ClearSwapChain()
 
 void VulkanRHI::DestroyBuffer(RHIBuffer* buffer)
 {
+    if (!buffer)
+        return;
     Device->destroyBuffer(*(VulkanBuffer*)buffer);
 }
 
 void VulkanRHI::DestroyImage(RHIImage* image)
 {
+    if (!image)
+        return;
     Device->destroyImage(*(VulkanImage*)image);
 }
 
 void VulkanRHI::DestroyImageView(RHIImageView* image_view)
 {
+    if (!image_view)
+        return;
     Device->destroyImageView(*(VulkanImageView*)image_view);
 }
 
 void VulkanRHI::DestroyShaderModule(RHIShader* shader)
 {
+    if (!shader)
+        return;
     Device->destroyShaderModule(*(VulkanShader*)shader);
 }
 
 void VulkanRHI::DestroyFramebuffer(RHIFramebuffer* framebuffer)
 {
+    if (!framebuffer)
+        return;
     Device->destroyFramebuffer(VulkanRHIConverter::Convert(*framebuffer));
 }
 
 void VulkanRHI::FreeMemory(RHIDeviceMemory* memory)
 {
+    if (!memory)
+        return;
     Device->freeMemory(*(VulkanDeviceMemory*)memory);
 }
 
@@ -981,14 +1025,14 @@ void VulkanRHI::CreateCommandPool()
         .queueFamilyIndex = queue_family_indices.GraphicsFamily.value(),
     };
 
-    DefaultCommandPool = Device->createCommandPool(pool_info);
+    DefaultCommandPool = new VulkanCommandPool(Device->createCommandPool(pool_info));
 
     CommandPools.resize(MAX_FRAMES_IN_FLIGHT);
 
     pool_info.flags = vk::CommandPoolCreateFlagBits::eTransient;
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        CommandPools[i] = Device->createCommandPool(pool_info);
+        CommandPools[i] = RHICommandPoolRef(new VulkanCommandPool(Device->createCommandPool(pool_info)));
     }
 }
 
@@ -1003,7 +1047,7 @@ void VulkanRHI::CreateCommandBuffer()
 
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        allocate_info.commandPool = (vk::CommandPool)CommandPools[i];
+        allocate_info.commandPool = VulkanRHIConverter::Convert(*CommandPools[i]);
 
         std::vector<vk::CommandBuffer> vk_command_buffers = Device->allocateCommandBuffers(allocate_info);
 

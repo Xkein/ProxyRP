@@ -25,7 +25,7 @@ public:
     virtual void PrepareContext()                  = 0;
     
     // allocate and create
-    
+    virtual RHICommandBuffer* AllocateCommandBuffers(const RHICommandBufferAllocateInfo* pAllocateInfo) = 0;
     virtual RHIDescriptorSet* AllocateDescriptorSets(const RHIDescriptorSetAllocateInfo* allocate_info) = 0;
 
     virtual void            CreateSwapChain() = 0;
@@ -90,6 +90,9 @@ public:
     virtual void              SubmitRendering(std::function<void()> on_recreate_swapchain) = 0;
     virtual RHICommandBuffer* BeginSingleTimeCommands() = 0;
     virtual void              EndSingleTimeCommands(RHICommandBuffer* command_buffer) = 0;
+    virtual bool              BeginCommandBuffer(RHICommandBuffer* command_buffer, const RHICommandBufferBeginInfo* begin_info) = 0;
+    virtual bool              EndCommandBuffer(RHICommandBuffer* command_buffer) = 0;
+
 
     virtual void BlitImage(RHICommandBuffer*             command_buffer,
                            RHIImage*                     src_image,
@@ -124,11 +127,13 @@ public:
     // query
     virtual RHIPhysicalDeviceProperties GetPhysicalDeviceProperties() = 0;
     virtual RHICommandBuffer*           GetCommandBuffer() const = 0;
+    virtual RHICommandPool*             GetCommandPool() const  = 0;
     virtual RHIDescriptorPool*          GetDescriptorPool() const = 0;
     virtual RHISwapchainDesc            GetSwapchainInfo() = 0;
     virtual RHIDepthImageDesc           GetDepthImageInfo() const = 0;
     virtual uint8_t                     GetMaxFramesInFlight() const = 0;
     virtual uint8_t                     GetCurrentFrameIndex() const = 0;
+    virtual uint8_t                     GetCurrentSwapchainIndex() const = 0;
     virtual RHISampleCountFlagBits      GetMsaaSampleCount() const    = 0;
 
     // destroy

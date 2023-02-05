@@ -4,7 +4,7 @@
 
 #include <functional>
 
-class GLFWwindow;
+struct GLFWwindow;
 
 struct WindowCreateInfo
 {

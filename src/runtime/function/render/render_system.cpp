@@ -31,8 +31,6 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
 
     LevelResourceDesc level_resource_desc;
     ResourceManager->UploadGlobalRenderResource(level_resource_desc);
-
-    compiler_work.wait();
     
     Camera = std::make_shared<RenderCamera>();
     const auto& camera_pose = global_rendering_res.CameraConfig.Pose;
@@ -40,6 +38,7 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     Camera->ZFar = global_rendering_res.CameraConfig.ZFar;
     Camera->ZNear = global_rendering_res.CameraConfig.ZNear;
     Camera->SetAspect(global_rendering_res.CameraConfig.Aspect.x() / global_rendering_res.CameraConfig.Aspect.y());
+    Camera->SetMainViewMatrix();
 
     Scene = std::make_shared<RenderScene>();
     Scene->Light.Ambient               = {global_rendering_res.AmbientLight};
@@ -47,6 +46,8 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     Scene->Light.Directional.Color     = global_rendering_res.DirectionalLight.Color;
     Scene->ResourceManager = ResourceManager;
     Scene->SetVisibleNodesReference();
+
+    compiler_work.wait();
 
     Renderer = std::make_shared<ForwardSceneRenderer>();
     RendererInitInfo renderer_init_info;
@@ -159,6 +160,8 @@ void RenderSystem::ProcessSwapData()
                 MeshSourceDesc mesh_source    = {game_object_part.MeshDesc.MeshFile};
                 bool           is_mesh_loaded = Scene->GetMeshAssetIdAllocator().HasElement(mesh_source);
 
+                render_entity.MeshAssetId = Scene->GetMeshAssetIdAllocator().AllocGuid(mesh_source);
+
                 std::shared_ptr<RenderMeshData> mesh_data;
                 if (!is_mesh_loaded)
                 {
@@ -170,7 +173,6 @@ void RenderSystem::ProcessSwapData()
                     render_entity.BoundingBox = render_mesh->MeshBoundingBox;
                 }
 
-                render_entity.MeshAssetId = Scene->GetMeshAssetIdAllocator().AllocGuid(mesh_source);
                 render_entity.EnableVertexBlending = game_object_part.SkeletonAnimationResult.Transforms.size() > 1;
                 render_entity.JointMatrices.resize(game_object_part.SkeletonAnimationResult.Transforms.size());
 
@@ -200,13 +202,14 @@ void RenderSystem::ProcessSwapData()
 
                 bool is_material_load = Scene->GetMaterialAssetdAllocator().HasElement(material_source);
 
+                render_entity.MaterialAssetId = Scene->GetMaterialAssetdAllocator().AllocGuid(material_source);
+
                 std::shared_ptr<RenderMaterialData> material_data;
                 if (!is_material_load)
                 {
                     material_data = ResourceManager->LoadMaterialData(material_source);
                 }
 
-                render_entity.MaterialAssetId = Scene->GetMaterialAssetdAllocator().AllocGuid(material_source);
 
                 //  create game object on the graphics api side
                 if (!is_mesh_loaded)

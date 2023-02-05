@@ -33,8 +33,6 @@ if(NOT TARGET glm)
     # set_target_properties(glm PROPERTIES FOLDER 3rdparty)
 endif()
 
-include(imgui.cmake)
-
 if(NOT TARGET spdlog)
     option(SPDLOG_BUILD_EXAMPLE "" OFF)
     option(SPDLOG_INSTALL "" OFF)
@@ -62,6 +60,8 @@ if(NOT TARGET glfw)
     set_target_properties(glfw PROPERTIES FOLDER 3rdparty/glfw)
     set_target_properties(update_mappings PROPERTIES FOLDER 3rdparty/glfw)
 endif()
+
+include(imgui.cmake)
 
 include(boost.cmake)
 

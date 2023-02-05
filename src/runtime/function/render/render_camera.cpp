@@ -1,6 +1,12 @@
 #include "render_camera.h"
 #include "core/math/math.h"
 
+void RenderCamera::SetMainViewMatrix()
+{
+    Matrix4x4 view_matrix = ::LookAt(Position, Position + Forward(), Up());
+    SetMainViewMatrix(view_matrix);
+}
+
 void RenderCamera::SetMainViewMatrix(const Matrix4x4& view_matrix)
 {
     ViewMatrix = view_matrix;
@@ -53,6 +59,8 @@ void RenderCamera::LookAt(const Vector3f& position, const Vector3f& target, cons
     Vector3f orth_up = right.cross(forward);
 
     Quaternionf up_rotation = Quaternionf::FromTwoVectors(Rotation * orth_up, Vector3f::UnitZ());
+
+    Rotation = up_rotation * Rotation;
 
     // inverse of the model rotation
     // maps camera space vectors to model vectors

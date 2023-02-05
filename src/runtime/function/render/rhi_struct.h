@@ -11,6 +11,11 @@ using RHIAttachmentReference =  vk::AttachmentReference;
 using RHISubpassDescription = vk::SubpassDescription;
 using RHISubpassDependency = vk::SubpassDependency;
 
+using RHICommandBufferAllocateInfo = vk::CommandBufferAllocateInfo;
+using RHICommandBufferBeginInfo = vk::CommandBufferBeginInfo;
+
+using RHISubmitInfo = vk::SubmitInfo;
+
 using RHIRenderPassCreateInfo = vk::RenderPassCreateInfo;
 using RHIRenderPassBeginInfo = vk::RenderPassBeginInfo;
 

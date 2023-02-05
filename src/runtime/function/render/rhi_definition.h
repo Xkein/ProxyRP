@@ -22,6 +22,8 @@ using RHIFilter = vk::Filter;
 
 using RHIBufferUsageFlags = vk::BufferUsageFlags;
 using RHIBufferUsageFlagBits = vk::BufferUsageFlagBits;
+using RHICommandBufferUsageFlags = vk::CommandBufferUsageFlags;
+using RHICommandBufferUsageFlagBits = vk::CommandBufferUsageFlagBits;
 
 using RHIMemoryPropertyFlags = vk::MemoryPropertyFlags;
 using RHIMemoryPropertyFlagBits = vk::MemoryPropertyFlagBits;
@@ -33,6 +35,8 @@ using RHIAttachmentDescriptionFlagBits = vk::AttachmentDescriptionFlagBits;
 
 using RHIAttachmentLoadOp = vk::AttachmentLoadOp;
 using RHIAttachmentStoreOp = vk::AttachmentStoreOp;
+
+using RHICommandBufferLevel = vk::CommandBufferLevel;
 
 using RHISubpassContents = vk::SubpassContents;
 

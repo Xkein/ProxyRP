@@ -12,17 +12,17 @@
     "SkyColor": [0.6,0.8,0.9],
     "AmbientLight": [0.03, 0.03, 0.03],
     "DirectionalLight": {
-        "Direction": [0.5, -0.5, 0.5],
+        "Direction": [1.0, 1.0, -1.0],
         "Color": [1.0, 1.0, 1.0]
     },
     "CameraConfig": {
         "Pose": {
-            "Position": [-5.0, 0.0, 3.0],
-            "Target": [-4.0, 0.0, 3.0],
+            "Position": [2.0, 2.0, 2.0],
+            "Target": [0.0, 0.0, 0.0],
             "Up": [0.0, 0.0, 1.0]
         },
         "Aspect": [1280.0, 768.0],
-        "ZFar": 1000.0,
+        "ZFar": 10.0,
         "ZNear": 0.1
     }
 

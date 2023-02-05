@@ -21,7 +21,7 @@ void SceneRenderer::UpdatePerBuffer(std::shared_ptr<RenderCamera> camera)
     Vector3f ambient_light = Scene->Light.Ambient.Irradiance;
     uint32_t point_light_num = Scene->Light.PointList.Lights.size();
 
-    Scene->PerframeStorageBufferObject.ProjViewMatrix = proj_matrix;
+    Scene->PerframeStorageBufferObject.ProjViewMatrix = proj_view_matrix;
     Scene->PerframeStorageBufferObject.CameraPosition = camera_position;
     Scene->PerframeStorageBufferObject.AmbientLight   = ambient_light;
     Scene->PerframeStorageBufferObject.PointLightNum  = point_light_num;
