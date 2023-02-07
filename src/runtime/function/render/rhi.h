@@ -116,6 +116,7 @@ public:
     virtual void BindIndexBuffer(RHICommandBuffer* command_buffer, RHIBuffer* buffer, RHIDeviceSize offset, RHIIndexType indexType) = 0;
     virtual void UpdateDescriptorSets(std::span<const RHIWriteDescriptorSet> descriptor_writes, std::span<const RHICopyDescriptorSet> descriptor_copies)                      = 0;
     virtual void DrawIndexed(RHICommandBuffer* commandBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) = 0;
+    virtual void Draw(RHICommandBuffer* commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) = 0;
     virtual void PushEvent(RHICommandBuffer* command_buffer, const Char* name, std::array<float, 4> color) = 0;
     virtual void PopEvent(RHICommandBuffer* command_buffer) = 0;
     virtual void SetViewport(RHICommandBuffer* command_buffer, uint32_t first_viewpor, std::span<const RHIViewport> viewports)                                                = 0;

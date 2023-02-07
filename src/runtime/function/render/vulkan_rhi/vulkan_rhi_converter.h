@@ -123,3 +123,15 @@ __DEFINE_VULKAN_RHI_CONVERTER(RenderPass);
 __DEFINE_VULKAN_RHI_CONVERTER(Sampler);
 __DEFINE_VULKAN_RHI_CONVERTER(Semaphore);
 
+template<>
+class VulkanRHIConverterTrait<RHIShader>
+{
+public:
+    using VKNativeType = vk::ShaderModule;
+};
+template<>
+inline vk::ShaderModule VulkanRHIConverter::Convert(const RHIShader& rhi_data)
+{
+    return *(VulkanShader*)&rhi_data;
+}
+

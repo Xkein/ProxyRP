@@ -38,6 +38,8 @@ class RenderPass
 public:
     enum
     {
+        _pass_attachment_pass_buffer_a,
+        _pass_attachment_pass_buffer_b,
         _pass_attachment_depth,
         _pass_attachment_swap_chain_image,
         _pass_attachment_count,
@@ -46,6 +48,7 @@ public:
     enum
     {
         _subpass_forward_lighting,
+        _subpass_tone_mapping,
         _subpass_count,
     };
 

@@ -25,6 +25,16 @@ RHIRenderPassRef MainRenderPass::GetRenderPass() const
     return Framebuffer.RenderPass;
 }
 
+std::vector<RHIImageViewRef> MainRenderPass::GetFramebufferImageViews() const
+{
+    std::vector<RHIImageViewRef> image_views;
+    for (const auto& attachment : Framebuffer.Attachments)
+    {
+        image_views.emplace_back(attachment.ImageViewRHI);
+    }
+    return image_views;
+}
+
 void MainRenderPass::UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info)
 {
     for (size_t i = 0; i < Framebuffer.Attachments.size(); i++)

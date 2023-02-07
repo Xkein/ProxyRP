@@ -671,6 +671,13 @@ void VulkanRHI::DrawIndexed(RHICommandBuffer* command_buffer, uint32_t indexCoun
     vk_command_buffer.drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
+void VulkanRHI::Draw(RHICommandBuffer* command_buffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
+{
+    vk::CommandBuffer vk_command_buffer = *(VulkanCommandBuffer*)command_buffer;
+
+    vk_command_buffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
 void VulkanRHI::PushEvent(RHICommandBuffer* command_buffer, const Char* name, std::array<float, 4> color)
 {
     if (!EnableDebugUtilsLabel)

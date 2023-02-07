@@ -22,6 +22,8 @@ public:
     virtual void Draw() override;
 
     RHIRenderPassRef GetRenderPass() const;
+    std::vector<RHIImageViewRef> GetFramebufferImageViews() const;
+
 
 private:
     void SetupAttachments();

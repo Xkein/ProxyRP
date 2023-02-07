@@ -98,7 +98,5 @@ float4 frag(VS_OUTPUT input) : SV_Target
     float3 Libl = (float3)0;
     Lo += Libl;
     
-    //return float4(Lo, 1.0);
-    // move gamma correct to post process later
-    return float4(pow(Lo, 1.0/2.2), 1.0);
+    return float4(Lo, 1.0);
 }
