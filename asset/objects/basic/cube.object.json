@@ -1,0 +1,32 @@
+{
+    "Components": [
+      {
+        "$type_name": "TransformComponent",
+        "$context": {
+          "Transform": {
+            "Position": [0, 0, 0],
+            "Scale": [1, 1, 1],
+            "Quaternionf": [0, 0, 0, 1]
+          }
+        }
+      },
+      {
+        "$type_name": "MeshComponent",
+        "$context": {
+          "MeshRes": {
+            "SubMeshes": [
+              {
+                "MeshFileRef": "asset/resource/mesh/cube.obj",
+                "Material": "asset/objects/material/white.material.json",
+                "Transform": {
+                  "Position": [0, 0, 0],
+                  "Scale": [1, 1, 1],
+                  "Quaternionf": [0, 0, 0, 1]
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }

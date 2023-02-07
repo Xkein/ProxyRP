@@ -17,6 +17,7 @@ struct SceneDirectionalLight
 {
     Vector3f Direction;
     alignas(16) Vector3f Color;
+    int _padding;
 };
 
 struct ScenePointLight
@@ -24,6 +25,7 @@ struct ScenePointLight
     Vector3f Position;
     float    Radius;
     Vector3f Intensity;
+    int      _padding;
 };
 
 struct MeshInstance
@@ -37,7 +39,7 @@ struct MeshPerframeStorageBufferObject
     Matrix4x4 ProjViewMatrix;
     Vector3f  CameraPosition;
     alignas(16) Vector3f AmbientLight;
-    alignas(16) uint32_t PointLightNum;
+    uint32_t PointLightNum;
     alignas(16) ScenePointLight PointLights[GMaxPointLightCount];
     alignas(16) SceneDirectionalLight DirectionalLight;
     alignas(16) Matrix4x4 DirectionalLightProjView;

@@ -6,6 +6,8 @@
 #include <clang-c/Index.h>
 #include <string>
 #include <vector>
+#include <chrono>
+#include <filesystem>
 
 class Cursor;
 
@@ -25,6 +27,10 @@ public:
 
     void GenerateFiles();
 
+    bool ShouldDoNothing() const {
+        return DoNothing;
+    }
+
 private:
     bool ParseProject();
     void BuildClassAST(const Cursor& cursor, Namespace& current_namespace);
@@ -43,11 +49,14 @@ private:
 
     std::vector<std::shared_ptr<Generator>> Generators;
 
-    CXIndex           Index;
-    CXTranslationUnit TranslationUnit;
+    CXIndex           Index {nullptr};
+    CXTranslationUnit TranslationUnit {nullptr};
 
     std::unordered_map<std::string, std::string>  TypeTable;
     std::unordered_map<std::string, SchemaModule> SchemaModules;
+
+    std::filesystem::file_time_type NewestWriteTime;
+    bool                            DoNothing {false};
 
     std::vector<const char*> arguments = {
         "-x",

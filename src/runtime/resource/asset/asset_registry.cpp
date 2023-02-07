@@ -22,7 +22,10 @@ void AssetRegistry::Clean()
 
 void AssetRegistry::RegisterCheck(size_t hash)
 {
-    if (Data.contains(hash))
+    auto iter = Data.find(hash);
+    if (iter == Data.end())
+        return;
+    if (!iter->second.Data.expired())
     {
         LOG_WARN("AssetRegistry '{}' re-register {}", Name, hash);
     }

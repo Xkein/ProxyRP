@@ -22,7 +22,7 @@ public:
 IMPLEMENT_SHADER_TYPE(DirectionalLightShadowVS, "directional_light_shadow.hlsl", "vert", SF_Vertex);
 IMPLEMENT_SHADER_TYPE(DirectionalLightShadowPS, "directional_light_shadow.hlsl", "frag", SF_Pixel);
 
-void DirectionalLightPass::Initialize(const RenderPassInitInfo* init_info)
+void DirectionalLightRenderPass::Initialize(const RenderPassInitInfo* init_info)
 {
     SetupDescriptorSetLayout();
     SetupAttachments();
@@ -30,19 +30,19 @@ void DirectionalLightPass::Initialize(const RenderPassInitInfo* init_info)
     SetupFramebuffer();
 }
 
-void DirectionalLightPass::PostInitialize()
+void DirectionalLightRenderPass::PostInitialize()
 {
     SetupPipelines();
     SetupDescriptorSet();
 }
 
-void DirectionalLightPass::PrepareData(RenderPassPrepareInfo* prepare_info)
+void DirectionalLightRenderPass::PrepareData(RenderPassPrepareInfo* prepare_info)
 {
     PerframeStorageBufferObject.LightProjView = prepare_info->Scene->LightProjView;
     VisiableNodes                             = &prepare_info->Scene->VisiableNodes;
 }
 
-void DirectionalLightPass::Draw()
+void DirectionalLightRenderPass::Draw()
 {
     struct MeshNode
     {
@@ -92,11 +92,11 @@ void DirectionalLightPass::Draw()
 
     RHI->BindPipeline(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].PipelineRHI.get());
 
-    uint32_t perframe_dynamic_offset;
+    uint32_t                                               perframe_dynamic_offset;
     MeshDirectionalLightShadowPerframeStorageBufferObject* perframe_storage_buffer_object = reinterpret_cast<MeshDirectionalLightShadowPerframeStorageBufferObject*>(
         PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshPerframeStorageBufferObject>(RHI->GetCurrentFrameIndex(), perframe_dynamic_offset));
     *perframe_storage_buffer_object = PerframeStorageBufferObject;
-    
+
     for (auto& [material, mesh_instanced] : mesh_drawcall_batch)
     {
         // TODO: render from near to far
@@ -173,25 +173,25 @@ void DirectionalLightPass::Draw()
             }
         }
     }
-    
+
     RHI->PopEvent(RHI->GetCommandBuffer());
 
     RHI->PopEvent(RHI->GetCommandBuffer());
-    
+
     RHI->EndRenderPass(RHI->GetCommandBuffer());
 }
 
-RHIImageViewRef DirectionalLightPass::GetDirectionalLightShadowMap() const
+RHIImageViewRef DirectionalLightRenderPass::GetDirectionalLightShadowMap() const
 {
     return Framebuffer.Attachments[0].ImageViewRHI;
 }
 
-void DirectionalLightPass::SetupAttachments()
+void DirectionalLightRenderPass::SetupAttachments()
 {
     // color and depth
     Framebuffer.Attachments.resize(2);
 
-    Texture& color_texture            = Framebuffer.Attachments[0];
+    Texture& color_texture = Framebuffer.Attachments[0];
     color_texture.Format   = RHIFormat::eR32Sfloat;
     RHI->CreateImage(DirectionalLightShadowMapSize,
                      DirectionalLightShadowMapSize,
@@ -201,15 +201,9 @@ void DirectionalLightPass::SetupAttachments()
                      RHIMemoryPropertyFlagBits::eDeviceLocal,
                      color_texture.ImageRHI,
                      color_texture.DeviceMemoryRHI);
-    RHI->CreateImageView(color_texture.ImageRHI.get(),
-                         color_texture.Format,
-                         RHIImageAspectFlagBits::eColor,
-                         RHIImageViewType::e2D,
-                         1,
-                         1,
-                         color_texture.ImageViewRHI);
+    RHI->CreateImageView(color_texture.ImageRHI.get(), color_texture.Format, RHIImageAspectFlagBits::eColor, RHIImageViewType::e2D, 1, 1, color_texture.ImageViewRHI);
 
-    Texture& depth_texture            = Framebuffer.Attachments[1];
+    Texture& depth_texture = Framebuffer.Attachments[1];
     depth_texture.Format   = RHI->GetDepthImageInfo().DepthImageFormat;
     RHI->CreateImage(DirectionalLightShadowMapSize,
                      DirectionalLightShadowMapSize,
@@ -219,20 +213,13 @@ void DirectionalLightPass::SetupAttachments()
                      RHIMemoryPropertyFlagBits::eDeviceLocal,
                      depth_texture.ImageRHI,
                      depth_texture.DeviceMemoryRHI);
-    RHI->CreateImageView(depth_texture.ImageRHI.get(),
-                         depth_texture.Format,
-                         RHIImageAspectFlagBits::eDepth,
-                         RHIImageViewType::e2D,
-                         1,
-                         1,
-                         depth_texture.ImageViewRHI);
+    RHI->CreateImageView(depth_texture.ImageRHI.get(), depth_texture.Format, RHIImageAspectFlagBits::eDepth, RHIImageViewType::e2D, 1, 1, depth_texture.ImageViewRHI);
 }
 
-void DirectionalLightPass::SetupFramebuffer()
+void DirectionalLightRenderPass::SetupFramebuffer()
 {
-    std::array<RHIImageView*, 2> attachments {Framebuffer.Attachments[0].ImageViewRHI.get(),
-                                              Framebuffer.Attachments[1].ImageViewRHI.get()};
-    
+    std::array<RHIImageView*, 2> attachments {Framebuffer.Attachments[0].ImageViewRHI.get(), Framebuffer.Attachments[1].ImageViewRHI.get()};
+
     std::array<vk::ImageView, 2> vk_attachments {*(VulkanImageView*)attachments[0], *(VulkanImageView*)attachments[1]};
     RHIFramebufferCreateInfo     create_info {
             .renderPass      = *(VulkanRenderPass*)Framebuffer.RenderPass.get(),
@@ -246,7 +233,7 @@ void DirectionalLightPass::SetupFramebuffer()
     Framebuffer.Framebuffer = RHIFramebufferRef(RHI->CreateFramebuffer(&create_info));
 }
 
-void DirectionalLightPass::SetupDescriptorSetLayout()
+void DirectionalLightRenderPass::SetupDescriptorSetLayout()
 {
     DescriptorInfos.resize(1);
 
@@ -278,7 +265,7 @@ void DirectionalLightPass::SetupDescriptorSetLayout()
     DescriptorInfos[0].LayoutRHI = RHIDescriptorSetLayoutRef(RHI->CreateDescriptorSetLayout(&layout_create_info));
 }
 
-void DirectionalLightPass::SetupDescriptorSet()
+void DirectionalLightRenderPass::SetupDescriptorSet()
 {
     RHIDescriptorSetAllocateInfo descriptor_set_alloc_info {
         .descriptorPool     = *(VulkanDescriptorPool*)RHI->GetDescriptorPool(),
@@ -307,11 +294,11 @@ void DirectionalLightPass::SetupDescriptorSet()
     };
 
     RHIDescriptorSet* descriptor_set = DescriptorInfos[0].DescriptorSetRHI.get();
-    
+
     std::array<RHIWriteDescriptorSet, 3> descriptor_writes {};
 
     RHIWriteDescriptorSet& perframe_storage_buffer_write = descriptor_writes[0];
-    perframe_storage_buffer_write.dstSet                 = (vk::DescriptorSet)*(VulkanDescriptorSet*)descriptor_set;
+    perframe_storage_buffer_write.dstSet                 = (vk::DescriptorSet) * (VulkanDescriptorSet*)descriptor_set;
     perframe_storage_buffer_write.dstBinding             = 0;
     perframe_storage_buffer_write.dstArrayElement        = 0;
     perframe_storage_buffer_write.descriptorType         = RHIDescriptorType::eStorageBufferDynamic;
@@ -319,7 +306,7 @@ void DirectionalLightPass::SetupDescriptorSet()
     perframe_storage_buffer_write.pBufferInfo            = &perframe_storage_buffer_info;
 
     RHIWriteDescriptorSet& perdrawcall_storage_buffer_write = descriptor_writes[1];
-    perdrawcall_storage_buffer_write.dstSet                 = (vk::DescriptorSet)*(VulkanDescriptorSet*)descriptor_set;
+    perdrawcall_storage_buffer_write.dstSet                 = (vk::DescriptorSet) * (VulkanDescriptorSet*)descriptor_set;
     perdrawcall_storage_buffer_write.dstBinding             = 1;
     perdrawcall_storage_buffer_write.dstArrayElement        = 0;
     perdrawcall_storage_buffer_write.descriptorType         = RHIDescriptorType::eStorageBufferDynamic;
@@ -327,7 +314,7 @@ void DirectionalLightPass::SetupDescriptorSet()
     perdrawcall_storage_buffer_write.pBufferInfo            = &perdrawcall_storage_buffer_info;
 
     RHIWriteDescriptorSet& perdrawcall_vertex_blending_storage_buffer_write = descriptor_writes[2];
-    perdrawcall_vertex_blending_storage_buffer_write.dstSet                 = (vk::DescriptorSet)*(VulkanDescriptorSet*)descriptor_set;
+    perdrawcall_vertex_blending_storage_buffer_write.dstSet                 = (vk::DescriptorSet) * (VulkanDescriptorSet*)descriptor_set;
     perdrawcall_vertex_blending_storage_buffer_write.dstBinding             = 2;
     perdrawcall_vertex_blending_storage_buffer_write.dstArrayElement        = 0;
     perdrawcall_vertex_blending_storage_buffer_write.descriptorType         = RHIDescriptorType::eStorageBufferDynamic;
@@ -337,7 +324,7 @@ void DirectionalLightPass::SetupDescriptorSet()
     RHI->UpdateDescriptorSets(descriptor_writes, {});
 }
 
-void DirectionalLightPass::SetupRenderPass()
+void DirectionalLightRenderPass::SetupRenderPass()
 {
     std::array<RHIAttachmentDescription, 2> attachments {};
 
@@ -371,18 +358,18 @@ void DirectionalLightPass::SetupRenderPass()
     };
 
     std::array<RHISubpassDescription, 1> subpasses {};
-    RHISubpassDescription& shadow_pass = subpasses[0];
-    shadow_pass.pipelineBindPoint      = RHIPipelineBindPoint::eGraphics;
-    shadow_pass.colorAttachmentCount   = 1;
-    shadow_pass.pColorAttachments      = &color_attachment_reference;
-    shadow_pass.pDepthStencilAttachment = &depth_attachment_reference;
+    RHISubpassDescription&               shadow_pass = subpasses[0];
+    shadow_pass.pipelineBindPoint                    = RHIPipelineBindPoint::eGraphics;
+    shadow_pass.colorAttachmentCount                 = 1;
+    shadow_pass.pColorAttachments                    = &color_attachment_reference;
+    shadow_pass.pDepthStencilAttachment              = &depth_attachment_reference;
 
     std::array<RHISubpassDependency, 1> dependencies {};
-    RHISubpassDependency& lighting_pass_denpendency = dependencies[0];
-    lighting_pass_denpendency.srcSubpass            = 0;
-    lighting_pass_denpendency.dstSubpass            = RHI_SUBPASS_EXTERNAL;
-    lighting_pass_denpendency.srcStageMask          = RHIPipelineStageFlagBits::eColorAttachmentOutput;
-    lighting_pass_denpendency.dstStageMask          = RHIPipelineStageFlagBits::eBottomOfPipe;
+    RHISubpassDependency&               lighting_pass_denpendency = dependencies[0];
+    lighting_pass_denpendency.srcSubpass                          = 0;
+    lighting_pass_denpendency.dstSubpass                          = RHI_SUBPASS_EXTERNAL;
+    lighting_pass_denpendency.srcStageMask                        = RHIPipelineStageFlagBits::eColorAttachmentOutput;
+    lighting_pass_denpendency.dstStageMask                        = RHIPipelineStageFlagBits::eBottomOfPipe;
 
     RHIRenderPassCreateInfo render_pass_create_info {};
     render_pass_create_info.attachmentCount = attachments.size();
@@ -395,7 +382,7 @@ void DirectionalLightPass::SetupRenderPass()
     Framebuffer.RenderPass = RHIRenderPassRef(RHI->CreateRenderPass(&render_pass_create_info));
 }
 
-void DirectionalLightPass::SetupPipelines()
+void DirectionalLightRenderPass::SetupPipelines()
 {
     RenderPipelines.resize(1);
 

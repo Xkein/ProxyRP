@@ -49,6 +49,20 @@ int MetaParser::Parse()
         return -1;
     }
 
+    std::filesystem::path write_stamp_file = ProjectInputFile;
+    write_stamp_file                       = write_stamp_file.parent_path() / "write_stamp";
+    if (!std::filesystem::exists(write_stamp_file))
+    {
+        utils::save_file("write stamp", write_stamp_file.string());
+    }
+
+    if (std::filesystem::last_write_time(write_stamp_file) > NewestWriteTime)
+    {
+        std::cout << "Nothing has changed. Exiting..." << std::endl;
+        DoNothing = true;
+        return 0;
+    }
+
     std::cout << "Parsing whole project..." << std::endl;
 
     Index = clang_createIndex(true, IsShowErrors);
@@ -85,6 +99,8 @@ int MetaParser::Parse()
     BuildClassAST(cursor, temp_namespace);
 
     temp_namespace.clear();
+
+    std::filesystem::last_write_time(write_stamp_file, std::filesystem::file_time_type::clock::now());
 
     return 0;
 }
@@ -145,16 +161,24 @@ bool MetaParser::ParseProject()
     include_file << "#ifndef __" << output_filename << "__" << std::endl;
     include_file << "#define __" << output_filename << "__" << std::endl;
 
-    for (auto include_item : inlcude_files)
+    for (auto& include_item : inlcude_files)
     {
         std::string temp_string(include_item);
         utils::replace_all(temp_string, "\\", "/");
-        temp_string = utils::trim(temp_string, " \t\r\n");
-        include_file << "#include  \"" << temp_string << "\"" << std::endl;
+        include_item = utils::trim(temp_string, " \t\r\n");
+        include_file << "#include  \"" << include_item << "\"" << std::endl;
     }
 
     include_file << "#endif" << std::endl;
     include_file.close();
+
+    std::filesystem::file_time_type newest_write_time;
+    for (auto include_item : inlcude_files)
+    {
+        newest_write_time = max(newest_write_time, std::filesystem::last_write_time(include_item));
+    }
+    NewestWriteTime = newest_write_time;
+
     return result;
 }
 

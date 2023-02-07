@@ -50,12 +50,12 @@ void Engine::StartSystems()
     GWorldManager = std::make_shared<WorldManager>();
     GWorldManager->Initialize();
 
-    GInputSystem = std::make_shared<InputSystem>();
-    GInputSystem->Initialize();
-
     GWindowSystem = std::make_shared<WindowSystem>();
     WindowCreateInfo window_create_info {.Width = 1024, .Height = 512, .Title = "Proxy Rendering Process", .IsFullScreen = false};
     GWindowSystem->Initialize(window_create_info);
+
+    GInputSystem = std::make_shared<InputSystem>();
+    GInputSystem->Initialize();
 
     GRenderSystem = std::make_shared<RenderSystem>();
     RenderSystemInitInfo render_init_info;

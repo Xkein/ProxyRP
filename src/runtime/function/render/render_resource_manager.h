@@ -64,6 +64,7 @@ private:
 
     std::shared_ptr<AssetRegistry> DefaultRegistry;
     std::shared_ptr<AssetRegistry> MeshRegistry;
+    std::shared_ptr<AssetRegistry> TextureRegistry;
     std::shared_ptr<AssetRegistry> MaterialRegistry;
 
     std::vector<std::shared_ptr<void*>> __PersistentResources;

@@ -43,7 +43,7 @@ private:
     PROPERTY()
     Instance<CameraParameter> Parameter;
 
-    Vector3f Position;
+    Vector3f Position {Vector3f::Zero()};
 
     Vector3f Forward {Vector3f::UnitY()};
     Vector3f Up {Vector3f::UnitZ()};

@@ -52,6 +52,11 @@ public:
         return (InvRotation * Vector3f::UnitX());
     }
 
+    Vector2f GetFov() const
+    {
+        return {FovX, FovY};
+    }
+
 	Vector3f    Position {Vector3f::Zero()};
     Quaternionf Rotation {Quaternionf::Identity()};
     Quaternionf InvRotation {Quaternionf::Identity()};

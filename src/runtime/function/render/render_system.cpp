@@ -42,7 +42,7 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
 
     Scene = std::make_shared<RenderScene>();
     Scene->Light.Ambient               = {global_rendering_res.AmbientLight};
-    Scene->Light.Directional.Direction = global_rendering_res.DirectionalLight.Direction;
+    Scene->Light.Directional.Direction = global_rendering_res.DirectionalLight.Direction.normalized();
     Scene->Light.Directional.Color     = global_rendering_res.DirectionalLight.Color;
     Scene->ResourceManager = ResourceManager;
     Scene->SetVisibleNodesReference();

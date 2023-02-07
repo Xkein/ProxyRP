@@ -134,11 +134,11 @@ float3 BRDF(float3 N, float3 V, float3 L, float3 SpecularColor, float3 BaseColor
     float Vis = Vis_SmithJointApprox(a2, Context.NoV, Context.NoL);
     float3 F = F_Schlick(SpecularColor, Context.VoH);
     
-    float3 specular = (D * Vis) * F / (4.0 * Context.NoL * Context.NoL + 0.001);
+    float3 specular = (D * Vis) * F / (4.0 * Context.NoL * Context.NoV + 0.001);
     
     float3 diffuse = Diffuse_Lambert(BaseColor);
    
-    float3 kD = (float3(1.0, 1.0, 1.0) - F) * (1.0 - Metallic);
+    float3 kD = (1.0 - F) * (1.0 - Metallic);
     float3 kS = 1.0 - kD;
     
     return kD * diffuse + kS * specular;

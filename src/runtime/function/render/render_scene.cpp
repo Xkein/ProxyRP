@@ -20,49 +20,103 @@ void RenderScene::SetVisibleNodesReference()
 
 void RenderScene::UpdateVisibleObjectsLights(std::shared_ptr<RenderCamera> camera)
 {
-    Matrix4x4 light_proj_view = CalculateDirectionalLightCamera(*this, *camera);
-
-    LightProjView = light_proj_view;
-
-    DirectionalLightVisibleMeshNodes.clear();
-
-    ClusterFrustum frustum = CreateClusterFrustumFromMatrix(light_proj_view, -1.f, 1.f, -1.f, 1.f, 0.f, 1.f);
-
-    for (const RenderEntity& entity : RenderEntities)
+    // update directional light
     {
-        BoundingBox mesh_bounding_box = entity.BoundingBox;
+        Matrix4x4 light_proj_view = CalculateDirectionalLightCamera(*this, *camera);
 
-        if (TiledFrustumIntersectBox(frustum, BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix)))
+        LightProjView = light_proj_view;
+        PerframeStorageBufferObject.DirectionalLightProjView = light_proj_view;
+
+        DirectionalLightVisibleMeshNodes.clear();
+
+        ClusterFrustum frustum = CreateClusterFrustumFromMatrix(light_proj_view, -1.f, 1.f, -1.f, 1.f, 0.f, 1.f);
+
+        for (const RenderEntity& entity : RenderEntities)
         {
-            RenderMeshNode& node = DirectionalLightVisibleMeshNodes.emplace_back();
+            BoundingBox mesh_bounding_box = entity.BoundingBox;
 
-            node.ModelMatrix = &entity.ModelMatrix;
-
-            ASSERT(entity.JointMatrices.size() <= MeshVertexBlendingMaxJointCount);
-
-            if (!entity.JointMatrices.empty())
+            if (TiledFrustumIntersectBox(frustum, BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix)))
             {
-                node.JointCount    = entity.JointMatrices.size();
-                node.JointMatrices = entity.JointMatrices.data();
+                RenderMeshNode& node = DirectionalLightVisibleMeshNodes.emplace_back();
+
+                node.ModelMatrix = &entity.ModelMatrix;
+
+                ASSERT(entity.JointMatrices.size() <= MeshVertexBlendingMaxJointCount);
+
+                if (!entity.JointMatrices.empty())
+                {
+                    node.JointCount    = entity.JointMatrices.size();
+                    node.JointMatrices = entity.JointMatrices.data();
+                }
+                node.NodeId = entity.InstanceId;
+
+                std::shared_ptr<RenderMesh> mesh = ResourceManager->GetEntityMesh(entity);
+                node.RefMesh                     = mesh.get();
+                node.EnableVertexBlending        = entity.EnableVertexBlending;
+
+                std::shared_ptr<PBRMaterial> material = ResourceManager->GetEntityMaterial(entity);
+                node.RefMaterial                      = material.get();
             }
-            node.NodeId = entity.InstanceId;
-
-            std::shared_ptr<RenderMesh> mesh = ResourceManager->GetEntityMesh(entity);
-            node.RefMesh                     = mesh.get();
-            node.EnableVertexBlending        = entity.EnableVertexBlending;
-
-            std::shared_ptr<PBRMaterial> material = ResourceManager->GetEntityMaterial(entity);
-            node.RefMaterial                      = material.get();
         }
     }
 
-    PointLightsVisibleMeshNodes.clear();
+    // update point lights
+    {
+        PointLightsVisibleMeshNodes.clear();
 
+        uint32_t                 point_light_num = Light.PointList.Lights.size();
+        std::vector<BoundingSphere> point_lights_bounding_spheres(point_light_num);
+        for (size_t i = 0; i < point_light_num; i++)
+        {
+            point_lights_bounding_spheres[i].Center = Light.PointList.Lights[i].Position;
+            point_lights_bounding_spheres[i].Radius = Light.PointList.Lights[i].CalculateRadius();
+        }
 
+        for (const RenderEntity& entity : RenderEntities)
+        {
+            BoundingBox mesh_bounding_box = entity.BoundingBox;
+
+            bool intersect_with_point_light = false;
+            for (size_t i = 0; i < point_light_num; i++)
+            {
+                BoundingBox transformed_bounding_box = BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix);
+                if (BoxIntersectsWithSphere(transformed_bounding_box, point_lights_bounding_spheres[i]))
+                {
+                    intersect_with_point_light = true;
+                    break;
+                }
+            }
+
+            if (intersect_with_point_light)
+            {
+                RenderMeshNode& node = PointLightsVisibleMeshNodes.emplace_back();
+
+                node.ModelMatrix = &entity.ModelMatrix;
+
+                ASSERT(entity.JointMatrices.size() <= MeshVertexBlendingMaxJointCount);
+
+                if (!entity.JointMatrices.empty())
+                {
+                    node.JointCount    = entity.JointMatrices.size();
+                    node.JointMatrices = entity.JointMatrices.data();
+                }
+                node.NodeId = entity.InstanceId;
+
+                std::shared_ptr<RenderMesh> mesh = ResourceManager->GetEntityMesh(entity);
+                node.RefMesh                     = mesh.get();
+                node.EnableVertexBlending        = entity.EnableVertexBlending;
+
+                std::shared_ptr<PBRMaterial> material = ResourceManager->GetEntityMaterial(entity);
+                node.RefMaterial                      = material.get();
+            }
+        }
+    }
 }
 
 void RenderScene::UpdateVisibleObjectsCamera(std::shared_ptr<RenderCamera> camera)
 {
+    MainCameraVisibleMeshNodes.clear();
+
     Matrix4x4 view_matrix      = camera->GetViewMatrix();
     Matrix4x4 proj_matrix      = camera->GetPerspectiveMatrix();
     Matrix4x4 proj_view_matrix = proj_matrix * view_matrix;
@@ -101,7 +155,9 @@ void RenderScene::UpdateVisibleObjectsCamera(std::shared_ptr<RenderCamera> camer
 
 void RenderScene::Clear()
 {
-
+    InstanceIdAllocator.Clear();
+    MeshObjectIdMap.clear();
+    RenderEntities.clear();
 }
 
 void RenderScene::AddInstanceIdToMap(uint32_t instance_id, GameObjectID go_id)

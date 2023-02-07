@@ -24,6 +24,6 @@ public:
         return std::reinterpret_pointer_cast<T>(Data.lock());
     }
 
-    size_t               Hash;
+    size_t               Hash {0};
     std::weak_ptr<void*> Data;
 };

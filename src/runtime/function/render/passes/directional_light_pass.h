@@ -9,7 +9,7 @@ struct DirectionalLightPassInitInfo : public RenderPassInitInfo
 {
 };
 
-class DirectionalLightPass : public RenderPass
+class DirectionalLightRenderPass : public RenderPass
 {
     static const uint32_t DirectionalLightShadowMapSize = 4096;
 

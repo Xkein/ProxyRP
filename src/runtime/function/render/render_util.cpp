@@ -131,8 +131,7 @@ bool TiledFrustumIntersectBox(ClusterFrustum const& f, BoundingBox const& b)
     // plane_bottom
     {
         float signed_distance_from_plane_bottom = f.PlaneBottom.dot(box_center);
-        float radius_project_plane_bottom       = Vector3f(f.PlaneBottom.head<3>()).cwiseAbs()
-                .dot(box_extents);
+        float radius_project_plane_bottom       = Vector3f(f.PlaneBottom.head<3>()).cwiseAbs().dot(box_extents);
 
         bool intersecting_or_inside_bottom = signed_distance_from_plane_bottom < radius_project_plane_bottom;
         if (!intersecting_or_inside_bottom)
@@ -268,6 +267,7 @@ Matrix4x4 CalculateDirectionalLightCamera(RenderScene& scene, RenderCamera& came
                          -scene_bounding_box_light_view.max().z(),
                          // the objects which are nearer than the frustum bounding box may caster shadow as well
                          -std::max(frustum_bounding_box_light_view.min().z(), scene_bounding_box_light_view.min().z()));
+        light_proj(1, 1) *= -1;
     }
 
     Matrix4x4 light_proj_view = (light_proj * light_view);

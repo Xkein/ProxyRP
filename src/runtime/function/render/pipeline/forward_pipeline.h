@@ -17,8 +17,9 @@ public:
 
     std::shared_ptr<RenderPass> DirectionalLightPass;
     std::shared_ptr<RenderPass> PointLightShadowPass;
-    std::shared_ptr<RenderPass> MeshPass;
+    std::shared_ptr<RenderPass> MainPass;
 
+    std::shared_ptr<RenderPass> MeshPass;
     std::shared_ptr<RenderPass> FxaaPass;
     std::shared_ptr<RenderPass> ColorGradingPass;
     std::shared_ptr<RenderPass> ToneMappingPass;

@@ -2,6 +2,7 @@
 #include "common/constants.hlsl"
 #include "common/structures.hlsl"
 #include "common/mesh_shading.hlsl"
+#include "common/mesh_common.hlsl"
 
 float2 NDC2UV(float2 xy)
 {
@@ -12,29 +13,12 @@ float2 UV2NDC(float2 uv)
     return uv * float2(2.0, 2.0) + float2(-1.0, -1.0);
 }
 
-#define MeshPerframeBuffer _MeshPerframeBuffer[0]
-StructuredBuffer<MeshPerframeStorageBufferObject> _MeshPerframeBuffer : register(t0);
-StructuredBuffer<MeshInstance> MeshInstances : register(t1);
-StructuredBuffer<float4x4> JointMatrices : register(t2);
-
-StructuredBuffer<MeshVertexJointBinding> JointBindings : register(t0, space1);
-
 Texture2DArray PointLightShadowMap        : register(t3);
 SamplerState   PointLightShadowMapSampler : register(s3);
 
 Texture2D    DirectionalLightShadowMap        : register(t4);
 SamplerState DirectionalLightShadowMapSampler : register(s4);
 
-Texture2D    BaseColorTexture        : register(t1, space2);
-SamplerState BaseColorTextureSampler : register(s1, space2);
-Texture2D    MetallicRoughnessTexture        : register(t2, space2);
-SamplerState MetallicRoughnessTextureSampler : register(s2, space2);
-Texture2D    NormalTexture        : register(t3, space2);
-SamplerState NormalTextureSampler : register(s3, space2);
-Texture2D    OcclusionTexture        : register(t4, space2);
-SamplerState OcclusionTextureSampler : register(s4, space2);
-Texture2D    EmissiveTexture        : register(t5, space2);
-SamplerState EmissiveTextureSampler : register(s5, space2);
 
 struct VS_OUTPUT
 {
@@ -54,51 +38,27 @@ void vert(float3 position : ATTRIBUTE0, float3 normal : ATTRIBUTE1, float3 tange
     float3 model_position;
     float3 model_normal;
     float3 model_tangent;
-    if (enable_vertex_blending > 0.0)
-    {
-        // TODO
-    }
-    else
-    {
-        model_position = position;
-        model_normal = normal;
-        model_tangent = tangent;
-    }
+    GetMeshBlendingResult(position, normal, tangent, enable_vertex_blending, vertex_index, instance_index, model_position, model_normal, model_tangent);
     
-    float4 position_world_space = mul(model_matrix, float4(model_position, 1.0));
-    position_world_space /= position_world_space.w;
-    output.PositionWorldSpace = position_world_space.xyz;
-    output.Position = mul(MeshPerframeBuffer.ProjViewMatrix, position_world_space);
+    GetPosition(model_matrix, MeshPerframeBuffer.ProjViewMatrix, model_position, output.PositionWorldSpace, output.Position);
     output.Normal = mul(model_matrix, float4(normal, 1.0)).xyz;
     output.Tangent = mul(model_matrix, float4(tangent, 1.0)).xyz;
     output.Texcoord = texcoord;
 }
 
-float3 CalculateNormal(float2 uv, float3 normal, float3 tangent)
-{
-    float3 tex_normal = NormalTexture.Sample(NormalTextureSampler, uv) * 2.0 - 1.0;
-    float3 N = normalize(normal);
-    float3 T = normalize(tangent);
-    float3 B = cross(N, T);
-    
-    float3x3 TBN = float3x3(T, B, N);
-    return normalize(mul(TBN, tex_normal));
-}
-
 float GetShadow(float2 uv, float cur_depth)
 {
-    float depth = DirectionalLightShadowMap.Sample(DirectionalLightShadowMapSampler, uv).x + 0.000075;
-    return depth >= cur_depth ? 1.0 : 0.0;
+    float depth = DirectionalLightShadowMap.Sample(DirectionalLightShadowMapSampler, uv).x + 0.0075;
+    return depth >= cur_depth ? 1.0 : -1.0;
 }
 
 float4 frag(VS_OUTPUT input) : SV_Target
 {
-    float3 base_color =  BaseColorTexture.Sample(BaseColorTextureSampler, input.Texcoord);
+    float3 base_color = BaseColorTexture.Sample(BaseColorTextureSampler, input.Texcoord).xyz;
     float3 N = CalculateNormal(input.Texcoord, input.Normal, input.Tangent);
-    float3 metallic_roughness = MetallicRoughnessTexture.Sample(MetallicRoughnessTextureSampler, input.Texcoord);
-    float metallic = metallic_roughness.z;
-    float roughness = metallic_roughness.y;
-    const float3 dielectric_specular = float3(0.04, 0.04, 0.04);
+    float metallic, roughness;
+    GetMetallicRoughness(input.Texcoord, metallic, roughness);
+    const float3 dielectric_specular = 0.04;
     
     float3 V = normalize(MeshPerframeBuffer.CameraPosition - input.PositionWorldSpace);
     float3 R = reflect(-V, N);
@@ -114,7 +74,8 @@ float4 frag(VS_OUTPUT input) : SV_Target
     }
 
     {
-        float3 L = normalize(MeshPerframeBuffer.DirectionalLight.Direction);
+        float3 directional_color = MeshPerframeBuffer.DirectionalLight.Color;
+        float3 L = -normalize(MeshPerframeBuffer.DirectionalLight.Direction);
         float NoL = dot(N, L);
         
         if (NoL > 0.0)
@@ -127,7 +88,7 @@ float4 frag(VS_OUTPUT input) : SV_Target
             float shadow = GetShadow(shadow_uv, position_ndc.z);
             if (shadow > 0.0)
             {
-                Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * MeshPerframeBuffer.DirectionalLight.Color * NoL * shadow;
+                Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * directional_color * NoL * shadow;
             }
         }
     }
@@ -137,5 +98,7 @@ float4 frag(VS_OUTPUT input) : SV_Target
     float3 Libl = (float3)0;
     Lo += Libl;
     
-    return float4(Lo, 1.0);
+    //return float4(Lo, 1.0);
+    // move gamma correct to post process later
+    return float4(pow(Lo, 1.0/2.2), 1.0);
 }

@@ -7,6 +7,8 @@ STRUCT(CameraParameter)
 {
     PROPERTY()
     float Fov {50.f};
+    PROPERTY()
+    bool UseGlobalCameraConfig {false};
 };
 
 STRUCT(FirstPersonCameraParameter : public CameraParameter)

@@ -2,13 +2,82 @@
   "Objects": [
     {
       "Name": "ProxyManager",
-      "DefinitionUrl": "asset/objects/proxy.object.json",
+      "DefinitionUrl": "asset/objects/proxy_manager.object.json",
+      "InstancedComponents": []
+    },
+    {
+      "Name": "ProxyCamera",
+      "DefinitionUrl": "asset/objects/proxy_camera.object.json",
       "InstancedComponents": []
     },
     {
       "Name": "MeshTestObject",
       "DefinitionUrl": "asset/objects/mesh_test.object.json",
       "InstancedComponents": []
+    },
+    {
+      "Name": "Floor",
+      "DefinitionUrl": "asset/objects/basic/cube.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [0, 0, -1],
+              "Scale": [10, 10, 0.2],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Cube",
+      "DefinitionUrl": "asset/objects/basic/cube.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [-2, 0, 0.2],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Sphere",
+      "DefinitionUrl": "asset/objects/basic/sphere.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [-1, -2, 0.2],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Cylinder",
+      "DefinitionUrl": "asset/objects/basic/cylinder.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [1, 2, 0.2],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
     }
   ]
 }

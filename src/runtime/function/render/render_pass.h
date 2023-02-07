@@ -36,6 +36,20 @@ struct FramebufferRecreateInfo
 class RenderPass
 {
 public:
+    enum
+    {
+        _pass_attachment_depth,
+        _pass_attachment_swap_chain_image,
+        _pass_attachment_count,
+    };
+
+    enum
+    {
+        _subpass_forward_lighting,
+        _subpass_count,
+    };
+
+public:
     virtual void Initialize(const RenderPassInitInfo* init_info) = 0;
     virtual void InitializeUIRenderBackend(WindowUI* window_ui) {}
     virtual void PostInitialize() {}

@@ -68,6 +68,7 @@ struct MeshVertexDataDefinition
 {
     Vector3f Position;
     Vector3f Normal;
+    Vector3f Tangent;
     Vector2f TexCoord;
 };
 

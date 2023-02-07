@@ -17,6 +17,7 @@ RenderResourceManager::RenderResourceManager()
 {
     DefaultRegistry  = std::make_shared<AssetRegistry>("RenderResourceManager::Default");
     MeshRegistry     = std::make_shared<AssetRegistry>("RenderResourceManager::Mesh");
+    TextureRegistry  = std::make_shared<AssetRegistry>("RenderResourceManager::Texture");
     MaterialRegistry = std::make_shared<AssetRegistry>("RenderResourceManager::Material");
 }
 
@@ -239,11 +240,11 @@ std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const
 
     std::shared_ptr<PBRMaterial> material = std::make_shared<PBRMaterial>();
 
-    float       empty_color[] {0.5f, 0.5f, 0.5f, 0.5f};
+    static byte empty_color[] {(byte)128, (byte)128, (byte)128, (byte)256};
     TextureData empty_texture {
         .Width  = 1,
         .Height = 1,
-        .Pixels = (byte*)empty_color,
+        .Pixels = empty_color,
         .Format = RHIFormat::eR8G8B8A8Unorm,
     };
 
@@ -447,7 +448,7 @@ void RenderResourceManager::UpdateVertexBuffer(bool                             
             mesh_vertex_positions[vertex_index].Position = vertex_buffer_data[vertex_index].Position;
 
             mesh_vertex_blending_varyings[vertex_index].Normal  = vertex_buffer_data[vertex_index].Normal;
-            //mesh_vertex_blending_varyings[vertex_index].Tangent = vertex_buffer_data[vertex_index].Tangent;
+            mesh_vertex_blending_varyings[vertex_index].Tangent = vertex_buffer_data[vertex_index].Tangent;
 
             mesh_vertex_varyings[vertex_index].Texcoord = vertex_buffer_data[vertex_index].TexCoord;
         }
@@ -567,7 +568,7 @@ void RenderResourceManager::UpdateVertexBuffer(bool                             
             mesh_vertex_positions[vertex_index].Position = vertex_buffer_data[vertex_index].Position;
 
             mesh_vertex_blending_varyings[vertex_index].Normal = vertex_buffer_data[vertex_index].Normal;
-            // mesh_vertex_blending_varyings[vertex_index].Tangent = vertex_buffer_data[vertex_index].Tangent;
+             mesh_vertex_blending_varyings[vertex_index].Tangent = vertex_buffer_data[vertex_index].Tangent;
 
             mesh_vertex_varyings[vertex_index].Texcoord = vertex_buffer_data[vertex_index].TexCoord;
         }
@@ -662,28 +663,27 @@ void RenderResourceManager::UpdateIndexBuffer(uint32_t index_buffer_size, void* 
 
 void RenderResourceManager::UpdateTextureImageData(const TextureDataToUpdate& texture_data)
 {
-    texture_data.Material->BaseColor         = TextureRef(new Texture());
-    texture_data.Material->Normal            = TextureRef(new Texture());
-    texture_data.Material->MetallicRoughness = TextureRef(new Texture());
-    texture_data.Material->Occlusion         = TextureRef(new Texture());
-    texture_data.Material->Emissive          = TextureRef(new Texture());
+    auto LoadGPUTexture = [this](TextureRef& texture, const TextureData* texture_data) {
+        size_t     texture_hash   = (size_t)texture_data->Pixels;
+        TextureRef cached_texture = TextureRegistry->GetAsset<Texture>(texture_hash);
+        if (cached_texture)
+        {
+            texture = std::move(cached_texture);
+            return;
+        }
 
-    texture_data.Material->BaseColor->Format         = texture_data.BaseColorTexture->Format;
-    texture_data.Material->Normal->Format            = texture_data.NormalTexture->Format;
-    texture_data.Material->MetallicRoughness->Format = texture_data.MetallicRoughnessTexture->Format;
-    texture_data.Material->Occlusion->Format         = texture_data.OcclusionTexture->Format;
-    texture_data.Material->Emissive->Format          = texture_data.EmissiveTexture->Format;
+        texture = TextureRef(new Texture());
+        texture->Format = texture_data->Format;
+        RHI->CreateTextureImage(texture->ImageRHI, texture->ImageViewRHI, texture->DeviceMemoryRHI, texture_data);
 
-    RHI->CreateTextureImage(
-        texture_data.Material->BaseColor->ImageRHI, texture_data.Material->BaseColor->ImageViewRHI, texture_data.Material->BaseColor->DeviceMemoryRHI, texture_data.BaseColorTexture);
-    RHI->CreateTextureImage(
-        texture_data.Material->Normal->ImageRHI, texture_data.Material->Normal->ImageViewRHI, texture_data.Material->Normal->DeviceMemoryRHI, texture_data.NormalTexture);
-    RHI->CreateTextureImage(
-        texture_data.Material->MetallicRoughness->ImageRHI, texture_data.Material->MetallicRoughness->ImageViewRHI, texture_data.Material->MetallicRoughness->DeviceMemoryRHI, texture_data.MetallicRoughnessTexture);
-    RHI->CreateTextureImage(
-        texture_data.Material->Occlusion->ImageRHI, texture_data.Material->Occlusion->ImageViewRHI, texture_data.Material->Occlusion->DeviceMemoryRHI, texture_data.OcclusionTexture);
-    RHI->CreateTextureImage(
-        texture_data.Material->Emissive->ImageRHI, texture_data.Material->Emissive->ImageViewRHI, texture_data.Material->Emissive->DeviceMemoryRHI, texture_data.EmissiveTexture);
+        TextureRegistry->Register(texture_hash, texture);
+    };
+
+    LoadGPUTexture(texture_data.Material->BaseColor, texture_data.BaseColorTexture);
+    LoadGPUTexture(texture_data.Material->Normal, texture_data.NormalTexture);
+    LoadGPUTexture(texture_data.Material->MetallicRoughness, texture_data.MetallicRoughnessTexture);
+    LoadGPUTexture(texture_data.Material->Occlusion, texture_data.OcclusionTexture);
+    LoadGPUTexture(texture_data.Material->Emissive, texture_data.EmissiveTexture);
 }
 
 struct Model
@@ -695,6 +695,8 @@ struct Model
         std::vector<String>                   Textures;
     };
 
+    StringView           ModelName;
+    bool                 FlipV {false};
     std::vector<SubMesh> Meshes;
 
     SubMesh MergeSubMesh()
@@ -729,16 +731,19 @@ StaticMeshData RenderResourceManager::LoadStaticMesh(const String& mesh_file, Ax
     std::vector<byte> data      = FileManager::Read(full_path.c_str());
 
     Assimp::Importer importer;
-    const aiScene*   scene = importer.ReadFileFromMemory(data.data(), data.size(), aiProcess_Triangulate);
+    const aiScene*   scene = importer.ReadFileFromMemory(data.data(), data.size(), aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         LOG_ERROR("load static mesh '{}' failed, error: {}", mesh_file, importer.GetErrorString());
+        return {};
     }
 
     StaticMeshData mesh_data;
 
     Model model;
+    model.ModelName = mesh_file;
+    model.FlipV  = mesh_file.ends_with(".obj");
     ProcessModel(scene, scene->mRootNode, &model);
     Model::SubMesh merged_mesh = model.MergeSubMesh();
 
@@ -766,7 +771,7 @@ void ProcessModel(const aiScene* scene, const aiNode* node, Model* model)
         model->Meshes.push_back({});
         ProcessMesh(scene, mesh, model, &model->Meshes.back());
     }
-
+    
     for (size_t i = 0; i < node->mNumChildren; i++)
     {
         ProcessModel(scene, node->mChildren[i], model);
@@ -775,14 +780,32 @@ void ProcessModel(const aiScene* scene, const aiNode* node, Model* model)
 
 void ProcessMesh(const aiScene* scene, const aiMesh* mesh, Model* model, Model::SubMesh* out_mesh)
 {
+    bool has_normal  = mesh->HasNormals();
+    bool has_tangent = mesh->HasTangentsAndBitangents();
+    bool has_texture = mesh->HasTextureCoords(0);
+
     for (size_t i = 0; i < mesh->mNumVertices; i++)
     {
         MeshVertexDataDefinition vertex;
         vertex.Position = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
-        vertex.Normal   = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
-        if (mesh->HasTextureCoords(0))
+        if (has_normal)
         {
-            vertex.TexCoord = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y};
+            vertex.Normal = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
+        }
+        if (has_tangent)
+        {
+            vertex.Tangent = {mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z};
+        }
+        if (has_texture)
+        {
+            if (model->FlipV)
+            {
+                vertex.TexCoord = {mesh->mTextureCoords[0][i].x, 1.0 - mesh->mTextureCoords[0][i].y};
+            }
+            else
+            {
+                vertex.TexCoord = {mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y};
+            }
         }
 
         out_mesh->Vertices.push_back(vertex);

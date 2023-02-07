@@ -58,8 +58,11 @@ int Parse(std::string project_input_file,
     {
         return result;
     }
-
-    parser.GenerateFiles();
+    
+    if (!parser.ShouldDoNothing())
+    {
+        parser.GenerateFiles();
+    }
 
     return 0;
 }

@@ -7,23 +7,11 @@
 struct MeshPassInitInfo : public RenderPassInitInfo
 {
     RHIImageViewRef DirectionalLightShadowMap;
+    RHIRenderPassRef RenderPass;
 };
 
-class MeshPass : public RenderPass
+class MeshRenderPass : public RenderPass
 {
-    enum
-    {
-        _pass_attachment_depth,
-        _pass_attachment_swap_chain_image,
-        _pass_attachment_count,
-    };
-
-    enum
-    {
-        _subpass_forward_lighting,
-        _subpass_count,
-    };
-
     enum
     {
         _layout_per_mesh,
@@ -47,11 +35,9 @@ public:
 
 private:
     void SetupAttachments();
-    void SetupFramebuffer();
     void SetupFramebufferDescriptorSet();
     void SetupDescriptorSetLayout();
     void SetupDescriptorSet();
-    void SetupRenderPass();
     void SetupPipelines();
 
     void DrawMeshLighting();
