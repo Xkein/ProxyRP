@@ -31,6 +31,7 @@ void ForwardPipeline::Initialize(RenderPipelineInitInfo* init_info)
 
     MainPassInitInfo main_pass_init_info;
     main_pass_init_info.MeshPass = MeshPass;
+    main_pass_init_info.ToneMappingPass = ToneMappingPass;
     MainPass->Initialize(&main_pass_init_info);
     RHIRenderPassRef main_render_pass = static_cast<MainRenderPass*>(MainPass.get())->GetRenderPass();
     std::vector<RHIImageViewRef> main_image_views = static_cast<MainRenderPass*>(MainPass.get())->GetFramebufferImageViews();
@@ -41,7 +42,7 @@ void ForwardPipeline::Initialize(RenderPipelineInitInfo* init_info)
     MeshPass->Initialize(&mesh_pass_init_info);
 
     ToneMappingPassInitInfo tone_mapping_init_info;
-    tone_mapping_init_info.InputAttachment = main_image_views[RenderPass::_pass_attachment_swap_chain_image];
+    tone_mapping_init_info.InputAttachment = main_image_views[RenderPass::_pass_attachment_pass_buffer_a];
     tone_mapping_init_info.RenderPass = main_render_pass;
     ToneMappingPass->Initialize(&tone_mapping_init_info);
 

@@ -250,11 +250,11 @@ Matrix4x4 CalculateDirectionalLightCamera(RenderScene& scene, RenderCamera& came
     Matrix4x4 light_view;
     Matrix4x4 light_proj;
     {
-        Vector3f box_center = frustum_bounding_box.center();
         Vector3f box_extents = frustum_bounding_box.sizes() / 2.f;
+        Vector3f center = frustum_bounding_box.center();
+        center.z() *= 2;
 
-        Vector3f eye    = box_center - scene.Light.Directional.Direction * box_extents.norm();
-        Vector3f center = box_center;
+        Vector3f eye = center - scene.Light.Directional.Direction * box_extents.norm();
         light_view      = LookAt(eye, center, Vector3f(0.0, 0.0, 1.0));
 
         BoundingBox frustum_bounding_box_light_view = BoundingBoxTransform(frustum_bounding_box, light_view);
@@ -267,7 +267,6 @@ Matrix4x4 CalculateDirectionalLightCamera(RenderScene& scene, RenderCamera& came
                          -scene_bounding_box_light_view.max().z(),
                          // the objects which are nearer than the frustum bounding box may caster shadow as well
                          -std::max(frustum_bounding_box_light_view.min().z(), scene_bounding_box_light_view.min().z()));
-        light_proj(1, 1) *= -1;
     }
 
     Matrix4x4 light_proj_view = (light_proj * light_view);

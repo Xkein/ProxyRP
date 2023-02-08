@@ -41,7 +41,7 @@ void ToneMappingRenderPass::UpdateAfterFramebufferRecreate(const FramebufferRecr
     post_process_input_attachment_write.dstSet                 = VulkanRHIConverter::Convert(*DescriptorInfos[0].DescriptorSetRHI);
     post_process_input_attachment_write.dstBinding             = 0;
     post_process_input_attachment_write.dstArrayElement        = 0;
-    post_process_input_attachment_write.descriptorType         = RHIDescriptorType::eCombinedImageSampler;
+    post_process_input_attachment_write.descriptorType         = RHIDescriptorType::eInputAttachment;
     post_process_input_attachment_write.descriptorCount        = 1;
     post_process_input_attachment_write.pImageInfo             = &post_process_input_attachment_info;
 
@@ -58,7 +58,7 @@ void ToneMappingRenderPass::Draw()
     RHI->SetViewport(RHI->GetCommandBuffer(), 0, std::array {*swapchain_info.Viewport});
     RHI->SetScissor(RHI->GetCommandBuffer(), 0, std::array {*swapchain_info.Scissor});
     const RHIDescriptorSet* material_descriptor_sets[] {DescriptorInfos[0].DescriptorSetRHI.get()};
-    RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 2, material_descriptor_sets, {});
+    RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 0, material_descriptor_sets, {});
 
     RHI->Draw(RHI->GetCommandBuffer(), 3, 1, 0, 0);
 
@@ -151,7 +151,7 @@ void ToneMappingRenderPass::SetupPipelines()
         .depthClampEnable        = RHI_FALSE,
         .rasterizerDiscardEnable = RHI_FALSE,
         .polygonMode             = RHIPolygonMode::eFill,
-        .cullMode                = RHICullModeFlagBits::eBack,
+        .cullMode                = RHICullModeFlagBits::eNone,
         .frontFace               = RHIFrontFace::eCounterClockwise,
         .depthBiasEnable         = RHI_FALSE,
         .lineWidth               = 1.f,

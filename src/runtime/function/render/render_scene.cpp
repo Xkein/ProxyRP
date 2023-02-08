@@ -35,7 +35,7 @@ void RenderScene::UpdateVisibleObjectsLights(std::shared_ptr<RenderCamera> camer
         {
             BoundingBox mesh_bounding_box = entity.BoundingBox;
 
-            if (TiledFrustumIntersectBox(frustum, BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix)))
+            if (true || TiledFrustumIntersectBox(frustum, BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix)))
             {
                 RenderMeshNode& node = DirectionalLightVisibleMeshNodes.emplace_back();
 

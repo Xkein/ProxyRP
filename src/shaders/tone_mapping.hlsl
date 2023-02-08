@@ -1,6 +1,5 @@
 
-Texture2D SceneTexture : register(t0);
-SamplerState SceneTextureSampler : register(s0);
+[[vk::input_attachment_index(0)]] SubpassInput in_color;
 
 float3 ACESToneMapping(float3 color, float adapted_lum)
 {
@@ -14,10 +13,10 @@ float3 ACESToneMapping(float3 color, float adapted_lum)
     return (color * (A * color + B)) / (color * (C * color + D) + E);
 }
 
-float4 frag(float4 pos : SV_Position) : SV_Target0
+float4 frag() : SV_Target
 {
-    float3 in_color = SceneTexture.Sample(SceneTextureSampler, pos.xy).rgb;
-    float3 color = ACESToneMapping(in_color, 4.5f);
+    float3 color = in_color.SubpassLoad().rgb;
+    color = ACESToneMapping(color, 4.5f);
 
     return float4(pow(color, 1.0 / 2.2), 1.0);
 }

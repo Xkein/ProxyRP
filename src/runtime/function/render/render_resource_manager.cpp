@@ -788,6 +788,7 @@ void ProcessMesh(const aiScene* scene, const aiMesh* mesh, Model* model, Model::
     {
         MeshVertexDataDefinition vertex;
         vertex.Position = {mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z};
+
         if (has_normal)
         {
             vertex.Normal = {mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z};
@@ -811,12 +812,57 @@ void ProcessMesh(const aiScene* scene, const aiMesh* mesh, Model* model, Model::
         out_mesh->Vertices.push_back(vertex);
     }
 
+    if (!has_normal)
+    {
+        LOG_INFO("Generating normal for {}", model->ModelName);
+    }
+    if (!has_tangent)
+    {
+        LOG_INFO("Generating tangent for {}", model->ModelName);
+    }
+
     for (size_t i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
         for (size_t j = 0; j < face.mNumIndices; j++)
         {
             out_mesh->Indices.push_back(face.mIndices[j]);
+        }
+        if (face.mNumIndices == 3 && (!has_normal || !has_tangent))
+        {
+            MeshVertexDataDefinition& vertex0 = out_mesh->Vertices[face.mIndices[0]];
+            MeshVertexDataDefinition& vertex1 = out_mesh->Vertices[face.mIndices[1]];
+            MeshVertexDataDefinition& vertex2 = out_mesh->Vertices[face.mIndices[2]];
+
+            Vector3f e1 = vertex1.Position - vertex0.Position;
+            Vector3f e2 = vertex2.Position - vertex1.Position;
+
+            if (!has_normal)
+            {
+                Vector3f normal = e1.cross(e2).normalized();
+
+                vertex0.Normal = normal;
+                vertex1.Normal = normal;
+                vertex2.Normal = normal;
+            }
+            if (!has_tangent)
+            {
+                Vector2f deltaUV1 = vertex1.TexCoord - vertex0.TexCoord;
+                Vector2f deltaUV2 = vertex2.TexCoord - vertex1.TexCoord;
+
+                auto divide = deltaUV1.x() * deltaUV2.y() - deltaUV2.x() * deltaUV1.y();
+                if (divide >= 0.0f && divide < 0.000001f)
+                    divide = 0.000001f;
+                else if (divide < 0.0f && divide > -0.000001f)
+                    divide = -0.000001f;
+
+                Vector3f tangent = (deltaUV2.y() * e1 - deltaUV1.y() * e2) / divide;
+                tangent.normalize();
+
+                vertex0.Tangent = tangent;
+                vertex1.Tangent = tangent;
+                vertex2.Tangent = tangent;
+            }
         }
     }
 }

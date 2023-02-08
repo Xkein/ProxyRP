@@ -31,6 +31,9 @@ private:
     void SetupFramebufferDescriptorSet();
     void SetupRenderPass();
 
+    void SetupRenderPass_Mesh(std::vector<RHIAttachmentReference>& attachment_references, RHISubpassDescription* subpasses, std::vector<RHISubpassDependency>& dependencies);
+    void SetupRenderPass_ToneMapping(std::vector<RHIAttachmentReference>& attachment_references, RHISubpassDescription* subpasses, std::vector<RHISubpassDependency>& dependencies);
+
     std::vector<RHIFramebufferRef> SwapchainFramebuffers;
 
     std::shared_ptr<RenderPass> MeshPass;

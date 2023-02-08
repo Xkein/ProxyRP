@@ -42,6 +42,9 @@ using RHISubpassContents = vk::SubpassContents;
 
 using RHIAccessFlagBits = vk::AccessFlagBits;
 
+using RHIDependencyFlags = vk::DependencyFlags;
+using RHIDependencyFlagBits = vk::DependencyFlagBits;
+
 using RHIPipelineBindPoint = vk::PipelineBindPoint;
 using RHIPipelineStageFlags = vk::PipelineStageFlags;
 using RHIPipelineStageFlagBits = vk::PipelineStageFlagBits;

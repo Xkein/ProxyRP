@@ -41,8 +41,9 @@ void vert(float3 position : ATTRIBUTE0, float3 normal : ATTRIBUTE1, float3 tange
     GetMeshBlendingResult(position, normal, tangent, enable_vertex_blending, vertex_index, instance_index, model_position, model_normal, model_tangent);
     
     GetPosition(model_matrix, MeshPerframeBuffer.ProjViewMatrix, model_position, output.PositionWorldSpace, output.Position);
-    output.Normal = mul(model_matrix, float4(normal, 1.0)).xyz;
-    output.Tangent = mul(model_matrix, float4(tangent, 1.0)).xyz;
+    float3x3 tangent_matrix = float3x3(model_matrix[0].xyz, model_matrix[1].xyz, model_matrix[2].xyz);
+    output.Normal = mul(tangent_matrix, model_normal);
+    output.Tangent = mul(tangent_matrix, model_tangent);
     output.Texcoord = texcoord;
 }
 
@@ -52,7 +53,7 @@ float GetShadow(float2 uv, float cur_depth)
     return depth >= cur_depth ? 1.0 : -1.0;
 }
 
-float4 frag(VS_OUTPUT input) : SV_Target
+float4 frag(VS_OUTPUT input) : SV_Target0
 {
     float3 base_color = BaseColorTexture.Sample(BaseColorTextureSampler, input.Texcoord).xyz;
     float3 N = CalculateNormal(input.Texcoord, input.Normal, input.Tangent);
@@ -65,7 +66,7 @@ float4 frag(VS_OUTPUT input) : SV_Target
     
     float3 F0 = lerp(dielectric_specular, base_color, float3(metallic, metallic, metallic));
     
-    float3 Lo = (float3)0;
+    float3 Lo = 0;
     
     int point_light_num = MeshPerframeBuffer.PointLightNum;
     for (int light_index = 0; light_index < point_light_num; ++light_index)

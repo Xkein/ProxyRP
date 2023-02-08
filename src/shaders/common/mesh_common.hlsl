@@ -27,15 +27,22 @@ void GetPosition(float4x4 model_matrix, float4x4 proj_view_matrix, float3 model_
     position_mvp = mul(proj_view_matrix, tmp);
 }
 
+float3x3 CalcTangentToLocal(float3 normal, float3 tangent)
+{
+    float3 binormal = cross(normal, tangent);
+    
+    float3x3 TBN;
+    TBN[0] = cross(binormal, normal);
+    TBN[1] = binormal;
+    TBN[2] = normal;
+    return TBN;
+}
+
 float3 CalculateNormal(float2 uv, float3 normal, float3 tangent)
 {
     float3 tex_normal = NormalTexture.Sample(NormalTextureSampler, uv).xyz * 2.0 - 1.0;
-    float3 N = normalize(normal);
-    float3 T = normalize(tangent);
-    float3 B = cross(N, T);
-    
-    float3x3 TBN = float3x3(T, B, N);
-    return normalize(mul(TBN, tex_normal));
+    float3x3 TBN = CalcTangentToLocal(normal, tangent);
+    return normalize(mul(tex_normal, TBN));
 }
 
 void GetMetallicRoughness(float2 uv, out float metallic, out float roughness)

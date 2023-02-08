@@ -9,6 +9,7 @@ void MainRenderPass::Initialize(const RenderPassInitInfo* init_info)
     const MainPassInitInfo* main_pass_init_info = static_cast<const MainPassInitInfo*>(init_info);
 
     MeshPass = main_pass_init_info->MeshPass;
+    ToneMappingPass = main_pass_init_info->ToneMappingPass;
 
     SetupAttachments();
     SetupRenderPass();
@@ -76,6 +77,10 @@ void MainRenderPass::Draw()
 
     MeshPass->Draw();
 
+    RHI->NextSubpass(RHI->GetCommandBuffer(), RHISubpassContents::eInline);
+
+    ToneMappingPass->Draw();
+
     RHI->PopEvent(RHI->GetCommandBuffer());
 
     RHI->EndRenderPass(RHI->GetCommandBuffer());
@@ -83,7 +88,37 @@ void MainRenderPass::Draw()
 
 void MainRenderPass::SetupAttachments()
 {
+    auto swapchin_info = RHI->GetSwapchainInfo();
+
     Framebuffer.Attachments.resize(_pass_attachment_count);
+
+    Framebuffer.Attachments[_pass_attachment_pass_buffer_b].Format = RHIFormat::eR16G16B16A16Sfloat;
+
+    {
+        Texture& pass_buffer_a_texture = Framebuffer.Attachments[_pass_attachment_pass_buffer_a];
+        pass_buffer_a_texture.Format   = RHIFormat::eR16G16B16A16Sfloat;
+        RHI->CreateImage(swapchin_info.Extent.width,
+                         swapchin_info.Extent.height,
+                         pass_buffer_a_texture.Format,
+                         RHIImageTiling::eOptimal,
+                         RHIImageUsageFlagBits::eColorAttachment | RHIImageUsageFlagBits::eInputAttachment | RHIImageUsageFlagBits::eTransientAttachment,
+                         RHIMemoryPropertyFlagBits::eDeviceLocal,
+                         pass_buffer_a_texture.ImageRHI,
+                         pass_buffer_a_texture.DeviceMemoryRHI);
+        RHI->CreateImageView(pass_buffer_a_texture.ImageRHI.get(), pass_buffer_a_texture.Format, RHIImageAspectFlagBits::eColor, RHIImageViewType::e2D, 1, 1, pass_buffer_a_texture.ImageViewRHI);
+
+        Texture& pass_buffer_b_texture = Framebuffer.Attachments[_pass_attachment_pass_buffer_b];
+        pass_buffer_b_texture.Format   = RHIFormat::eR16G16B16A16Sfloat;
+        RHI->CreateImage(swapchin_info.Extent.width,
+                         swapchin_info.Extent.height,
+                         pass_buffer_b_texture.Format,
+                         RHIImageTiling::eOptimal,
+                         RHIImageUsageFlagBits::eColorAttachment | RHIImageUsageFlagBits::eInputAttachment | RHIImageUsageFlagBits::eTransientAttachment,
+                         RHIMemoryPropertyFlagBits::eDeviceLocal,
+                         pass_buffer_b_texture.ImageRHI,
+                         pass_buffer_b_texture.DeviceMemoryRHI);
+        RHI->CreateImageView(pass_buffer_b_texture.ImageRHI.get(), pass_buffer_b_texture.Format, RHIImageAspectFlagBits::eColor, RHIImageViewType::e2D, 1, 1, pass_buffer_b_texture.ImageViewRHI);
+    }
 
     Framebuffer.Attachments[_pass_attachment_depth].Format = RHI->GetDepthImageInfo().DepthImageFormat;
 
@@ -99,6 +134,8 @@ void MainRenderPass::SetupFramebuffer()
     for (size_t i = 0; i < swapchin_info.ImageViews.size(); i++)
     {
         std::array<RHIImageView*, _pass_attachment_count> attachments {
+            Framebuffer.Attachments[_pass_attachment_pass_buffer_a].ImageViewRHI.get(),
+            Framebuffer.Attachments[_pass_attachment_pass_buffer_b].ImageViewRHI.get(),
             RHI->GetDepthImageInfo().DepthImageView,
             swapchin_info.ImageViews[i],
         };
@@ -123,6 +160,26 @@ void MainRenderPass::SetupRenderPass()
 {
     std::array<RHIAttachmentDescription, _pass_attachment_count> attachments {};
 
+    RHIAttachmentDescription& pass_buffer_a_attachment = attachments[_pass_attachment_pass_buffer_a];
+    pass_buffer_a_attachment.format                    = Framebuffer.Attachments[_pass_attachment_pass_buffer_a].Format;
+    pass_buffer_a_attachment.samples                   = RHISampleCountFlagBits::e1;
+    pass_buffer_a_attachment.loadOp                    = RHIAttachmentLoadOp::eClear;
+    pass_buffer_a_attachment.storeOp                   = RHIAttachmentStoreOp::eDontCare;
+    pass_buffer_a_attachment.stencilLoadOp             = RHIAttachmentLoadOp::eDontCare;
+    pass_buffer_a_attachment.stencilStoreOp            = RHIAttachmentStoreOp::eDontCare;
+    pass_buffer_a_attachment.initialLayout             = RHIImageLayout::eUndefined;
+    pass_buffer_a_attachment.finalLayout               = RHIImageLayout::eShaderReadOnlyOptimal;
+
+    RHIAttachmentDescription& pass_buffer_b_attachment = attachments[_pass_attachment_pass_buffer_b];
+    pass_buffer_b_attachment.format                    = Framebuffer.Attachments[_pass_attachment_pass_buffer_b].Format;
+    pass_buffer_b_attachment.samples                   = RHISampleCountFlagBits::e1;
+    pass_buffer_b_attachment.loadOp                    = RHIAttachmentLoadOp::eClear;
+    pass_buffer_b_attachment.storeOp                   = RHIAttachmentStoreOp::eDontCare;
+    pass_buffer_b_attachment.stencilLoadOp             = RHIAttachmentLoadOp::eDontCare;
+    pass_buffer_b_attachment.stencilStoreOp            = RHIAttachmentStoreOp::eDontCare;
+    pass_buffer_b_attachment.initialLayout             = RHIImageLayout::eUndefined;
+    pass_buffer_b_attachment.finalLayout               = RHIImageLayout::eShaderReadOnlyOptimal;
+
     RHIAttachmentDescription& color_attachment = attachments[_pass_attachment_swap_chain_image];
     color_attachment.format                    = Framebuffer.Attachments[_pass_attachment_swap_chain_image].Format;
     color_attachment.samples                   = RHI->GetMsaaSampleCount();
@@ -143,32 +200,17 @@ void MainRenderPass::SetupRenderPass()
     depth_attachment.initialLayout             = RHIImageLayout::eUndefined;
     depth_attachment.finalLayout               = RHIImageLayout::eDepthStencilAttachmentOptimal;
 
-    RHIAttachmentReference color_attachment_reference {
-        .attachment = _pass_attachment_swap_chain_image,
-        .layout     = RHIImageLayout::eColorAttachmentOptimal,
-    };
-    RHIAttachmentReference depth_attachment_reference {
-        .attachment = _pass_attachment_depth,
-        .layout     = RHIImageLayout::eDepthStencilAttachmentOptimal,
-    };
-
     std::array<RHISubpassDescription, _subpass_count> subpasses {};
 
-    RHISubpassDescription& forward_lighting_pass  = subpasses[_subpass_forward_lighting];
-    forward_lighting_pass.pipelineBindPoint       = RHIPipelineBindPoint::eGraphics;
-    forward_lighting_pass.colorAttachmentCount    = 1;
-    forward_lighting_pass.pColorAttachments       = &color_attachment_reference;
-    forward_lighting_pass.pDepthStencilAttachment = &depth_attachment_reference;
+    std::vector<RHIAttachmentReference> attachment_references;
+    std::vector<RHISubpassDependency> dependencies;
 
-    std::array<RHISubpassDependency, 1> dependencies {};
+    // avoid address movement caused by reallocation
+    attachment_references.reserve(_subpass_count * 3);
+    dependencies.reserve(_subpass_count * 3);
 
-    RHISubpassDependency& forward_lighting_pass_denpendency = dependencies[0];
-    forward_lighting_pass_denpendency.srcSubpass            = VK_SUBPASS_EXTERNAL;
-    forward_lighting_pass_denpendency.dstSubpass            = _subpass_forward_lighting;
-    forward_lighting_pass_denpendency.srcStageMask          = RHIPipelineStageFlagBits::eColorAttachmentOutput;
-    forward_lighting_pass_denpendency.dstStageMask          = RHIPipelineStageFlagBits::eFragmentShader | RHIPipelineStageFlagBits::eColorAttachmentOutput;
-    forward_lighting_pass_denpendency.srcAccessMask         = {};
-    forward_lighting_pass_denpendency.dstAccessMask         = RHIAccessFlagBits::eShaderRead | RHIAccessFlagBits::eColorAttachmentWrite;
+    SetupRenderPass_Mesh(attachment_references, subpasses.data(), dependencies);
+    SetupRenderPass_ToneMapping(attachment_references, subpasses.data(), dependencies);
 
     RHIRenderPassCreateInfo render_pass_create_info {};
     render_pass_create_info.attachmentCount = attachments.size();
@@ -179,4 +221,57 @@ void MainRenderPass::SetupRenderPass()
     render_pass_create_info.pDependencies   = dependencies.data();
 
     Framebuffer.RenderPass = RHIRenderPassRef(RHI->CreateRenderPass(&render_pass_create_info));
+}
+
+void MainRenderPass::SetupRenderPass_Mesh(std::vector<RHIAttachmentReference>& attachment_references, RHISubpassDescription* subpasses, std::vector<RHISubpassDependency>& dependencies)
+{
+    RHIAttachmentReference& color_attachment_reference = attachment_references.emplace_back();
+    color_attachment_reference.attachment              = _pass_attachment_pass_buffer_a;
+    color_attachment_reference.layout                  = RHIImageLayout::eColorAttachmentOptimal;
+    
+    RHIAttachmentReference& depth_attachment_reference = attachment_references.emplace_back();
+    depth_attachment_reference.attachment = _pass_attachment_depth;
+    depth_attachment_reference.layout     = RHIImageLayout::eDepthStencilAttachmentOptimal;
+
+    RHISubpassDescription& forward_lighting_pass  = subpasses[_subpass_forward_lighting];
+    forward_lighting_pass.pipelineBindPoint       = RHIPipelineBindPoint::eGraphics;
+    forward_lighting_pass.colorAttachmentCount    = 1;
+    forward_lighting_pass.pColorAttachments       = &color_attachment_reference;
+    forward_lighting_pass.pDepthStencilAttachment = &depth_attachment_reference;
+
+    RHISubpassDependency& forward_lighting_pass_denpendency = dependencies.emplace_back();
+    forward_lighting_pass_denpendency.srcSubpass            = VK_SUBPASS_EXTERNAL;
+    forward_lighting_pass_denpendency.dstSubpass            = _subpass_forward_lighting;
+    forward_lighting_pass_denpendency.srcStageMask          = RHIPipelineStageFlagBits::eColorAttachmentOutput;
+    forward_lighting_pass_denpendency.dstStageMask          = RHIPipelineStageFlagBits::eFragmentShader | RHIPipelineStageFlagBits::eColorAttachmentOutput;
+    forward_lighting_pass_denpendency.srcAccessMask         = {};
+    forward_lighting_pass_denpendency.dstAccessMask         = RHIAccessFlagBits::eShaderRead | RHIAccessFlagBits::eColorAttachmentWrite;
+}
+
+void MainRenderPass::SetupRenderPass_ToneMapping(std::vector<RHIAttachmentReference>& attachment_references, RHISubpassDescription* subpasses, std::vector<RHISubpassDependency>& dependencies)
+{
+    RHIAttachmentReference& tone_mapping_input_attachment = attachment_references.emplace_back();
+    tone_mapping_input_attachment.attachment = _pass_attachment_pass_buffer_a;
+    tone_mapping_input_attachment.layout     = RHIImageLayout::eShaderReadOnlyOptimal;
+
+    RHIAttachmentReference& tone_mapping_color_attachment = attachment_references.emplace_back();
+    tone_mapping_color_attachment.attachment              = _pass_attachment_pass_buffer_b;
+    tone_mapping_color_attachment.layout     = RHIImageLayout::eColorAttachmentOptimal;
+    tone_mapping_color_attachment.attachment              = _pass_attachment_swap_chain_image;
+
+    RHISubpassDescription& tone_mapping_pass  = subpasses[_subpass_tone_mapping];
+    tone_mapping_pass.pipelineBindPoint       = RHIPipelineBindPoint::eGraphics;
+    tone_mapping_pass.inputAttachmentCount    = 1;
+    tone_mapping_pass.pInputAttachments       = &tone_mapping_input_attachment;
+    tone_mapping_pass.colorAttachmentCount    = 1;
+    tone_mapping_pass.pColorAttachments       = &tone_mapping_color_attachment;
+
+    RHISubpassDependency& tone_mapping_pass_denpendency = dependencies.emplace_back();
+    tone_mapping_pass_denpendency.srcSubpass            = _subpass_forward_lighting;
+    tone_mapping_pass_denpendency.dstSubpass            = _subpass_tone_mapping;
+    tone_mapping_pass_denpendency.srcStageMask          = RHIPipelineStageFlagBits::eFragmentShader | RHIPipelineStageFlagBits::eColorAttachmentOutput;
+    tone_mapping_pass_denpendency.dstStageMask          = RHIPipelineStageFlagBits::eFragmentShader | RHIPipelineStageFlagBits::eColorAttachmentOutput;
+    tone_mapping_pass_denpendency.srcAccessMask         = RHIAccessFlagBits::eShaderWrite| RHIAccessFlagBits::eColorAttachmentWrite;
+    tone_mapping_pass_denpendency.dstAccessMask         = RHIAccessFlagBits::eShaderRead | RHIAccessFlagBits::eColorAttachmentRead;
+    tone_mapping_pass_denpendency.dependencyFlags       = RHIDependencyFlagBits::eByRegion;
 }

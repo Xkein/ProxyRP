@@ -34,9 +34,9 @@ public:
 
 IMPLEMENT_SHADER_TYPE(MeshVS, "mesh.hlsl", "vert", SF_Vertex);
 IMPLEMENT_SHADER_TYPE(MeshPS, "mesh.hlsl", "frag", SF_Pixel);
-IMPLEMENT_SHADER_TYPE(MeshGBufferPS, "gbuffer.hlsl", "frag", SF_Pixel);
-IMPLEMENT_SHADER_TYPE(DeferredLightingVS, "deferred_lighting.hlsl", "vert", SF_Vertex);
-IMPLEMENT_SHADER_TYPE(DeferredLightingPS, "deferred_lighting.hlsl", "frag", SF_Pixel);
+//IMPLEMENT_SHADER_TYPE(MeshGBufferPS, "gbuffer.hlsl", "frag", SF_Pixel);
+//IMPLEMENT_SHADER_TYPE(DeferredLightingVS, "deferred_lighting.hlsl", "vert", SF_Vertex);
+//IMPLEMENT_SHADER_TYPE(DeferredLightingPS, "deferred_lighting.hlsl", "frag", SF_Pixel);
 
 
 void MeshRenderPass::Initialize(const RenderPassInitInfo* init_info)

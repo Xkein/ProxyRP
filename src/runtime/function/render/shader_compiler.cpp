@@ -42,14 +42,31 @@ tf::Future<void> ShaderCompiler::BeginCompileShaders(std::vector<ShaderType*>   
 {
     tf::Taskflow taskflow;
 
+    String queue_string;
     for (ShaderType* shader_type : shader_types)
     {
         //Compile(shader_type, shader_map);
         taskflow.emplace([shader_type, shader_map]() {
-            ShaderCompiledInfo compiled_info = Compile(shader_type, shader_map);
-            SaveShader(shader_type, compiled_info);
+            try
+            {
+                ShaderCompiledInfo compiled_info = Compile(shader_type, shader_map);
+                SaveShader(shader_type, compiled_info);
+            }
+            catch (...)
+            {
+                LOG_ERROR("Shader {} compile task error!", shader_type->Name);
+            }
         });
+
+        queue_string += shader_type->Name;
+        queue_string += ", ";
     }
+    if (!queue_string.empty() && *(queue_string.end() - 2) == ',')
+    {
+        queue_string.resize(queue_string.size() - 2);
+    }
+
+    LOG_INFO("Shader Compile Queue: {}.", queue_string);
 
     return GExecutor.run(taskflow);
 }
@@ -73,6 +90,7 @@ ShaderCompiledInfo ShaderCompiler::Compile(ShaderType* shader_type, std::shared_
     Compiler::Options options {
         .packMatricesInRowMajor = false,
         .enableDebugInfo        = true,
+        .optimizationLevel      = 0,
     };
 
     Compiler::SourceDesc source_desc {
