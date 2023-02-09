@@ -2,6 +2,7 @@
 #include "function/render/render_camera.h"
 #include "function/render/render_scene.h"
 #include "function/render/render_pipeline.h"
+#include "function/render/scene_proxy.h"
 
 void SceneRenderer::PrepareData()
 {
@@ -19,7 +20,7 @@ void SceneRenderer::UpdatePerBuffer(std::shared_ptr<RenderCamera> camera)
     Matrix4x4 proj_view_matrix = proj_matrix * view_matrix;
 
     Vector3f ambient_light = Scene->Light.Ambient.Irradiance;
-    uint32_t point_light_num = Scene->Light.PointList.Lights.size();
+    uint32_t point_light_num = Scene->PointLightList.size();
 
     Scene->PerframeStorageBufferObject.ProjViewMatrix = proj_view_matrix;
     Scene->PerframeStorageBufferObject.CameraPosition = camera_position;
@@ -29,16 +30,16 @@ void SceneRenderer::UpdatePerBuffer(std::shared_ptr<RenderCamera> camera)
     Scene->PointLightShadowPerframeStorageBufferObject.PointLightNum = point_light_num;
     for (uint32_t i = 0; i < point_light_num; i++)
     {
-        auto point_light = Scene->Light.PointList.Lights[i];
+        auto point_light = Scene->PointLightList[i];
 
-        Vector3f point_light_intensity = point_light.GetIntensity();
-        float radius = point_light.CalculateRadius();
+        Vector3f point_light_intensity = point_light->Intensity * point_light->Color;
+        float    radius                = point_light->Radius;
 
-        Scene->PerframeStorageBufferObject.PointLights[i].Position = point_light.Position;
+        Scene->PerframeStorageBufferObject.PointLights[i].Position = point_light->Position;
         Scene->PerframeStorageBufferObject.PointLights[i].Radius   = radius;
         Scene->PerframeStorageBufferObject.PointLights[i].Intensity = point_light_intensity;
 
-        Scene->PointLightShadowPerframeStorageBufferObject.PointLightsPositionAndRadius[i] = Vector4f(point_light.Position.x(), point_light.Position.y(), point_light.Position.z(), radius);
+        Scene->PointLightShadowPerframeStorageBufferObject.PointLightsPositionAndRadius[i] = Vector4f(point_light->Position.x(), point_light->Position.y(), point_light->Position.z(), radius);
     }
     
     Scene->PerframeStorageBufferObject.DirectionalLight.Direction = Scene->Light.Directional.Direction.normalized();

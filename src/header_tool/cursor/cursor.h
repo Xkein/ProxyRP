@@ -22,6 +22,8 @@ public:
 
     bool IsEnumClass() const;
 
+    bool IsAbstract() const;
+
 	const CursorType& GetType() const;
 
 	std::vector<Cursor> GetChildren() const;

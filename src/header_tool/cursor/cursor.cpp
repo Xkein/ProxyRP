@@ -55,6 +55,11 @@ bool Cursor::IsEnumClass() const
     return clang_EnumDecl_isScoped(Handle);
 }
 
+bool Cursor::IsAbstract() const
+{
+    return clang_CXXRecord_isAbstract(Handle);
+}
+
 const CursorType& Cursor::GetType() const
 {
     return Type;

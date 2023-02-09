@@ -169,18 +169,21 @@ void MeshRenderPass::SetupDescriptorSet()
         .offset = 0,
         .range  = sizeof(MeshPerframeStorageBufferObject),
     };
+    ASSERT(perframe_storage_buffer_info.range < PassCommon->GlobalRenderResource._StorageBuffers.MaxStorageBufferRange);
 
     RHIDescriptorBufferInfo perdrawcall_storage_buffer_info {
         .buffer = VulkanRHIConverter::Convert(*PassCommon->GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffer.BufferRHI),
         .offset = 0,
         .range  = sizeof(MeshPerdrawcallStorageBufferObject),
     };
+    ASSERT(perdrawcall_storage_buffer_info.range < PassCommon->GlobalRenderResource._StorageBuffers.MaxStorageBufferRange);
 
     RHIDescriptorBufferInfo perdrawcall_vertex_blending_storage_buffer_info {
         .buffer = VulkanRHIConverter::Convert(*PassCommon->GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffer.BufferRHI),
         .offset = 0,
         .range  = sizeof(MeshPerdrawcallVertexBlendingStorageBufferObject),
     };
+    ASSERT(perdrawcall_vertex_blending_storage_buffer_info.range < PassCommon->GlobalRenderResource._StorageBuffers.MaxStorageBufferRange);
 
     RHIDescriptorImageInfo point_light_shadow_texture_image_info {};
     point_light_shadow_texture_image_info.sampler     = VulkanRHIConverter::Convert(*RHI->GetOrCreateDefaultSampler(RHIDefaultSamplerType::Nearest));

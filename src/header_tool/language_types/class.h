@@ -27,6 +27,8 @@ public:
 
     std::string GetClassName() const;
 
+    bool IsAbstract;
+
     std::vector<std::shared_ptr<BaseClass>> BaseClasses;
 
     std::string Name;

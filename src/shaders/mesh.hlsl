@@ -13,8 +13,9 @@ float2 UV2NDC(float2 uv)
     return uv * float2(2.0, 2.0) + float2(-1.0, -1.0);
 }
 
-Texture2DArray PointLightShadowMap        : register(t3);
-SamplerState   PointLightShadowMapSampler : register(s3);
+TextureCubeArray PointLightShadowMap        : register(t3);
+SamplerState     PointLightShadowMapSampler : register(s3);
+
 
 Texture2D    DirectionalLightShadowMap        : register(t4);
 SamplerState DirectionalLightShadowMapSampler : register(s4);
@@ -49,7 +50,7 @@ void vert(float3 position : ATTRIBUTE0, float3 normal : ATTRIBUTE1, float3 tange
 
 float GetShadow(float2 uv, float cur_depth)
 {
-    float depth = DirectionalLightShadowMap.Sample(DirectionalLightShadowMapSampler, uv).x + 0.0075;
+    float depth = DirectionalLightShadowMap.Sample(DirectionalLightShadowMapSampler, uv).x + 0.00075;
     return depth >= cur_depth ? 1.0 : -1.0;
 }
 
@@ -64,7 +65,7 @@ float4 frag(VS_OUTPUT input) : SV_Target0
     float3 V = normalize(MeshPerframeBuffer.CameraPosition - input.PositionWorldSpace);
     float3 R = reflect(-V, N);
     
-    float3 F0 = lerp(dielectric_specular, base_color, float3(metallic, metallic, metallic));
+    float3 F0 = lerp(dielectric_specular, base_color, metallic);
     
     float3 Lo = 0;
     
@@ -72,6 +73,8 @@ float4 frag(VS_OUTPUT input) : SV_Target0
     for (int light_index = 0; light_index < point_light_num; ++light_index)
     {
         // TODO
+        PointLightShadowMap.Sample()
+
     }
 
     {

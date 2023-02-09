@@ -33,9 +33,7 @@ public:
     bool IsDirty() const {
         return DirtyFlag;
     }
-    void SetDirtyFlag(bool is_dirty) {
-        DirtyFlag = is_dirty;
-    }
+    void SetDirtyFlag(bool is_dirty);
 
 private:
     PROPERTY()

@@ -1,7 +1,7 @@
 #pragma once
 
-#define MaxPointLightCount 15
-#define MaxPointLightGeomVertices 90 
+#define MaxPointLightCount 3
+#define MaxPointLightGeomVertices 6 * 3 * MaxPointLightCount 
 #define MeshPerDrawcallMaxInstanceCount 64
 #define MeshVertexBlendingMaxJointCount 1024
 

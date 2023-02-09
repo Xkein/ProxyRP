@@ -38,8 +38,8 @@ void DirectionalLightRenderPass::PostInitialize()
 
 void DirectionalLightRenderPass::PrepareData(RenderPassPrepareInfo* prepare_info)
 {
-    PerframeStorageBufferObject.LightProjView = prepare_info->Scene->LightProjView;
-    VisiableNodes                             = &prepare_info->Scene->VisiableNodes;
+    PerframeStorageBufferObject = prepare_info->Scene->DirectionalLightShadowPerframeStorageBufferObject;
+    VisiableNodes               = &prepare_info->Scene->VisiableNodes;
 }
 
 void DirectionalLightRenderPass::Draw()
@@ -280,18 +280,21 @@ void DirectionalLightRenderPass::SetupDescriptorSet()
         .offset = 0,
         .range  = sizeof(MeshDirectionalLightShadowPerframeStorageBufferObject),
     };
+    ASSERT(perframe_storage_buffer_info.range < PassCommon->GlobalRenderResource._StorageBuffers.MaxStorageBufferRange);
 
     RHIDescriptorBufferInfo perdrawcall_storage_buffer_info {
         .buffer = *(VulkanBuffer*)PassCommon->GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffer.BufferRHI.get(),
         .offset = 0,
         .range  = sizeof(MeshDirectionalLightShadowPerdrawcallStorageBufferObject),
     };
+    ASSERT(perdrawcall_storage_buffer_info.range < PassCommon->GlobalRenderResource._StorageBuffers.MaxStorageBufferRange);
 
     RHIDescriptorBufferInfo perdrawcall_vertex_blending_storage_buffer_info {
         .buffer = *(VulkanBuffer*)PassCommon->GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffer.BufferRHI.get(),
         .offset = 0,
         .range  = sizeof(MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject),
     };
+    ASSERT(perdrawcall_vertex_blending_storage_buffer_info.range < PassCommon->GlobalRenderResource._StorageBuffers.MaxStorageBufferRange);
 
     RHIDescriptorSet* descriptor_set = DescriptorInfos[0].DescriptorSetRHI.get();
 
@@ -370,6 +373,7 @@ void DirectionalLightRenderPass::SetupRenderPass()
     lighting_pass_denpendency.dstSubpass                          = RHI_SUBPASS_EXTERNAL;
     lighting_pass_denpendency.srcStageMask                        = RHIPipelineStageFlagBits::eColorAttachmentOutput;
     lighting_pass_denpendency.dstStageMask                        = RHIPipelineStageFlagBits::eBottomOfPipe;
+    lighting_pass_denpendency.srcAccessMask                       = RHIAccessFlagBits::eColorAttachmentWrite;
 
     RHIRenderPassCreateInfo render_pass_create_info {};
     render_pass_create_info.attachmentCount = attachments.size();

@@ -300,6 +300,7 @@ std::shared_ptr<PBRMaterial> RenderResourceManager::GetOrCreatePBRMaterial(const
         .offset = 0,
         .range  = sizeof(MeshPerMaterialUniformBufferObject),
     };
+    ASSERT(material_uniform_buffer_info.range < PassCommon->GlobalRenderResource._StorageBuffers.MaxStorageBufferRange);
 
     RHIDescriptorImageInfo base_color_image_info {
         .sampler     = *(VulkanSampler*)RHI->GetOrCreateMipmapSampler(update_texture_data.BaseColorTexture->Width, update_texture_data.BaseColorTexture->Height),

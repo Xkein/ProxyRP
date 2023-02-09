@@ -9,9 +9,13 @@ class __ReflectionType{{class_name}}
 public:
 	static void* ConstructWithJson(const json& context)
 	{
+{{#class_is_abstract}}
+		return nullptr;
+{{/class_is_abstract}}{{^class_is_abstract}}
 		{{class_name}}* instance = new {{class_name}}();
 		Serializer::Read(context, *instance);
 		return instance;
+{{/class_is_abstract}}
 	}
 	static bool WriteJson(void* instance, json& context)
 	{
@@ -28,8 +32,9 @@ public:
 		TypeMetaRegister::__RegisterSerializerMethods("{{class_name}}", {ConstructWithJson, WriteJson});
 
 		registration::class_<{{class_name}}>("{{class_name}}")
+		{{^class_is_abstract}}
 			.constructor<>()
-		{{#class_method_defines}}
+		{{/class_is_abstract}}{{#class_method_defines}}
 			.method("{{class_method_name}}", &{{class_name}}::{{class_method_name}})
 		{{/class_method_defines}}{{#class_field_defines}}
 			.property("{{class_field_name}}", &{{class_name}}::{{class_field_name}})

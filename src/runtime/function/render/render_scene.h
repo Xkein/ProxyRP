@@ -14,13 +14,13 @@
 class RenderCamera;
 class RenderResourceManager;
 class BufferData;
+class LightComponent;
+class PointLightSceneProxy;
 
-struct PointLightList
-{
-    std::vector<PointLight> Lights;
-
-    std::shared_ptr<BufferData> Buffer;
-};
+//struct PointLightList
+//{
+//    std::vector<PointLight> Lights;
+//};
 
 class RenderScene
 {
@@ -31,13 +31,15 @@ public:
     {
         AmbientLight     Ambient;
         DirectionalLight Directional;
-        PointLightList   PointList;
+        //PointLightList   PointList;
     } Light;
 
+    std::vector<PointLightSceneProxy*> PointLightList;
+
     // storage buffer objects
-    Matrix4x4 LightProjView;
-    MeshPerframeStorageBufferObject PerframeStorageBufferObject;
+    MeshDirectionalLightShadowPerframeStorageBufferObject DirectionalLightShadowPerframeStorageBufferObject;
     MeshPointLightShadowPerframeStorageBufferObject PointLightShadowPerframeStorageBufferObject;
+    MeshPerframeStorageBufferObject PerframeStorageBufferObject;
     
     std::vector<RenderEntity> RenderEntities;
     
@@ -46,6 +48,10 @@ public:
     std::vector<RenderMeshNode> MainCameraVisibleMeshNodes;
 
     VisiableNodes VisiableNodes;
+
+    void AddLight(LightComponent* light);
+    void RemoveLight(LightComponent* light);
+    void UpdateLight(LightComponent* light);
 
     void UpdateVisibleObjects(std::shared_ptr<RenderCamera> camera);
 

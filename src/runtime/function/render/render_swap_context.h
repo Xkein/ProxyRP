@@ -25,6 +25,7 @@ struct LevelResourceDesc
     LevelColorGradingResourceDesc ColorGradingResourceDesc;
 };
 
+
 struct CameraSwapDataDesc
 {
     std::optional<float>     FovX;

@@ -9,6 +9,8 @@ Class::Class(const Cursor& cursor, const Namespace& current_namespace) :
 {
     DisplayName = QualifiedName;
 
+    IsAbstract = cursor.IsAbstract();
+
     utils::replace_all(Name, " ", "");
 
     for (auto& child : cursor.GetChildren())

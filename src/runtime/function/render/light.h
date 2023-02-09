@@ -3,6 +3,15 @@
 #include "core/math/math_const.h"
 #include "core/math/vector.h"
 
+enum ELightType : unsigned char
+{
+    Invalid = 0,
+    Directional,
+    Point,
+    Spot,
+    Rect,
+};
+
 struct AmbientLight
 {
     Vector3f Irradiance;

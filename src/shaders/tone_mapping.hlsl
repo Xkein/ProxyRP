@@ -16,7 +16,7 @@ float3 ACESToneMapping(float3 color, float adapted_lum)
 float4 frag() : SV_Target
 {
     float3 color = in_color.SubpassLoad().rgb;
-    color = ACESToneMapping(color, 4.5f);
+    color = ACESToneMapping(color, 1);
 
     return float4(pow(color, 1.0 / 2.2), 1.0);
 }

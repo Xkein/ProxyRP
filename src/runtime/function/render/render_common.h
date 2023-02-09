@@ -6,12 +6,7 @@
 // TODO: 64 may not be the best
 uint32_t constexpr GMeshPerDrawcallMaxInstanceCount = 64;
 uint32_t constexpr GMeshVertexBlendingMaxJointCount = 1024;
-uint32_t constexpr GMaxPointLightCount              = 15;
-
-// TODO: 64 may not be the best
-uint32_t constexpr MeshPerDrawcallMaxInstanceCount = 64;
-uint32_t constexpr MeshVertexBlendingMaxJointCount = 1024;
-uint32_t constexpr MaxPointLightCount              = 15;
+uint32_t constexpr GMaxPointLightCount              = 3;
 
 struct SceneDirectionalLight
 {
@@ -44,12 +39,10 @@ struct MeshPerframeStorageBufferObject
     alignas(16) SceneDirectionalLight DirectionalLight;
     alignas(16) Matrix4x4 DirectionalLightProjView;
 };
-
 struct MeshPerdrawcallStorageBufferObject
 {
     MeshInstance MeshInstances[GMeshPerDrawcallMaxInstanceCount];
 };
-
 struct MeshPerdrawcallVertexBlendingStorageBufferObject
 {
     Matrix4x4 JointMatrices[GMeshVertexBlendingMaxJointCount * GMeshPerDrawcallMaxInstanceCount];
@@ -59,12 +52,10 @@ struct MeshDirectionalLightShadowPerframeStorageBufferObject
 {
     Matrix4x4 LightProjView;
 };
-
 struct MeshDirectionalLightShadowPerdrawcallStorageBufferObject
 {
     MeshInstance MeshInstances[GMeshPerDrawcallMaxInstanceCount];
 };
-
 struct MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject
 {
     Matrix4x4 JointMatrices[GMeshVertexBlendingMaxJointCount * GMeshPerDrawcallMaxInstanceCount];
@@ -87,5 +78,13 @@ struct MeshPerMaterialUniformBufferObject
 struct MeshPointLightShadowPerframeStorageBufferObject
 {
     uint32_t PointLightNum;
-    alignas(16) Vector4f PointLightsPositionAndRadius[MaxPointLightCount];
+    alignas(16) Vector4f PointLightsPositionAndRadius[GMaxPointLightCount];
+};
+struct MeshPointLightShadowPerdrawcallStorageBufferObject
+{
+    MeshInstance MeshInstances[GMeshPerDrawcallMaxInstanceCount];
+};
+struct MeshPointLightShadowPerdrawcallVertexBlendingStorageBufferObject
+{
+    Matrix4x4 JointMatrices[GMeshVertexBlendingMaxJointCount * GMeshPerDrawcallMaxInstanceCount];
 };

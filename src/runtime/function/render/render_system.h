@@ -35,6 +35,7 @@ public:
     RenderSwapContext&            GetSwapContext();
     std::shared_ptr<RHI>          GetRHI() const;
     std::shared_ptr<RenderCamera> GetRenderCamera() const;
+    std::shared_ptr<RenderScene>  GetScene() const;
 
 private:
     void ProcessSwapData();

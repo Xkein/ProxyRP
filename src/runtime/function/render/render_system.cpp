@@ -122,6 +122,11 @@ std::shared_ptr<RenderCamera> RenderSystem::GetRenderCamera() const
     return Camera;
 }
 
+std::shared_ptr<RenderScene> RenderSystem::GetScene() const
+{
+    return Scene;
+}
+
 void RenderSystem::ProcessSwapData()
 {
     RenderSwapData& swap_data = SwapContext.GetRenderSwapData();

@@ -4,6 +4,55 @@
 #include "render_resource_manager.h"
 #include "function/render/render_camera.h"
 #include "core/macro.h"
+#include "function/render/scene_proxy.h"
+#include "function/framework/component/light/point_light_component.h"
+
+void RenderScene::AddLight(LightComponent* light)
+{
+    LightSceneProxy* proxy = light->CreateSceneProxy();
+    if (proxy)
+    {
+        if (light->GetLightType() == ELightType::Point)
+        {
+            PointLightList.push_back((PointLightSceneProxy*)proxy);
+        }
+
+        light->SceneProxy = proxy;
+    }
+}
+
+void RenderScene::RemoveLight(LightComponent* light)
+{
+    if (light->SceneProxy)
+    {
+        if (light->GetLightType() == ELightType::Point)
+        {
+            PointLightList.erase(std::find(PointLightList.begin(), PointLightList.end(), light->SceneProxy));
+        }
+
+        delete light->SceneProxy;
+        light->SceneProxy = nullptr;
+    }
+}
+
+void RenderScene::UpdateLight(LightComponent* light)
+{
+    LightSceneProxy* proxy = light->SceneProxy;
+    if (proxy == nullptr)
+        return;
+    
+    proxy->Position = light->GetPosition();
+    proxy->Color = light->GetLightColor();
+    proxy->Intensity = light->GetIntensity();
+
+    if (light->GetLightType() == ELightType::Point)
+    {
+        PointLightComponent*  point_light       = static_cast<PointLightComponent*>(light);
+        PointLightSceneProxy* point_light_proxy = static_cast<PointLightSceneProxy*>(proxy);
+
+        point_light_proxy->Radius = point_light->GetRadius();
+    }
+}
 
 void RenderScene::UpdateVisibleObjects(std::shared_ptr<RenderCamera> camera)
 {
@@ -24,7 +73,7 @@ void RenderScene::UpdateVisibleObjectsLights(std::shared_ptr<RenderCamera> camer
     {
         Matrix4x4 light_proj_view = CalculateDirectionalLightCamera(*this, *camera);
 
-        LightProjView = light_proj_view;
+        DirectionalLightShadowPerframeStorageBufferObject.LightProjView    = light_proj_view;
         PerframeStorageBufferObject.DirectionalLightProjView = light_proj_view;
 
         DirectionalLightVisibleMeshNodes.clear();
@@ -35,13 +84,13 @@ void RenderScene::UpdateVisibleObjectsLights(std::shared_ptr<RenderCamera> camer
         {
             BoundingBox mesh_bounding_box = entity.BoundingBox;
 
-            if (true || TiledFrustumIntersectBox(frustum, BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix)))
+            if (TiledFrustumIntersectBox(frustum, BoundingBoxTransform(mesh_bounding_box, entity.ModelMatrix)))
             {
                 RenderMeshNode& node = DirectionalLightVisibleMeshNodes.emplace_back();
 
                 node.ModelMatrix = &entity.ModelMatrix;
 
-                ASSERT(entity.JointMatrices.size() <= MeshVertexBlendingMaxJointCount);
+                ASSERT(entity.JointMatrices.size() <= GMeshVertexBlendingMaxJointCount);
 
                 if (!entity.JointMatrices.empty())
                 {
@@ -64,12 +113,12 @@ void RenderScene::UpdateVisibleObjectsLights(std::shared_ptr<RenderCamera> camer
     {
         PointLightsVisibleMeshNodes.clear();
 
-        uint32_t                 point_light_num = Light.PointList.Lights.size();
+        uint32_t                    point_light_num = PointLightList.size();
         std::vector<BoundingSphere> point_lights_bounding_spheres(point_light_num);
         for (size_t i = 0; i < point_light_num; i++)
         {
-            point_lights_bounding_spheres[i].Center = Light.PointList.Lights[i].Position;
-            point_lights_bounding_spheres[i].Radius = Light.PointList.Lights[i].CalculateRadius();
+            point_lights_bounding_spheres[i].Center = PointLightList[i]->Position;
+            point_lights_bounding_spheres[i].Radius = PointLightList[i]->Radius;
         }
 
         for (const RenderEntity& entity : RenderEntities)
@@ -93,7 +142,7 @@ void RenderScene::UpdateVisibleObjectsLights(std::shared_ptr<RenderCamera> camer
 
                 node.ModelMatrix = &entity.ModelMatrix;
 
-                ASSERT(entity.JointMatrices.size() <= MeshVertexBlendingMaxJointCount);
+                ASSERT(entity.JointMatrices.size() <= GMeshVertexBlendingMaxJointCount);
 
                 if (!entity.JointMatrices.empty())
                 {
@@ -133,7 +182,7 @@ void RenderScene::UpdateVisibleObjectsCamera(std::shared_ptr<RenderCamera> camer
 
             node.ModelMatrix = &entity.ModelMatrix;
 
-            ASSERT(entity.JointMatrices.size() <= MeshVertexBlendingMaxJointCount);
+            ASSERT(entity.JointMatrices.size() <= GMeshVertexBlendingMaxJointCount);
 
             if (!entity.JointMatrices.empty())
             {

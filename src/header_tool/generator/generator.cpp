@@ -17,6 +17,7 @@ void Generator::GenClassRenderData(std::shared_ptr<Class> class_temp, Mustache::
     class_def.set("class_name", class_temp->GetClassName());
     class_def.set("class_base_class_size", std::to_string(class_temp->BaseClasses.size()));
     class_def.set("class_need_register", true);
+    class_def.set("class_is_abstract", class_temp->IsAbstract);
 
     if (class_temp->BaseClasses.size() > 0)
     {
