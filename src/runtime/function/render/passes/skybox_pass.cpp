@@ -25,7 +25,7 @@ void SkyboxRenderPass::Initialize(const RenderPassInitInfo* init_info)
     const SkyboxPassInitInfo* skybox_pass_init_info = static_cast<const SkyboxPassInitInfo*>(init_info);
 
     Framebuffer.RenderPass = skybox_pass_init_info->RenderPass;
-
+    
     SetupDescriptorSetLayout();
     SetupAttachments();
     SetupPipelines();

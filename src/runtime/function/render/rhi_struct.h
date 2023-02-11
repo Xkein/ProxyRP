@@ -8,6 +8,9 @@ using RHIPhysicalDeviceProperties = vk::PhysicalDeviceProperties;
 using RHIAttachmentDescription =  vk::AttachmentDescription;
 using RHIAttachmentReference =  vk::AttachmentReference;
 
+using RHIImageSubresourceRange = vk::ImageSubresourceRange;
+using RHIImageViewCreateInfo = vk::ImageViewCreateInfo;
+
 using RHISubpassDescription = vk::SubpassDescription;
 using RHISubpassDependency = vk::SubpassDependency;
 

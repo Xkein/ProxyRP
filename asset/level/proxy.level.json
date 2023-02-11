@@ -51,22 +51,6 @@
       ]
     },
     {
-      "Name": "FloorUp",
-      "DefinitionUrl": "asset/objects/basic/cube.object.json",
-      "InstancedComponents": [
-        {
-          "$type_name": "TransformComponent",
-          "$context": {
-            "Transform": {
-              "Position": [0, 0, 1.2],
-              "Scale": [10, 10, 0.2],
-              "Quaternionf": [0, 0, 0, 1]
-            }
-          }
-        }
-      ]
-    },
-    {
       "Name": "Floor",
       "DefinitionUrl": "asset/objects/basic/cube.object.json",
       "InstancedComponents": [

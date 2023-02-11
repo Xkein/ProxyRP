@@ -20,11 +20,19 @@ SamplerState OcclusionTextureSampler : register(s4, space2);
 Texture2D EmissiveTexture : register(t5, space2);
 SamplerState EmissiveTextureSampler : register(s5, space2);
 
+float3 GetBaseColor(float2 uv)
+{
+    float3 color = BaseColorTexture.Sample(BaseColorTextureSampler, uv).xyz;
+    //return color;
+    // convert to linear space
+    return pow(color, 2.2);
+}
+
 void GetPosition(float4x4 model_matrix, float4x4 proj_view_matrix, float3 model_position, out float3 position_world_space, out float4 position_mvp)
 {
     float4 tmp = mul(model_matrix, float4(model_position, 1.0));
-    position_world_space = tmp.xyz / tmp.w;
-    position_mvp = mul(proj_view_matrix, tmp);
+    position_world_space = tmp.xyz;
+    position_mvp = mul(proj_view_matrix, float4(position_world_space, 1.0));
 }
 
 float3x3 CalcTangentToLocal(float3 normal, float3 tangent)

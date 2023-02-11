@@ -43,15 +43,20 @@ void SceneRenderer::UpdatePerBuffer(std::shared_ptr<RenderCamera> camera)
     }
     {
         Matrix4x4 proj_matrix = Perspective(DegreesToRadians(90), 1, 0.001, 25);
-        //proj_matrix(1, 1) *= -1;
+        proj_matrix(1, 1) *= -1;
         Vector3f  eye         = Vector3f::Zero();
-        // +X, -X, +Y, -Y, +Z, -Z.
-        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[0] = proj_matrix * LookAt(eye, eye + Vector3f(1, 0, 0), Vector3f(0, -1, 0));
-        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[1] = proj_matrix * LookAt(eye, eye + Vector3f(-1, 0, 0), Vector3f(0, -1, 0));
-        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[2] = proj_matrix * LookAt(eye, eye + Vector3f(0, 1, 0), Vector3f(0, 0, 1));
-        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[3] = proj_matrix * LookAt(eye, eye + Vector3f(0, -1, 0), Vector3f(0, 0, -1));
-        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[4] = proj_matrix * LookAt(eye, eye + Vector3f(0, 0, 1), Vector3f(0, -1, 0));
-        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[5] = proj_matrix * LookAt(eye, eye + Vector3f(0, 0, -1), Vector3f(0, -1, 0));
+
+        proj_matrix(0, 0) *= -1;
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[0] = proj_matrix * LookAt(eye, eye + Vector3f(1, 0, 0), Vector3f(0, 0, 1));
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[1] = proj_matrix * LookAt(eye, eye + Vector3f(-1, 0, 0), Vector3f(0, 0, 1));
+        proj_matrix(0, 0) *= -1;
+        proj_matrix(0, 0) *= -1;
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[4] = proj_matrix * LookAt(eye, eye + Vector3f(0, -1, 0), Vector3f(0, 0, 1));
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[5] = proj_matrix * LookAt(eye, eye + Vector3f(0, 1, 0), Vector3f(0, 0, 1));
+        proj_matrix(0, 0) *= -1;
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[2] = proj_matrix * LookAt(eye, eye + Vector3f(0, 0, 1), Vector3f(0, -1, 0));
+        proj_matrix(1, 1) *= -1;
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[3] = proj_matrix * LookAt(eye, eye + Vector3f(0, 0, -1), Vector3f(0, 1, 0));
     }
     
     Scene->PerframeStorageBufferObject.DirectionalLight.Direction = Scene->Light.Directional.Direction.normalized();

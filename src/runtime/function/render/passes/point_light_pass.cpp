@@ -75,113 +75,134 @@ void PointLightRenderPass::Draw()
         mesh_nodes.push_back(temp);
     }
 
-    // point light shadow begin pass
-    std::array<RHIClearValue, 2> clear_values {};
-    clear_values[0].color.setFloat32({1.f});
-    clear_values[1].depthStencil = RHIClearDepthStencilValue {1.f, 0};
-
-    RHIRenderPassBeginInfo render_pass_begin_info {
-        .renderPass      = *(VulkanRenderPass*)Framebuffer.RenderPass.get(),
-        .framebuffer     = *(VulkanFramebuffer*)Framebuffer.Framebuffer.get(),
-        .renderArea      = {0, 0, PointLightShadowMapSize, PointLightShadowMapSize},
-        .clearValueCount = clear_values.size(),
-        .pClearValues    = clear_values.data(),
-    };
 
     RHI->PushEvent(RHI->GetCommandBuffer(), "Point Light Shadow", {1.f, 1.f, 1.f, 1.f});
 
-    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
-
-    // Mesh
-    RHI->PushEvent(RHI->GetCommandBuffer(), "Mesh", {1.f, 1.f, 1.f, 1.f});
-
     RHI->BindPipeline(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].PipelineRHI.get());
 
-    uint32_t                                         perframe_dynamic_offset;
-    MeshPointLightShadowPerframeStorageBufferObject* perframe_storage_buffer_object = reinterpret_cast<MeshPointLightShadowPerframeStorageBufferObject*>(
-        PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshPerframeStorageBufferObject>(RHI->GetCurrentFrameIndex(), perframe_dynamic_offset));
-    *perframe_storage_buffer_object = PerframeStorageBufferObject;
+    auto draw_light_face = [this, &mesh_drawcall_batch](uint32_t light_index, uint32_t face) {
+        // Mesh
+        RHI->PushEvent(RHI->GetCommandBuffer(), "Mesh", {1.f, 1.f, 1.f, 1.f});
 
-    for (auto& [material, mesh_instanced] : mesh_drawcall_batch)
-    {
-        // TODO: render from near to far
+        // point light shadow begin pass
+        std::array<RHIClearValue, 2> clear_values {};
+        clear_values[0].color.setFloat32({1.f});
+        clear_values[1].depthStencil = RHIClearDepthStencilValue {1.f, 0};
 
-        for (auto& [mesh, mesh_nodes] : mesh_instanced)
+        RHIRenderPassBeginInfo render_pass_begin_info {
+            .renderPass      = *(VulkanRenderPass*)Framebuffer.RenderPass.get(),
+            .framebuffer     = *(VulkanFramebuffer*)ShadowCubeMapFaceFramebuffers[face + 6 * light_index].get(),
+            .renderArea      = {0, 0, PointLightShadowMapSize, PointLightShadowMapSize},
+            .clearValueCount = clear_values.size(),
+            .pClearValues    = clear_values.data(),
+        };
+
+        RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
+
+        if (light_index >= PerframeStorageBufferObject.PointLightNum)
         {
-            uint32_t total_instance_count = mesh_nodes.size();
-            if (total_instance_count)
+            RHI->EndRenderPass(RHI->GetCommandBuffer());
+            RHI->PopEvent(RHI->GetCommandBuffer());
+            return;
+        }
+
+        uint32_t                                         perframe_dynamic_offset;
+        MeshPointLightShadowPerframeStorageBufferObject* perframe_storage_buffer_object =
+            PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshPointLightShadowPerframeStorageBufferObject>(RHI->GetCurrentFrameIndex(), perframe_dynamic_offset);
+        *perframe_storage_buffer_object = PerframeStorageBufferObject;
+        perframe_storage_buffer_object->CurrentFace  = face;
+        perframe_storage_buffer_object->CurrentIndex = light_index;
+
+        for (const auto& [material, mesh_instanced] : mesh_drawcall_batch)
+        {
+            // TODO: render from near to far
+
+            for (const auto& [mesh, mesh_nodes] : mesh_instanced)
             {
-                // bind per mesh
-                const RHIDescriptorSet* vertex_blending_descriptor_sets[] {mesh->VertexBlendingDescriptorSet.get()};
-                RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 1, vertex_blending_descriptor_sets, {});
-
-                const RHIBuffer* vertex_buffers[] {mesh->VertexPositionBuffer.VertexBufferRHI.get()};
-                RHI->BindVertexBuffers(RHI->GetCommandBuffer(), 0, vertex_buffers, std::array {0ull});
-                RHI->BindIndexBuffer(RHI->GetCommandBuffer(), mesh->IndexBuffer.IndexBufferRHI.get(), 0, RHIIndexType::eUint16);
-
-                uint32_t drawcall_max_instance_count = GMeshPerDrawcallMaxInstanceCount;
-                uint32_t drawcall_count              = RoundUp(total_instance_count, drawcall_max_instance_count) / drawcall_max_instance_count;
-
-                for (uint32_t drawcall_index = 0; drawcall_index < drawcall_count; drawcall_index++)
+                uint32_t total_instance_count = mesh_nodes.size();
+                if (total_instance_count)
                 {
-                    uint32_t current_instance_count = std::min(total_instance_count - drawcall_max_instance_count * drawcall_index, drawcall_max_instance_count);
+                    // bind per mesh
+                    const RHIDescriptorSet* vertex_blending_descriptor_sets[] {mesh->VertexBlendingDescriptorSet.get()};
+                    RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 1, vertex_blending_descriptor_sets, {});
 
-                    // perdrawcall storage buffer
-                    uint32_t                                                  perdrawcall_dynamic_offset;
-                    MeshDirectionalLightShadowPerdrawcallStorageBufferObject* perdrawcall_storage_buffer_object =
-                        PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshDirectionalLightShadowPerdrawcallStorageBufferObject>(RHI->GetCurrentFrameIndex(),
-                                                                                                                                                          perdrawcall_dynamic_offset);
+                    const RHIBuffer* vertex_buffers[] {mesh->VertexPositionBuffer.VertexBufferRHI.get()};
+                    RHI->BindVertexBuffers(RHI->GetCommandBuffer(), 0, vertex_buffers, std::array {0ull});
+                    RHI->BindIndexBuffer(RHI->GetCommandBuffer(), mesh->IndexBuffer.IndexBufferRHI.get(), 0, RHIIndexType::eUint16);
 
-                    for (uint32_t i = 0; i < current_instance_count; i++)
+                    uint32_t drawcall_max_instance_count = GMeshPerDrawcallMaxInstanceCount;
+                    uint32_t drawcall_count              = RoundUp(total_instance_count, drawcall_max_instance_count) / drawcall_max_instance_count;
+
+                    for (uint32_t drawcall_index = 0; drawcall_index < drawcall_count; drawcall_index++)
                     {
-                        perdrawcall_storage_buffer_object->MeshInstances[i].ModelMatrix          = *mesh_nodes[drawcall_max_instance_count * drawcall_index + i].ModelMatrix;
-                        perdrawcall_storage_buffer_object->MeshInstances[i].EnableVertexBlending = mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices ? 1.f : -1.f;
-                    }
+                        uint32_t current_instance_count = std::min(total_instance_count - drawcall_max_instance_count * drawcall_index, drawcall_max_instance_count);
 
-                    // per drawcall vertex blending storage buffer
-                    bool all_enable_vertex_blending = true;
-                    for (uint32_t i = 0; i < current_instance_count; i++)
-                    {
-                        if (!mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices)
-                        {
-                            all_enable_vertex_blending = false;
-                            break;
-                        }
-                    }
-
-                    uint32_t per_drawcall_vertex_blending_dynamic_offset = 0;
-                    if (all_enable_vertex_blending)
-                    {
-                        MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject* per_drawcall_vertex_blending_storage_buffer_object =
-                            PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject>(
-                                RHI->GetCurrentFrameIndex(), per_drawcall_vertex_blending_dynamic_offset);
+                        // perdrawcall storage buffer
+                        uint32_t                                                  perdrawcall_dynamic_offset;
+                        MeshDirectionalLightShadowPerdrawcallStorageBufferObject* perdrawcall_storage_buffer_object =
+                            PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshDirectionalLightShadowPerdrawcallStorageBufferObject>(RHI->GetCurrentFrameIndex(),
+                                                                                                                                                              perdrawcall_dynamic_offset);
 
                         for (uint32_t i = 0; i < current_instance_count; i++)
                         {
-                            if (mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices)
+                            perdrawcall_storage_buffer_object->MeshInstances[i].ModelMatrix          = *mesh_nodes[drawcall_max_instance_count * drawcall_index + i].ModelMatrix;
+                            perdrawcall_storage_buffer_object->MeshInstances[i].EnableVertexBlending = mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices ? 1.f : -1.f;
+                        }
+
+                        // per drawcall vertex blending storage buffer
+                        bool all_enable_vertex_blending = true;
+                        for (uint32_t i = 0; i < current_instance_count; i++)
+                        {
+                            if (!mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices)
                             {
-                                for (uint32_t joint_index = 0; joint_index < mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointCount; joint_index++)
+                                all_enable_vertex_blending = false;
+                                break;
+                            }
+                        }
+
+                        uint32_t per_drawcall_vertex_blending_dynamic_offset = 0;
+                        if (all_enable_vertex_blending)
+                        {
+                            MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject* per_drawcall_vertex_blending_storage_buffer_object =
+                                PassCommon->GlobalRenderResource._StorageBuffers.AllocateFromRingbuffer<MeshDirectionalLightShadowPerdrawcallVertexBlendingStorageBufferObject>(
+                                    RHI->GetCurrentFrameIndex(), per_drawcall_vertex_blending_dynamic_offset);
+
+                            for (uint32_t i = 0; i < current_instance_count; i++)
+                            {
+                                if (mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices)
                                 {
-                                    per_drawcall_vertex_blending_storage_buffer_object->JointMatrices[GMeshVertexBlendingMaxJointCount * i + joint_index] =
-                                        mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices[joint_index];
+                                    for (uint32_t joint_index = 0; joint_index < mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointCount; joint_index++)
+                                    {
+                                        per_drawcall_vertex_blending_storage_buffer_object->JointMatrices[GMeshVertexBlendingMaxJointCount * i + joint_index] =
+                                            mesh_nodes[drawcall_max_instance_count * drawcall_index + i].JointMatrices[joint_index];
+                                    }
                                 }
                             }
                         }
+
+                        std::array<uint32_t, 3> dynamic_offsets {perframe_dynamic_offset, perdrawcall_dynamic_offset, per_drawcall_vertex_blending_dynamic_offset};
+                        const RHIDescriptorSet* descriptor_sets[] {DescriptorInfos[0].DescriptorSetRHI.get()};
+                        RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 0, descriptor_sets, dynamic_offsets);
+
+                        RHI->DrawIndexed(RHI->GetCommandBuffer(), mesh->IndexCount, current_instance_count, 0, 0, 0);
                     }
-
-                    std::array<uint32_t, 3> dynamic_offsets {perframe_dynamic_offset, perdrawcall_dynamic_offset, per_drawcall_vertex_blending_dynamic_offset};
-                    const RHIDescriptorSet* descriptor_sets[] {DescriptorInfos[0].DescriptorSetRHI.get()};
-                    RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 0, descriptor_sets, dynamic_offsets);
-
-                    RHI->DrawIndexed(RHI->GetCommandBuffer(), mesh->IndexCount, current_instance_count, 0, 0, 0);
                 }
             }
         }
+
+        RHI->EndRenderPass(RHI->GetCommandBuffer());
+
+        RHI->PopEvent(RHI->GetCommandBuffer());
+
+    };
+
+    for (uint32_t light_index = 0; light_index < GMaxPointLightCount; light_index++)
+    {
+        for (uint32_t face = 0; face < 6; face++)
+        {
+            draw_light_face(light_index, face);
+        }
     }
-
-    RHI->PopEvent(RHI->GetCommandBuffer());
-
-    RHI->EndRenderPass(RHI->GetCommandBuffer());
 
     RHI->PopEvent(RHI->GetCommandBuffer());
 }
@@ -219,27 +240,48 @@ void PointLightRenderPass::SetupAttachments()
                      RHIImageUsageFlagBits::eDepthStencilAttachment | RHIImageUsageFlagBits::eTransientAttachment,
                      RHIMemoryPropertyFlagBits::eDeviceLocal,
                      depth_texture.ImageRHI,
-                     depth_texture.DeviceMemoryRHI,
-                     RHIImageCreateFlagBits::eCubeCompatible,
-                     6 * GMaxPointLightCount);
-    RHI->CreateImageView(depth_texture.ImageRHI.get(), depth_texture.Format, RHIImageAspectFlagBits::eDepth, RHIImageViewType::eCubeArray, 6 * GMaxPointLightCount, 1, depth_texture.ImageViewRHI);
+                     depth_texture.DeviceMemoryRHI);
+    RHI->CreateImageView(depth_texture.ImageRHI.get(), depth_texture.Format, RHIImageAspectFlagBits::eDepth, RHIImageViewType::e2D, 1, 1, depth_texture.ImageViewRHI);
 }
 
 void PointLightRenderPass::SetupFramebuffer()
 {
-    std::array<RHIImageView*, 2> attachments {Framebuffer.Attachments[0].ImageViewRHI.get(), Framebuffer.Attachments[1].ImageViewRHI.get()};
+    VulkanRHI* vk_rhi = (VulkanRHI*)RHI.get();
+    for (uint32_t light_index = 0; light_index < GMaxPointLightCount; light_index++)
+    {
+        for (uint32_t face = 0; face < 6; face++)
+        {
+            RHIImageSubresourceRange subresource_range {
+                .aspectMask     = RHIImageAspectFlagBits::eColor,
+                .baseMipLevel   = 0,
+                .levelCount     = 1,
+                .baseArrayLayer = face + light_index * 6,
+                .layerCount     = 1,
+            };
 
-    std::array<vk::ImageView, 2> vk_attachments {*(VulkanImageView*)attachments[0], *(VulkanImageView*)attachments[1]};
-    RHIFramebufferCreateInfo     create_info {
-            .renderPass      = *(VulkanRenderPass*)Framebuffer.RenderPass.get(),
-            .attachmentCount = attachments.size(),
-            .pAttachments    = vk_attachments.data(),
-            .width           = PointLightShadowMapSize,
-            .height          = PointLightShadowMapSize,
-            .layers          = 6 * GMaxPointLightCount,
-    };
+            RHIImageViewCreateInfo view_info {
+                .image            = VulkanRHIConverter::Convert(*Framebuffer.Attachments[0].ImageRHI),
+                .viewType         = RHIImageViewType::e2D,
+                .format           = Framebuffer.Attachments[0].Format,
+                .subresourceRange = subresource_range,
+            };
 
-    Framebuffer.Framebuffer = RHIFramebufferRef(RHI->CreateFramebuffer(&create_info));
+            auto vk_image_view = vk_rhi->Device->createImageView(view_info);
+
+            std::array<vk::ImageView, 2> vk_attachments {vk_image_view, *(VulkanImageView*)Framebuffer.Attachments[1].ImageViewRHI.get()};
+            RHIFramebufferCreateInfo     create_info {
+                    .renderPass      = *(VulkanRenderPass*)Framebuffer.RenderPass.get(),
+                    .attachmentCount = vk_attachments.size(),
+                    .pAttachments    = vk_attachments.data(),
+                    .width           = PointLightShadowMapSize,
+                    .height          = PointLightShadowMapSize,
+                    .layers          = 1,
+            };
+
+            ShadowCubeMapFaceImageViews[face + light_index * 6]   = RHIImageViewRef(new VulkanImageView(vk_image_view));
+            ShadowCubeMapFaceFramebuffers[face + light_index * 6] = RHIFramebufferRef(RHI->CreateFramebuffer(&create_info));
+        }
+    }
 }
 
 void PointLightRenderPass::SetupDescriptorSetLayout()
@@ -252,7 +294,7 @@ void PointLightRenderPass::SetupDescriptorSetLayout()
     perframe_storage_buffer_binding.binding                        = 0;
     perframe_storage_buffer_binding.descriptorType                 = RHIDescriptorType::eStorageBufferDynamic;
     perframe_storage_buffer_binding.descriptorCount                = 1;
-    perframe_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eGeometry | RHIShaderStageFlagBits::eFragment;
+    perframe_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eVertex | RHIShaderStageFlagBits::eFragment;
 
     RHIDescriptorSetLayoutBinding& perdrawcall_storage_buffer_binding = layout_bindings[1];
     perdrawcall_storage_buffer_binding.binding                        = 1;
@@ -409,7 +451,6 @@ void PointLightRenderPass::SetupPipelines()
     RenderPipelines[0].LayoutRHI = RHIPipelineLayoutRef(RHI->CreatePipelineLayout(&pipeline_layout_create_info));
 
     RHIShader* vert_shader_module = RHI->CreateShaderModule(FileManager::Read(PointLightShadowVS::StaticType.GetCachedFilePath()));
-    RHIShader* geom_shader_module = RHI->CreateShaderModule(FileManager::Read(PointLightShadowGS::StaticType.GetCachedFilePath()));
     RHIShader* frag_shader_module = RHI->CreateShaderModule(FileManager::Read(PointLightShadowPS::StaticType.GetCachedFilePath()));
 
     RHIPipelineShaderStageCreateInfo vert_pipeline_shader_stage_create_info {
@@ -417,18 +458,13 @@ void PointLightRenderPass::SetupPipelines()
         .module = *(VulkanShader*)vert_shader_module,
         .pName  = PointLightShadowVS::StaticType.EntryPoint.c_str(),
     };
-    RHIPipelineShaderStageCreateInfo geom_pipeline_shader_stage_create_info {
-        .stage  = RHIShaderStageFlagBits::eGeometry,
-        .module = *(VulkanShader*)geom_shader_module,
-        .pName  = PointLightShadowGS::StaticType.EntryPoint.c_str(),
-    };
     RHIPipelineShaderStageCreateInfo frag_pipeline_shader_stage_create_info {
         .stage  = RHIShaderStageFlagBits::eFragment,
         .module = *(VulkanShader*)frag_shader_module,
         .pName  = PointLightShadowPS::StaticType.EntryPoint.c_str(),
     };
 
-    std::array<RHIPipelineShaderStageCreateInfo, 3> shader_stages {vert_pipeline_shader_stage_create_info, geom_pipeline_shader_stage_create_info, frag_pipeline_shader_stage_create_info};
+    std::array<RHIPipelineShaderStageCreateInfo, 2> shader_stages {vert_pipeline_shader_stage_create_info, frag_pipeline_shader_stage_create_info};
 
     auto vertex_binding_descriptions   = MeshVertex::GetBindingDescriptions();
     auto vertex_attribute_descriptions = MeshVertex::GetAttributeDescription();
@@ -467,7 +503,7 @@ void PointLightRenderPass::SetupPipelines()
         .rasterizerDiscardEnable = RHI_FALSE,
         .polygonMode             = RHIPolygonMode::eFill,
         .cullMode                = RHICullModeFlagBits::eBack,
-        .frontFace               = RHIFrontFace::eCounterClockwise,
+        .frontFace               = RHIFrontFace::eClockwise,
         .depthBiasEnable         = RHI_FALSE,
         .lineWidth               = 1.f,
     };

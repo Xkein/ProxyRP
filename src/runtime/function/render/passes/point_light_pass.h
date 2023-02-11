@@ -33,4 +33,7 @@ private:
 
     MeshPointLightShadowPerframeStorageBufferObject PerframeStorageBufferObject;
     VisiableNodes*                                        VisiableNodes;
+
+    RHIImageViewRef ShadowCubeMapFaceImageViews[6*GMaxPointLightCount];
+    RHIFramebufferRef ShadowCubeMapFaceFramebuffers[6*GMaxPointLightCount];
 };

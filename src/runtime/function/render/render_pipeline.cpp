@@ -105,8 +105,11 @@ void RenderPipeline::PassUpdateAfterRecreateSwapchain()
     DirectionalLightPass->UpdateAfterFramebufferRecreate(&recreate_info);
     PointLightShadowPass->UpdateAfterFramebufferRecreate(&recreate_info);
     MainPass->UpdateAfterFramebufferRecreate(&recreate_info);
+
+    std::vector<RHIImageViewRef> main_image_views = static_cast<MainRenderPass*>(MainPass.get())->GetFramebufferImageViews();
     MeshPass->UpdateAfterFramebufferRecreate(&recreate_info);
     SkyboxPass->UpdateAfterFramebufferRecreate(&recreate_info);
+    recreate_info.PostProcessAttachment = main_image_views[RenderPass::_pass_attachment_pass_buffer_a].get();
     ToneMappingPass->UpdateAfterFramebufferRecreate(&recreate_info);
 }
 

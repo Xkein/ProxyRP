@@ -456,7 +456,7 @@ void DirectionalLightRenderPass::SetupPipelines()
         .rasterizerDiscardEnable = RHI_FALSE,
         .polygonMode             = RHIPolygonMode::eFill,
         .cullMode                = RHICullModeFlagBits::eBack,
-        .frontFace               = RHIFrontFace::eCounterClockwise,
+        .frontFace               = RHIFrontFace::eClockwise,
         .depthBiasEnable         = RHI_FALSE,
         .lineWidth               = 1.f,
     };

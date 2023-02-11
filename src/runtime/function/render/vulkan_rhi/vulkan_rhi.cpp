@@ -128,7 +128,8 @@ void VulkanRHI::CreateSwapChain()
     SwapChainImageFormat = surface_format.format;
     SwapChainExtent       = extent;
 
-    Scissor = vk::Rect2D{{0, 0}, {SwapChainExtent.width, SwapChainExtent.height}};
+    Scissor  = vk::Rect2D {{0, 0}, {SwapChainExtent.width, SwapChainExtent.height}};
+    Viewport = vk::Viewport {0.0f, 0.0f, (float)extent.width, (float)extent.height, 0.0f, 1.0f};
 }
 
 void VulkanRHI::RecreateSwapChain()

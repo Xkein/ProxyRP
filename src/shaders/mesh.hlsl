@@ -1,5 +1,6 @@
 
 #include "common/constants.hlsl"
+#include "common/light.hlsl"
 #include "common/structures.hlsl"
 #include "common/mesh_shading.hlsl"
 #include "common/mesh_common.hlsl"
@@ -48,22 +49,25 @@ void vert(float3 position : ATTRIBUTE0, float3 normal : ATTRIBUTE1, float3 tange
     output.Texcoord = texcoord;
 }
 
-float GetDirectionalShadow(float2 uv, float cur_depth)
+float GetDirectionalShadow(float2 uv, float cur_depth, float NoL)
 {
-    float depth = DirectionalLightShadowMap.Sample(DirectionalLightShadowMapSampler, uv).x + 0.00075;
+    float bias = GetShadowAdjustedBias(0.00075, 0.005, NoL);
+    float depth = DirectionalLightShadowMap.Sample(DirectionalLightShadowMapSampler, uv).x + bias;
     return depth >= cur_depth ? 1.0 : -1.0;
 }
 
 float GetPointLightShadow(float3 dir, float light_index, float cur_depth)
 {
-    float3 uvw = dir;
-    float depth = PointLightShadowMap.Sample(PointLightShadowMapSampler, float4(uvw, light_index)).r + 0.00075;
+    float bias = 0.00075;
+    // same as skybox
+    float3 uvw = float3(dir.x, dir.z, -dir.y);
+    float depth = PointLightShadowMap.Sample(PointLightShadowMapSampler, float4(uvw, light_index)).r + bias;
     return depth >= cur_depth ? 1.0 : -1.0;
 }
 
 float4 frag(VS_OUTPUT input) : SV_Target0
 {
-    float3 base_color = BaseColorTexture.Sample(BaseColorTextureSampler, input.Texcoord).xyz;
+    float3 base_color = GetBaseColor(input.Texcoord);
     float3 N = CalculateNormal(input.Texcoord, input.Normal, input.Tangent);
     float metallic, roughness;
     GetMetallicRoughness(input.Texcoord, metallic, roughness);
@@ -95,7 +99,7 @@ float4 frag(VS_OUTPUT input) : SV_Target0
         {
             float3 position_view_space = input.PositionWorldSpace - point_light_position;
             
-            float shadow = GetPointLightShadow(position_view_space, light_index, length(position_view_space));
+            float shadow = GetPointLightShadow(position_view_space, light_index, length(position_view_space) / point_light_radius);
             if (shadow > 0.0)
             {
                 Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * MeshPerframeBuffer.PointLights[light_index].Intensity * light_attenuation * shadow;
@@ -116,7 +120,7 @@ float4 frag(VS_OUTPUT input) : SV_Target0
 
             float2 shadow_uv = NDC2UV(position_ndc.xy);
             
-            float shadow = GetDirectionalShadow(shadow_uv, position_ndc.z);
+            float shadow = GetDirectionalShadow(shadow_uv, position_ndc.z, NoL);
             if (shadow > 0.0)
             {
                 Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * directional_color * NoL * shadow;

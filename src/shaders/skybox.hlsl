@@ -51,7 +51,7 @@ float4 vert(uint vertex_index : SV_VertexID, out float3 UVW : TEXCOORD0) : SV_Po
     float4 position_clip = mul(SkyboxPerFrame.ProjViewMatrix, float4(position_world_space, 1.0));
     
     position_clip.z = position_clip.w * 0.99999;
-
+    
     UVW = normalize(position_world_space - SkyboxPerFrame.CameraPosition);
     
     return position_clip;
@@ -59,7 +59,13 @@ float4 vert(uint vertex_index : SV_VertexID, out float3 UVW : TEXCOORD0) : SV_Po
 
 void frag(float3 UVW : TEXCOORD0, out float4 out_color : SV_Target)
 {
-    float3 uvw = float3(UVW.x, UVW.y, UVW.z);
+    // the skybox we use is:
+    //    +y
+    // -x +z +x -z
+    //    -y
+    // so rotate 90 around X axis
+    float3 uvw = float3(UVW.x, UVW.z, -UVW.y);
     float3 color = SkyboxTextureCube.SampleLevel(SkyboxTextureCubeSampler, uvw, 0).rgb;
-    out_color = float4(color, 1);
+    //out_color = float4(color, 1);
+    out_color = float4(pow(color, 2.2), 1.0);
 }

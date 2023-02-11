@@ -22,7 +22,7 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
 
     RHI = std::make_shared<VulkanRHI>();
     RHI->Initialize(rhi_init_info);
-
+    
     ResourceManager = std::make_shared<RenderResourceManager>();
     ResourceManager->RHI = RHI;
 
