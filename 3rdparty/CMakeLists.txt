@@ -41,7 +41,8 @@ if(NOT TARGET spdlog)
 endif()
 
 if(NOT TARGET eigen)
-    add_subdirectory(eigen)
+    add_library(eigen INTERFACE)
+    target_include_directories(eigen INTERFACE ${THIRD_PARTY_DIR}/eigen)
 endif()
 
 if(NOT TARGET json)
@@ -64,6 +65,8 @@ endif()
 include(imgui.cmake)
 
 include(boost.cmake)
+
+include(rpclib.cmake)
 
 if(NOT TARGET rttr)
     option(BUILD_STATIC "" ON)
