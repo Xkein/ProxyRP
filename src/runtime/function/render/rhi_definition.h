@@ -19,6 +19,10 @@ using RHIImageAspectFlagBits = vk::ImageAspectFlagBits;
 using RHIImageViewType = vk::ImageViewType;
 using RHIImageLayout = vk::ImageLayout;
 using RHIFilter = vk::Filter;
+using RHISamplerAddressMode = vk::SamplerAddressMode;
+using RHISamplerMipmapMode = vk::SamplerMipmapMode;
+
+using RHIBorderColor = vk::BorderColor;
 
 using RHIBufferUsageFlags = vk::BufferUsageFlags;
 using RHIBufferUsageFlagBits = vk::BufferUsageFlagBits;

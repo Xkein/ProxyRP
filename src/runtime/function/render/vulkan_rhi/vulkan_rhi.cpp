@@ -343,6 +343,14 @@ RHIDescriptorPool* VulkanRHI::CreateDescriptorPool(const RHIDescriptorPoolCreate
     return new VulkanDescriptorPool(descriptor_pool);
 }
 
+RHISampler* VulkanRHI::CreateSampler(const RHISamplerCreateInfo* create_info)
+{
+    vk::SamplerCreateInfo vk_create_info  = VulkanRHIConverter::Convert(*create_info);
+    vk::Sampler           sampler = Device->createSampler(vk_create_info);
+
+    return new VulkanSampler(sampler);
+}
+
 void VulkanRHI::CreateBuffer(vk::DeviceSize          size,
                              vk::BufferUsageFlags    usage,
                              vk::MemoryPropertyFlags properties,
@@ -426,14 +434,26 @@ void VulkanRHI::CreateImageView(const RHIImage*      image,
 void VulkanRHI::CreateTextureImage(RHIImage*&         image,
                                    RHIImageView*&     image_view,
                                    RHIDeviceMemory*&  image_memory,
-                                   const TextureData* texure_data)
+                                   const TextureData* tetxure_data)
 {
     vk::Image        vulkan_image;
     vk::ImageView    vulkan_image_view;
     vk::DeviceMemory vulkan_image_memory;
-    VulkanUtil::CreateTextureImage(this, vulkan_image, vulkan_image_view, vulkan_image_memory, texure_data);
+    VulkanUtil::CreateTextureImage(this, vulkan_image, vulkan_image_view, vulkan_image_memory, tetxure_data);
 
     
+    image        = new VulkanImage(vulkan_image);
+    image_view   = new VulkanImageView(vulkan_image_view);
+    image_memory = new VulkanDeviceMemory(vulkan_image_memory);
+}
+
+void VulkanRHI::CreateTextureCube(RHIImage*& image, RHIImageView*& image_view, RHIDeviceMemory*& image_memory, std::array<const TextureData*, 6> tetxures_data)
+{
+    vk::Image        vulkan_image;
+    vk::ImageView    vulkan_image_view;
+    vk::DeviceMemory vulkan_image_memory;
+    VulkanUtil::CreateTextureCube(this, vulkan_image, vulkan_image_view, vulkan_image_memory, tetxures_data);
+
     image        = new VulkanImage(vulkan_image);
     image_view   = new VulkanImageView(vulkan_image_view);
     image_memory = new VulkanDeviceMemory(vulkan_image_memory);
@@ -842,6 +862,13 @@ void VulkanRHI::DestroyFramebuffer(RHIFramebuffer* framebuffer)
     Device->destroyFramebuffer(VulkanRHIConverter::Convert(*framebuffer));
 }
 
+void VulkanRHI::DestroySampler(RHISampler* sampler)
+{
+    if (!sampler)
+        return;
+    Device->destroySampler(VulkanRHIConverter::Convert(*sampler));
+}
+
 void VulkanRHI::FreeMemory(RHIDeviceMemory* memory)
 {
     if (!memory)
@@ -1003,6 +1030,7 @@ void VulkanRHI::CreateLogicalDevice()
         .samplerAnisotropy        = VK_TRUE,
         .fragmentStoresAndAtomics = VK_TRUE,
     };
+    device_features.imageCubeArray = VK_TRUE;
 
     vk::DeviceCreateInfo create_info {.queueCreateInfoCount    = (uint32_t)queue_create_infos.size(),
                                       .pQueueCreateInfos       = queue_create_infos.data(),

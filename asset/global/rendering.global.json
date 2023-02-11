@@ -4,7 +4,12 @@
 
     },
     "SkyboxSpecularMap": {
-
+        "NegativeX": "asset/resource/texture/sky/skybox_specular_nx.hdr",
+        "PositiveX": "asset/resource/texture/sky/skybox_specular_px.hdr",
+        "NegativeY": "asset/resource/texture/sky/skybox_specular_ny.hdr",
+        "PositiveY": "asset/resource/texture/sky/skybox_specular_py.hdr",
+        "NegativeZ": "asset/resource/texture/sky/skybox_specular_nz.hdr",
+        "PositiveZ": "asset/resource/texture/sky/skybox_specular_pz.hdr"
     },
     "BrdfMap": "",
     "ColorGradingMap": "",

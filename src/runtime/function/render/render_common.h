@@ -79,6 +79,7 @@ struct MeshPointLightShadowPerframeStorageBufferObject
 {
     uint32_t PointLightNum;
     alignas(16) Vector4f PointLightsPositionAndRadius[GMaxPointLightCount];
+    Matrix4x4 ProjViewMatrix[6];
 };
 struct MeshPointLightShadowPerdrawcallStorageBufferObject
 {

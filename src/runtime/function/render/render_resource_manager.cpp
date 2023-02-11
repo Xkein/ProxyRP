@@ -25,7 +25,33 @@ void RenderResourceManager::Clear() {}
 
 void RenderResourceManager::UploadGlobalRenderResource(const LevelResourceDesc& level_resource_desc)
 {
+    SkyBoxIrradianceMap skybox_irradiance_map = level_resource_desc.IblResourceDesc.SkyboxIrradianceMap;
+    std::shared_ptr<TextureData> irradiance_px         = LoadTextureHDR(skybox_irradiance_map.PositiveX);
+    std::shared_ptr<TextureData> irradiance_nx         = LoadTextureHDR(skybox_irradiance_map.NegativeX);
+    std::shared_ptr<TextureData> irradiance_py         = LoadTextureHDR(skybox_irradiance_map.PositiveY);
+    std::shared_ptr<TextureData> irradiance_ny         = LoadTextureHDR(skybox_irradiance_map.NegativeY);
+    std::shared_ptr<TextureData> irradiance_pz         = LoadTextureHDR(skybox_irradiance_map.PositiveZ);
+    std::shared_ptr<TextureData> irradiance_nz         = LoadTextureHDR(skybox_irradiance_map.NegativeZ);
 
+    SkyBoxSpecularMap skybox_specular_map = level_resource_desc.IblResourceDesc.SkyboxSpecularMap;
+    std::shared_ptr<TextureData> specular_px         = LoadTextureHDR(skybox_specular_map.PositiveX);
+    std::shared_ptr<TextureData> specular_nx         = LoadTextureHDR(skybox_specular_map.NegativeX);
+    std::shared_ptr<TextureData> specular_py         = LoadTextureHDR(skybox_specular_map.PositiveY);
+    std::shared_ptr<TextureData> specular_ny         = LoadTextureHDR(skybox_specular_map.NegativeY);
+    std::shared_ptr<TextureData> specular_pz         = LoadTextureHDR(skybox_specular_map.PositiveZ);
+    std::shared_ptr<TextureData> specular_nz         = LoadTextureHDR(skybox_specular_map.NegativeZ);
+
+    std::shared_ptr<TextureData> brdf_map = LoadTextureHDR(level_resource_desc.IblResourceDesc.BrdfMap);
+
+    PassCommon->CreateIBLSamplers();
+    
+    PassCommon->CreateIBLTextures({irradiance_px, irradiance_nx, irradiance_py, irradiance_ny, irradiance_pz, irradiance_nz},
+                                  {specular_px, specular_nx, specular_py, specular_ny, specular_pz, specular_nz});
+
+    RHI->CreateTextureImage(PassCommon->GlobalRenderResource._IBLResource.BrdfLUTTexture.ImageRHI,
+                            PassCommon->GlobalRenderResource._IBLResource.BrdfLUTTexture.ImageViewRHI,
+                            PassCommon->GlobalRenderResource._IBLResource.BrdfLUTTexture.DeviceMemoryRHI,
+                            brdf_map.get());
 }
 
 void RenderResourceManager::UploadGameObjectRenderResource(const RenderEntity&       render_entity,
@@ -124,8 +150,7 @@ std::shared_ptr<TextureData> RenderResourceManager::LoadTextureHDR(const String&
     std::vector<byte> data      = FileManager::Read(full_path.c_str());
 
     int channels;
-    texture->Pixels = stbi_load_from_memory(
-        data.data(), data.size(), (int*)&texture->Width, (int*)&texture->Height, &channels, STBI_rgb_alpha);
+    texture->Pixels = (byte*)stbi_loadf_from_memory(data.data(), data.size(), (int*)&texture->Width, (int*)&texture->Height, &channels, desired_channels);
     if (!texture)
     {
         throw std::runtime_error("failed to load texture!");

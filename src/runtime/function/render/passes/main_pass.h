@@ -6,6 +6,7 @@
 struct MainPassInitInfo : public RenderPassInitInfo
 {
     std::shared_ptr<RenderPass> MeshPass;
+    std::shared_ptr<RenderPass> SkyboxPass;
     std::shared_ptr<RenderPass> FxaaPass;
     std::shared_ptr<RenderPass> ColorGradingPass;
     std::shared_ptr<RenderPass> ToneMappingPass;
@@ -37,6 +38,7 @@ private:
     std::vector<RHIFramebufferRef> SwapchainFramebuffers;
 
     std::shared_ptr<RenderPass> MeshPass;
+    std::shared_ptr<RenderPass> SkyboxPass;
     std::shared_ptr<RenderPass> FxaaPass;
     std::shared_ptr<RenderPass> ColorGradingPass;
     std::shared_ptr<RenderPass> ToneMappingPass;

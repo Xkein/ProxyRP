@@ -10,6 +10,11 @@ void RenderPassCommon::Initialize(const RenderPassCommonInfo* common_info)
     CreateAndMapStorageBuffer();
 }
 
+void RenderPassCommon::Clear()
+{
+    
+}
+
 void RenderPassCommon::SetupDescriptorSetLayout()
 {
     {
@@ -75,6 +80,7 @@ void RenderPassCommon::ResetRingBuffer(uint8_t current_frame_index)
     GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffersEnd[current_frame_index] =
         GlobalRenderResource._StorageBuffers.GlobalUploadRingBuffersBegin[current_frame_index];
 }
+
 void RenderPassCommon::CreateAndMapStorageBuffer()
 {
     StorageBuffers& _storage_buffers = GlobalRenderResource._StorageBuffers;
@@ -110,4 +116,54 @@ void RenderPassCommon::CreateAndMapStorageBuffer()
 
 
     RHI->CreateBuffer(64, RHIBufferUsageFlagBits::eStorageBuffer, {}, _storage_buffers.NullStorageBuffer.BufferRHI, _storage_buffers.NullStorageBuffer.DeviceMemoryRHI);
+}
+
+void RenderPassCommon::CreateIBLSamplers()
+{
+    RHIPhysicalDeviceProperties physical_device_properties = RHI->GetPhysicalDeviceProperties();
+
+    RHISamplerCreateInfo sampler_info {
+        .magFilter = RHIFilter::eLinear,
+        .minFilter = RHIFilter::eLinear,
+        .mipmapMode = RHISamplerMipmapMode::eLinear,
+        .addressModeU = RHISamplerAddressMode::eClampToEdge,
+        .addressModeV= RHISamplerAddressMode::eClampToEdge,
+        .addressModeW = RHISamplerAddressMode::eClampToEdge,
+        .anisotropyEnable = RHI_TRUE,
+        .maxAnisotropy = physical_device_properties.limits.maxSamplerAnisotropy,
+        .compareEnable = RHI_FALSE,
+        .compareOp = RHICompareOp::eAlways,
+        .maxLod = 0.0f,
+        .borderColor = RHIBorderColor::eIntOpaqueBlack,
+        .unnormalizedCoordinates = RHI_FALSE,
+    };
+
+    auto destroy_and_create = [this, &sampler_info](RHISamplerRef& sampler_ref) {
+        if (sampler_ref)
+        {
+            RHI->DestroySampler(sampler_ref.get());
+        }
+        sampler_ref = RHISamplerRef(RHI->CreateSampler(&sampler_info));
+    };
+
+    destroy_and_create(GlobalRenderResource._IBLResource.BrdfLUTTextureSampler);
+
+    sampler_info.minLod = 0.0f;
+    sampler_info.maxLod = 8.0f;
+    sampler_info.mipLodBias = 0.0f;
+
+    destroy_and_create(GlobalRenderResource._IBLResource.IrradianceTextureSampler);
+    destroy_and_create(GlobalRenderResource._IBLResource.SpecularTextureSampler);
+}
+
+void RenderPassCommon::CreateIBLTextures(std::array<std::shared_ptr<TextureData>, 6> irradiance_maps, std::array<std::shared_ptr<TextureData>, 6> specular_maps)
+{
+    RHI->CreateTextureCube(GlobalRenderResource._IBLResource.IrradianceTexture.ImageRHI,
+                           GlobalRenderResource._IBLResource.IrradianceTexture.ImageViewRHI,
+                           GlobalRenderResource._IBLResource.IrradianceTexture.DeviceMemoryRHI,
+                           {irradiance_maps[0].get(), irradiance_maps[1].get(), irradiance_maps[2].get(), irradiance_maps[3].get(), irradiance_maps[4].get(), irradiance_maps[5].get()});
+    RHI->CreateTextureCube(GlobalRenderResource._IBLResource.SpecularTexture.ImageRHI,
+                           GlobalRenderResource._IBLResource.SpecularTexture.ImageViewRHI,
+                           GlobalRenderResource._IBLResource.SpecularTexture.DeviceMemoryRHI,
+                           {specular_maps[0].get(), specular_maps[1].get(), specular_maps[2].get(), specular_maps[3].get(), specular_maps[4].get(), specular_maps[5].get()});
 }

@@ -84,12 +84,24 @@ void RHI::CreateImageView(const RHIImage*     image,
 void RHI::CreateTextureImage(RHIImageRef&        image,
                              RHIImageViewRef&    image_view,
                              RHIDeviceMemoryRef& image_memory,
-                             const TextureData*  texure_data)
+                             const TextureData*  texture_data)
 {
     RHIImage*        vulkan_image;
     RHIImageView*    vulkan_image_view;
     RHIDeviceMemory* vulkan_image_memory;
-    CreateTextureImage(vulkan_image, vulkan_image_view, vulkan_image_memory, texure_data);
+    CreateTextureImage(vulkan_image, vulkan_image_view, vulkan_image_memory, texture_data);
+
+    image        = RHIImageRef(vulkan_image);
+    image_view   = RHIImageViewRef(vulkan_image_view);
+    image_memory = RHIDeviceMemoryRef(vulkan_image_memory);
+}
+
+void RHI::CreateTextureCube(RHIImageRef& image, RHIImageViewRef& image_view, RHIDeviceMemoryRef& image_memory, std::array<const TextureData*, 6> textures_data)
+{
+    RHIImage*        vulkan_image;
+    RHIImageView*    vulkan_image_view;
+    RHIDeviceMemory* vulkan_image_memory;
+    CreateTextureCube(vulkan_image, vulkan_image_view, vulkan_image_memory, textures_data);
 
     image        = RHIImageRef(vulkan_image);
     image_view   = RHIImageViewRef(vulkan_image_view);

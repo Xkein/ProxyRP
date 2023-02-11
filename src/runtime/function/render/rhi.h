@@ -33,22 +33,17 @@ public:
     virtual void            CreateSwapChainImageViews() = 0;
     virtual RHIFramebuffer* CreateFramebuffer(const RHIFramebufferCreateInfo* pCreateInfo) = 0;
     virtual RHIRenderPass*  CreateRenderPass(const RHIRenderPassCreateInfo* create_info) = 0;
-    virtual RHIDescriptorSetLayout*
-                               CreateDescriptorSetLayout(const RHIDescriptorSetLayoutCreateInfo* create_info) = 0;
+    virtual RHIDescriptorSetLayout* CreateDescriptorSetLayout(const RHIDescriptorSetLayoutCreateInfo* create_info) = 0;
     virtual RHIPipelineLayout* CreatePipelineLayout(const RHIPipelineLayoutCreateInfo* create_info) = 0;
-    virtual RHIPipeline*       CreateGraphicsPipeline(RHIPipelineCache*                    pipeline_cache,
-                                                      const RHIGraphicsPipelineCreateInfo* create_info) = 0;
+    virtual RHIPipeline*            CreateGraphicsPipeline(RHIPipelineCache* pipeline_cache, const RHIGraphicsPipelineCreateInfo* create_info) = 0;
     virtual RHIDescriptorPool* CreateDescriptorPool(const RHIDescriptorPoolCreateInfo* create_info) = 0;
+    virtual RHISampler*             CreateSampler(const RHISamplerCreateInfo* create_info)                                                     = 0;
 
     virtual RHISampler* GetOrCreateDefaultSampler(RHIDefaultSamplerType type)     = 0;
     virtual RHISampler* GetOrCreateMipmapSampler(uint32_t width, uint32_t height) = 0;
     virtual RHIShader* CreateShaderModule(const std::vector<byte>& shader_code) = 0;
 
-    virtual void CreateBuffer(RHIDeviceSize          size,
-                              RHIBufferUsageFlags    usage,
-                              RHIMemoryPropertyFlags properties,
-                              RHIBuffer*&             buffer,
-                              RHIDeviceMemory*&       buffer_memory) = 0;
+    virtual void CreateBuffer(RHIDeviceSize size, RHIBufferUsageFlags usage, RHIMemoryPropertyFlags properties, RHIBuffer*& buffer, RHIDeviceMemory*& buffer_memory) = 0;
     virtual void CreateBufferAndInitialize(RHIDeviceSize          size,
                                            RHIBufferUsageFlags    usage,
                                            RHIMemoryPropertyFlags properties,
@@ -75,15 +70,10 @@ public:
                                  uint32_t             layout_count,
                                  uint32_t             miplevels,
                                  RHIImageView*&       image_view) = 0;
-    virtual void CreateTextureImage(RHIImage*&         image,
-                                    RHIImageView*&     image_view,
-                                    RHIDeviceMemory*&  image_memory,
-                                    const TextureData* texure_data) = 0;
-    virtual void CopyBuffer(RHIBuffer*     src_buffer,
-                            RHIBuffer*     dst_buffer,
-                            RHIDeviceSize src_offset,
-                            RHIDeviceSize dst_offset,
-                            RHIDeviceSize size) = 0;
+    virtual void CreateTextureImage(RHIImage*& image, RHIImageView*& image_view, RHIDeviceMemory*& image_memory, const TextureData* texure_data)                     = 0;
+    virtual void CreateTextureCube(RHIImage*& image, RHIImageView*& image_view, RHIDeviceMemory*& image_memory, std::array<const TextureData*, 6> texure_data)       = 0;
+
+    virtual void CopyBuffer(RHIBuffer* src_buffer, RHIBuffer* dst_buffer, RHIDeviceSize src_offset, RHIDeviceSize dst_offset, RHIDeviceSize size)                    = 0;
 
     // command
     virtual bool              PrepareBeforePass(std::function<void()> on_recreate_swapchain) = 0;
@@ -145,6 +135,7 @@ public:
     virtual void DestroyImageView(RHIImageView* image_view) = 0;
     virtual void DestroyShaderModule(RHIShader* shader) = 0;
     virtual void DestroyFramebuffer(RHIFramebuffer* framebuffer) = 0;
+    virtual void DestroySampler(RHISampler* sampler) = 0;
 
     // memory
     virtual void FreeMemory(RHIDeviceMemory* memory) = 0;
@@ -184,5 +175,6 @@ public:
                          uint32_t            layout_count,
                          uint32_t            miplevels,
                          RHIImageViewRef&    image_view);
-    void CreateTextureImage(RHIImageRef& image, RHIImageViewRef& image_view, RHIDeviceMemoryRef& image_memory, const TextureData* texure_data);
+    void CreateTextureImage(RHIImageRef& image, RHIImageViewRef& image_view, RHIDeviceMemoryRef& image_memory, const TextureData* texture_data);
+    void CreateTextureCube(RHIImageRef& image, RHIImageViewRef& image_view, RHIDeviceMemoryRef& image_memory, std::array<const TextureData*, 6> textures_data);
 };

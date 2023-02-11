@@ -16,17 +16,17 @@ STRUCT(SkyBoxIrradianceMap)
     REFLECTION_STRUCT_BODY(SkyBoxIrradianceMap);
 
     PROPERTY()
-    String m_negative_x_map;
+    String NegativeX;
     PROPERTY()
-    String m_positive_x_map;
+    String PositiveX;
     PROPERTY()
-    String m_negative_y_map;
+    String NegativeY;
     PROPERTY()
-    String m_positive_y_map;
+    String PositiveY;
     PROPERTY()
-    String m_negative_z_map;
+    String NegativeZ;
     PROPERTY()
-    String m_positive_z_map;
+    String PositiveZ;
 };
 
 STRUCT(SkyBoxSpecularMap)
@@ -34,17 +34,17 @@ STRUCT(SkyBoxSpecularMap)
     REFLECTION_STRUCT_BODY(SkyBoxSpecularMap);
 
     PROPERTY()
-    String m_negative_x_map;
+    String NegativeX;
     PROPERTY()
-    String m_positive_x_map;
+    String PositiveX;
     PROPERTY()
-    String m_negative_y_map;
+    String NegativeY;
     PROPERTY()
-    String m_positive_y_map;
+    String PositiveY;
     PROPERTY()
-    String m_negative_z_map;
+    String NegativeZ;
     PROPERTY()
-    String m_positive_z_map;
+    String PositiveZ;
 };
 
 STRUCT(CameraPose)

@@ -4,7 +4,7 @@
 #include "function/render/render_scene.h"
 #include "function/render/vulkan_rhi/vulkan_rhi_converter.h"
 #include "platform/file/file_manager.h"
-#include <function/render/render_mesh.h>
+#include "function/render/render_mesh.h"
 
 class MeshVS : public Shader
 {
@@ -43,6 +43,7 @@ void MeshRenderPass::Initialize(const RenderPassInitInfo* init_info)
 {
     const MeshPassInitInfo* mesh_pass_init_info = static_cast<const MeshPassInitInfo*>(init_info);
 
+    PointLightShadowMap       = mesh_pass_init_info->PointLightShadowMap;
     DirectionalLightShadowMap = mesh_pass_init_info->DirectionalLightShadowMap;
     Framebuffer.RenderPass    = mesh_pass_init_info->RenderPass;
 
@@ -65,20 +66,6 @@ void MeshRenderPass::PrepareData(RenderPassPrepareInfo* prepare_info)
 
 void MeshRenderPass::UpdateAfterFramebufferRecreate(const FramebufferRecreateInfo* recreate_info)
 {
-    for (size_t i = 0; i < Framebuffer.Attachments.size(); i++)
-    {
-        RHI->DestroyImage(Framebuffer.Attachments[i].ImageRHI.get());
-        RHI->DestroyImageView(Framebuffer.Attachments[i].ImageViewRHI.get());
-        RHI->FreeMemory(Framebuffer.Attachments[i].DeviceMemoryRHI.get());
-    }
-
-    for (auto& Framebuffer : SwapchainFramebuffers)
-    {
-        RHI->DestroyFramebuffer(Framebuffer.get());
-    }
-
-    SetupAttachments();
-    SetupFramebufferDescriptorSet();
 }
 
 void MeshRenderPass::Draw()
@@ -187,7 +174,7 @@ void MeshRenderPass::SetupDescriptorSet()
 
     RHIDescriptorImageInfo point_light_shadow_texture_image_info {};
     point_light_shadow_texture_image_info.sampler     = VulkanRHIConverter::Convert(*RHI->GetOrCreateDefaultSampler(RHIDefaultSamplerType::Nearest));
-    point_light_shadow_texture_image_info.imageView   = VulkanRHIConverter::Convert(*DirectionalLightShadowMap);
+    point_light_shadow_texture_image_info.imageView   = VulkanRHIConverter::Convert(*PointLightShadowMap);
     point_light_shadow_texture_image_info.imageLayout = RHIImageLayout::eShaderReadOnlyOptimal;
 
     RHIDescriptorImageInfo directional_light_shadow_texture_image_info {};

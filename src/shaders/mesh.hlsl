@@ -48,9 +48,16 @@ void vert(float3 position : ATTRIBUTE0, float3 normal : ATTRIBUTE1, float3 tange
     output.Texcoord = texcoord;
 }
 
-float GetShadow(float2 uv, float cur_depth)
+float GetDirectionalShadow(float2 uv, float cur_depth)
 {
     float depth = DirectionalLightShadowMap.Sample(DirectionalLightShadowMapSampler, uv).x + 0.00075;
+    return depth >= cur_depth ? 1.0 : -1.0;
+}
+
+float GetPointLightShadow(float3 dir, float light_index, float cur_depth)
+{
+    float3 uvw = dir;
+    float depth = PointLightShadowMap.Sample(PointLightShadowMapSampler, float4(uvw, light_index)).r + 0.00075;
     return depth >= cur_depth ? 1.0 : -1.0;
 }
 
@@ -72,8 +79,28 @@ float4 frag(VS_OUTPUT input) : SV_Target0
     int point_light_num = MeshPerframeBuffer.PointLightNum;
     for (int light_index = 0; light_index < point_light_num; ++light_index)
     {
-        // TODO
-        PointLightShadowMap.Sample()
+        float3 point_light_position = MeshPerframeBuffer.PointLights[light_index].Position;
+        float point_light_radius = MeshPerframeBuffer.PointLights[light_index].Radius;
+        
+        float3 L = normalize(point_light_position - input.PositionWorldSpace);
+        float NoL = dot(N, L);
+        
+        float distance = length(point_light_position - input.PositionWorldSpace);
+        float distance_attenuation = 1.0 / (distance * distance + 1.0);
+        float radius_attenuation = 1.0 - (distance * distance / (point_light_radius * point_light_radius));
+        
+        float light_attenuation = radius_attenuation * distance_attenuation * NoL;
+        
+        if (light_attenuation > 0.0)
+        {
+            float3 position_view_space = input.PositionWorldSpace - point_light_position;
+            
+            float shadow = GetPointLightShadow(position_view_space, light_index, length(position_view_space));
+            if (shadow > 0.0)
+            {
+                Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * MeshPerframeBuffer.PointLights[light_index].Intensity * light_attenuation * shadow;
+            }
+        }
 
     }
 
@@ -89,7 +116,7 @@ float4 frag(VS_OUTPUT input) : SV_Target0
 
             float2 shadow_uv = NDC2UV(position_ndc.xy);
             
-            float shadow = GetShadow(shadow_uv, position_ndc.z);
+            float shadow = GetDirectionalShadow(shadow_uv, position_ndc.z);
             if (shadow > 0.0)
             {
                 Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * directional_color * NoL * shadow;

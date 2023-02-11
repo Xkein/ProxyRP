@@ -34,12 +34,24 @@ void SceneRenderer::UpdatePerBuffer(std::shared_ptr<RenderCamera> camera)
 
         Vector3f point_light_intensity = point_light->Intensity * point_light->Color;
         float    radius                = point_light->Radius;
-
+        
         Scene->PerframeStorageBufferObject.PointLights[i].Position = point_light->Position;
         Scene->PerframeStorageBufferObject.PointLights[i].Radius   = radius;
         Scene->PerframeStorageBufferObject.PointLights[i].Intensity = point_light_intensity;
 
         Scene->PointLightShadowPerframeStorageBufferObject.PointLightsPositionAndRadius[i] = Vector4f(point_light->Position.x(), point_light->Position.y(), point_light->Position.z(), radius);
+    }
+    {
+        Matrix4x4 proj_matrix = Perspective(DegreesToRadians(90), 1, 0.001, 25);
+        //proj_matrix(1, 1) *= -1;
+        Vector3f  eye         = Vector3f::Zero();
+        // +X, -X, +Y, -Y, +Z, -Z.
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[0] = proj_matrix * LookAt(eye, eye + Vector3f(1, 0, 0), Vector3f(0, -1, 0));
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[1] = proj_matrix * LookAt(eye, eye + Vector3f(-1, 0, 0), Vector3f(0, -1, 0));
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[2] = proj_matrix * LookAt(eye, eye + Vector3f(0, 1, 0), Vector3f(0, 0, 1));
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[3] = proj_matrix * LookAt(eye, eye + Vector3f(0, -1, 0), Vector3f(0, 0, -1));
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[4] = proj_matrix * LookAt(eye, eye + Vector3f(0, 0, 1), Vector3f(0, -1, 0));
+        Scene->PointLightShadowPerframeStorageBufferObject.ProjViewMatrix[5] = proj_matrix * LookAt(eye, eye + Vector3f(0, 0, -1), Vector3f(0, -1, 0));
     }
     
     Scene->PerframeStorageBufferObject.DirectionalLight.Direction = Scene->Light.Directional.Direction.normalized();

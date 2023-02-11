@@ -6,7 +6,8 @@
 
 struct MeshPassInitInfo : public RenderPassInitInfo
 {
-    RHIImageViewRef DirectionalLightShadowMap;
+    RHIImageViewRef  PointLightShadowMap;
+    RHIImageViewRef  DirectionalLightShadowMap;
     RHIRenderPassRef RenderPass;
 };
 
@@ -42,8 +43,7 @@ private:
 
     void DrawMeshLighting();
 
-    std::vector<RHIFramebufferRef> SwapchainFramebuffers;
-
+    RHIImageViewRef PointLightShadowMap;
     RHIImageViewRef DirectionalLightShadowMap;
     VisiableNodes*  VisiableNodes;
 

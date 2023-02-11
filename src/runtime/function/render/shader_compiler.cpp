@@ -45,8 +45,9 @@ tf::Future<void> ShaderCompiler::BeginCompileShaders(std::vector<ShaderType*>   
     String queue_string;
     for (ShaderType* shader_type : shader_types)
     {
-        //Compile(shader_type, shader_map);
-        taskflow.emplace([shader_type, shader_map]() {
+        ShaderCompiledInfo compiled_info = Compile(shader_type, shader_map);
+        SaveShader(shader_type, compiled_info);
+        /*taskflow.emplace([shader_type, shader_map]() {
             try
             {
                 ShaderCompiledInfo compiled_info = Compile(shader_type, shader_map);
@@ -56,7 +57,7 @@ tf::Future<void> ShaderCompiler::BeginCompileShaders(std::vector<ShaderType*>   
             {
                 LOG_ERROR("Shader {} compile task error!", shader_type->Name);
             }
-        });
+        });*/
 
         queue_string += shader_type->Name;
         queue_string += ", ";

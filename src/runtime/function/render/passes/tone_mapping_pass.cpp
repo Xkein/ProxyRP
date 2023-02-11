@@ -57,8 +57,8 @@ void ToneMappingRenderPass::Draw()
     RHI->BindPipeline(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].PipelineRHI.get());
     RHI->SetViewport(RHI->GetCommandBuffer(), 0, std::array {*swapchain_info.Viewport});
     RHI->SetScissor(RHI->GetCommandBuffer(), 0, std::array {*swapchain_info.Scissor});
-    const RHIDescriptorSet* material_descriptor_sets[] {DescriptorInfos[0].DescriptorSetRHI.get()};
-    RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 0, material_descriptor_sets, {});
+    const RHIDescriptorSet* tone_mapping_descriptor_sets[] {DescriptorInfos[0].DescriptorSetRHI.get()};
+    RHI->BindDescriptorSets(RHI->GetCommandBuffer(), RHIPipelineBindPoint::eGraphics, RenderPipelines[0].LayoutRHI.get(), 0, tone_mapping_descriptor_sets, {});
 
     RHI->Draw(RHI->GetCommandBuffer(), 3, 1, 0, 0);
 

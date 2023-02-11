@@ -12,7 +12,7 @@ class RHI;
 class RenderResourceManager final
 {
     friend class RenderSystem;
-
+    friend class RenderPipeline;
 
 public:
     RenderResourceManager();
@@ -69,5 +69,5 @@ private:
 
     std::vector<std::shared_ptr<void*>> __PersistentResources;
 
-    std::shared_ptr<class RenderPassCommon>   PassCommon;
+    std::shared_ptr<class RenderPassCommon> PassCommon;
 };

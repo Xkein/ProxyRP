@@ -9,6 +9,8 @@ class RenderPassCommon
 public:
     void Initialize(const RenderPassCommonInfo* common_info);
 
+    void Clear();
+
     void SetupDescriptorSetLayout();
 
     struct StorageBuffers
@@ -40,13 +42,29 @@ public:
         }
     };
 
+    struct IBLResource
+    {
+        Texture       BrdfLUTTexture;
+        RHISamplerRef BrdfLUTTextureSampler;
+
+        Texture       IrradianceTexture;
+        RHISamplerRef IrradianceTextureSampler;
+
+        Texture       SpecularTexture;
+        RHISamplerRef SpecularTextureSampler;
+    };
+
     struct
     {
+        IBLResource    _IBLResource;
         StorageBuffers _StorageBuffers;
     } GlobalRenderResource;
 
     void CreateAndMapStorageBuffer();
     void ResetRingBuffer(uint8_t current_frame_index);
+
+    void CreateIBLSamplers();
+    void CreateIBLTextures(std::array<std::shared_ptr<TextureData>, 6> irradiance_maps, std::array<std::shared_ptr<TextureData>, 6> specular_maps);
 
     std::shared_ptr<RHI> RHI;
 

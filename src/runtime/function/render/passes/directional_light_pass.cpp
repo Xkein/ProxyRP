@@ -83,9 +83,9 @@ void DirectionalLightRenderPass::Draw()
         .pClearValues    = clear_values.data(),
     };
 
-    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
-
     RHI->PushEvent(RHI->GetCommandBuffer(), "Directional Light Shadow", {1.f, 1.f, 1.f, 1.f});
+
+    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
 
     // Mesh
     RHI->PushEvent(RHI->GetCommandBuffer(), "Mesh", {1.f, 1.f, 1.f, 1.f});
@@ -176,9 +176,9 @@ void DirectionalLightRenderPass::Draw()
 
     RHI->PopEvent(RHI->GetCommandBuffer());
 
-    RHI->PopEvent(RHI->GetCommandBuffer());
-
     RHI->EndRenderPass(RHI->GetCommandBuffer());
+
+    RHI->PopEvent(RHI->GetCommandBuffer());
 }
 
 RHIImageViewRef DirectionalLightRenderPass::GetDirectionalLightShadowMap() const

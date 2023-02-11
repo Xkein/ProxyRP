@@ -3,7 +3,7 @@
 #include "function/render/render_camera.h"
 #include "function/render/render_scene.h"
 #include "function/render/render_resource_manager.h"
-#include "function/render/pipeline/forward_pipeline.h"
+#include "function/render/render_pipeline.h"
 #include "function/render/renderer/forward_renderer.h"
 #include "function/global/global_context.h"
 #include "resource/asset/asset_manager.h"
@@ -29,9 +29,6 @@ void RenderSystem::Initialize(RenderSystemInitInfo init_info)
     GlobalRenderingResource global_rendering_res;
     GAssetManager->LoadAsset(GConfigManager->Global.GlobalRenderingResourceUrl, global_rendering_res);
 
-    LevelResourceDesc level_resource_desc;
-    ResourceManager->UploadGlobalRenderResource(level_resource_desc);
-    
     Camera = std::make_shared<RenderCamera>();
     const auto& camera_pose = global_rendering_res.CameraConfig.Pose;
     Camera->LookAt(camera_pose.Position, camera_pose.Target, camera_pose.Up);

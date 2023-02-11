@@ -44,6 +44,7 @@ void PointLightRenderPass::PostInitialize()
 void PointLightRenderPass::PrepareData(RenderPassPrepareInfo* prepare_info)
 {
     PerframeStorageBufferObject = prepare_info->Scene->PointLightShadowPerframeStorageBufferObject;
+    VisiableNodes               = &prepare_info->Scene->VisiableNodes;
 }
 
 void PointLightRenderPass::Draw()
@@ -87,9 +88,9 @@ void PointLightRenderPass::Draw()
         .pClearValues    = clear_values.data(),
     };
 
-    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
-
     RHI->PushEvent(RHI->GetCommandBuffer(), "Point Light Shadow", {1.f, 1.f, 1.f, 1.f});
+
+    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
 
     // Mesh
     RHI->PushEvent(RHI->GetCommandBuffer(), "Mesh", {1.f, 1.f, 1.f, 1.f});
@@ -180,9 +181,9 @@ void PointLightRenderPass::Draw()
 
     RHI->PopEvent(RHI->GetCommandBuffer());
 
-    RHI->PopEvent(RHI->GetCommandBuffer());
-
     RHI->EndRenderPass(RHI->GetCommandBuffer());
+
+    RHI->PopEvent(RHI->GetCommandBuffer());
 }
 
 RHIImageViewRef PointLightRenderPass::GetPointLightShadowMap() const
@@ -251,7 +252,7 @@ void PointLightRenderPass::SetupDescriptorSetLayout()
     perframe_storage_buffer_binding.binding                        = 0;
     perframe_storage_buffer_binding.descriptorType                 = RHIDescriptorType::eStorageBufferDynamic;
     perframe_storage_buffer_binding.descriptorCount                = 1;
-    perframe_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eVertex;
+    perframe_storage_buffer_binding.stageFlags                     = RHIShaderStageFlagBits::eGeometry | RHIShaderStageFlagBits::eFragment;
 
     RHIDescriptorSetLayoutBinding& perdrawcall_storage_buffer_binding = layout_bindings[1];
     perdrawcall_storage_buffer_binding.binding                        = 1;
@@ -417,9 +418,9 @@ void PointLightRenderPass::SetupPipelines()
         .pName  = PointLightShadowVS::StaticType.EntryPoint.c_str(),
     };
     RHIPipelineShaderStageCreateInfo geom_pipeline_shader_stage_create_info {
-        .stage  = RHIShaderStageFlagBits::eVertex,
+        .stage  = RHIShaderStageFlagBits::eGeometry,
         .module = *(VulkanShader*)geom_shader_module,
-        .pName  = PointLightShadowVS::StaticType.EntryPoint.c_str(),
+        .pName  = PointLightShadowGS::StaticType.EntryPoint.c_str(),
     };
     RHIPipelineShaderStageCreateInfo frag_pipeline_shader_stage_create_info {
         .stage  = RHIShaderStageFlagBits::eFragment,

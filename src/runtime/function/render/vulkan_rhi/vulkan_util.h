@@ -16,10 +16,7 @@ public:
 
     static vk::SampleCountFlagBits GetMaxUsableSampleCount(vk::PhysicalDevice physical_device);
 
-    static vk::Format FindSupportedFormat(vk::PhysicalDevice             physical_device,
-                                          const std::vector<vk::Format>& candidates,
-                                          vk::ImageTiling                tiling,
-                                          vk::FormatFeatureFlags         features);
+    static vk::Format FindSupportedFormat(vk::PhysicalDevice physical_device, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
 
     static vk::Format FindDepthFormat(vk::PhysicalDevice physical_device);
 
@@ -82,29 +79,10 @@ public:
                                   vk::Format     texture_format,
                                   uint32_t       miplevels);
 
-    static void CreateTextureImage(VulkanRHI*         rhi,
-                                   vk::Image&         image,
-                                   vk::ImageView&     image_view,
-                                   vk::DeviceMemory&  device_memory,
-                                   const TextureData* texure_data);
-
-    static void CreateCubeMap(VulkanRHI*           rhi,
-                              vk::Image&           image,
-                              vk::ImageView&       image_view,
-                              vk::DeviceMemory&    image_memory,
-                              uint32_t             texture_image_width,
-                              uint32_t             texture_image_height,
-                              std::array<void*, 6> texture_image_pixels,
-                              vk::Format           texture_image_format,
-                              uint32_t             miplevels);
+    static void CreateTextureImage(VulkanRHI* rhi, vk::Image& image, vk::ImageView& image_view, vk::DeviceMemory& device_memory, const TextureData* texure_data);
+    static void CreateTextureCube(VulkanRHI* rhi, vk::Image& image, vk::ImageView& image_view, vk::DeviceMemory& device_memory, std::array<const TextureData*, 6> texure_data);
     
-    static void GenerateTextureMipMaps(VulkanRHI* rhi,
-                                       vk::Image  image,
-                                       vk::Format image_format,
-                                       uint32_t   texture_width,
-                                       uint32_t   texture_height,
-                                       uint32_t   layer_count,
-                                       uint32_t   mip_levels);
+    static void GenerateTextureMipMaps(VulkanRHI* rhi, vk::Image image, vk::Format image_format, uint32_t texture_width, uint32_t texture_height, uint32_t layer_count, uint32_t mip_levels);
 
     static void TransitionImageLayout(VulkanRHI*           rhi,
                                       vk::Image            image,
@@ -115,18 +93,8 @@ public:
                                       uint32_t             layer_count      = 1,
                                       uint32_t             mip_levels       = 1);
 
-    static void CopyBuffer(VulkanRHI*     rhi,
-                           vk::Buffer     srcBuffer,
-                           vk::Buffer     dstBuffer,
-                           vk::DeviceSize srcOffset,
-                           vk::DeviceSize dstOffset,
-                           vk::DeviceSize size);
+    static void CopyBuffer(VulkanRHI* rhi, vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize srcOffset, vk::DeviceSize dstOffset, vk::DeviceSize size);
 
-    static void CopyBufferToImage(VulkanRHI* rhi,
-                                  vk::Buffer buffer,
-                                  vk::Image  image,
-                                  uint32_t   width,
-                                  uint32_t   height,
-                                  uint32_t   layer_count = 1);
+    static void CopyBufferToImage(VulkanRHI* rhi, vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height, uint32_t layer_count = 1);
 
 };

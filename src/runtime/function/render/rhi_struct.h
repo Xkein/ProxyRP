@@ -21,6 +21,8 @@ using RHIRenderPassBeginInfo = vk::RenderPassBeginInfo;
 
 using RHIFramebufferCreateInfo = vk::FramebufferCreateInfo;
 
+using RHISamplerCreateInfo = vk::SamplerCreateInfo;
+
 using RHIDescriptorPoolCreateInfo = vk::DescriptorPoolCreateInfo;
 using RHIDescriptorSetLayoutBinding = vk::DescriptorSetLayoutBinding;
 using RHIDescriptorSetLayoutCreateInfo = vk::DescriptorSetLayoutCreateInfo;

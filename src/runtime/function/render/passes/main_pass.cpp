@@ -8,7 +8,8 @@ void MainRenderPass::Initialize(const RenderPassInitInfo* init_info)
 {
     const MainPassInitInfo* main_pass_init_info = static_cast<const MainPassInitInfo*>(init_info);
 
-    MeshPass = main_pass_init_info->MeshPass;
+    MeshPass        = main_pass_init_info->MeshPass;
+    SkyboxPass      = main_pass_init_info->SkyboxPass;
     ToneMappingPass = main_pass_init_info->ToneMappingPass;
 
     SetupAttachments();
@@ -71,19 +72,21 @@ void MainRenderPass::Draw()
         .pClearValues    = clear_values.data(),
     };
 
-    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
-
     RHI->PushEvent(RHI->GetCommandBuffer(), "Main Pass", {1.f, 1.f, 1.f, 1.f});
 
+    RHI->BeginRenderPass(RHI->GetCommandBuffer(), &render_pass_begin_info, RHISubpassContents::eInline);
+
+
     MeshPass->Draw();
+    SkyboxPass->Draw();
 
     RHI->NextSubpass(RHI->GetCommandBuffer(), RHISubpassContents::eInline);
 
     ToneMappingPass->Draw();
 
-    RHI->PopEvent(RHI->GetCommandBuffer());
-
     RHI->EndRenderPass(RHI->GetCommandBuffer());
+
+    RHI->PopEvent(RHI->GetCommandBuffer());
 }
 
 void MainRenderPass::SetupAttachments()

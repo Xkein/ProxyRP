@@ -335,6 +335,80 @@ void VulkanUtil::CreateTextureImage(VulkanRHI*         rhi,
     image_view = CreateImageView(device, image, texture_data->Format, vk::ImageAspectFlagBits::eColor, vk::ImageViewType::e2D, 1, mip_levels);
 }
 
+void VulkanUtil::CreateTextureCube(VulkanRHI* rhi, vk::Image& image, vk::ImageView& image_view, vk::DeviceMemory& device_memory, std::array<const TextureData*, 6> textures_data)
+{
+    if (!textures_data[0])
+    {
+        return;
+    }
+    auto& texture_data = textures_data[0];
+
+    vk::Device       device         = rhi->Device;
+    const uint32_t&  texture_width  = texture_data->Width;
+    const uint32_t&  texture_height = texture_data->Height;
+    const vk::Format texture_format = texture_data->Format;
+
+    vk::DeviceSize texture_layer_size = GetTextureSize(texture_width, texture_height, texture_format);
+    vk::DeviceSize cube_texture_size = texture_layer_size * 6;
+
+    uint32_t mip_levels = (texture_data->MipLevels != 0) ? texture_data->MipLevels : floor(log2(std::max(texture_width, texture_height))) + 1;
+
+    vk::Buffer       inefficient_staging_buffer;
+    vk::DeviceMemory inefficient_staging_buffer_memory;
+
+    CreateBuffer(rhi->PhysicalDevice,
+                 rhi->Device,
+                 cube_texture_size,
+                 vk::BufferUsageFlagBits::eTransferSrc,
+                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                 inefficient_staging_buffer,
+                 inefficient_staging_buffer_memory);
+
+    void* data = device.mapMemory(inefficient_staging_buffer_memory, 0, cube_texture_size);
+    {
+        uint32_t cur_idx = 0;
+        for (size_t i = 0; i < 6;)
+        {
+            memcpy(static_cast<byte*>(data) + texture_layer_size * i, textures_data[cur_idx]->Pixels, static_cast<size_t>(textures_data[cur_idx]->ArrayLayers * texture_layer_size));
+            i += textures_data[cur_idx]->ArrayLayers;
+            cur_idx++;
+        }
+    }
+    device.unmapMemory(inefficient_staging_buffer_memory);
+
+    CreateImage(rhi->PhysicalDevice,
+                rhi->Device,
+                texture_width,
+                texture_height,
+                texture_data->Format,
+                vk::ImageTiling::eOptimal,
+                vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+                vk::MemoryPropertyFlagBits::eDeviceLocal,
+                image,
+                device_memory,
+                vk::ImageCreateFlagBits::eCubeCompatible,
+                6,
+                mip_levels,
+                vk::SampleCountFlagBits::e1);
+
+    TransitionImageLayout(rhi, image, texture_data->Format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageAspectFlagBits::eColor, 6, mip_levels);
+
+    CopyBufferToImage(rhi, inefficient_staging_buffer, image, texture_width, texture_height, 6);
+
+    // TransitionImageLayout(texture_image,
+    //                       texture_data->Format,
+    //                       vk::ImageLayout::eTransferDstOptimal,
+    //                       vk::ImageLayout::eShaderReadOnlyOptimal,
+    //                       mip_levels);
+
+    device.destroyBuffer(inefficient_staging_buffer);
+    device.freeMemory(inefficient_staging_buffer_memory);
+
+    GenerateTextureMipMaps(rhi, image, texture_data->Format, texture_width, texture_height, 6, mip_levels);
+
+    image_view = CreateImageView(device, image, texture_data->Format, vk::ImageAspectFlagBits::eColor, vk::ImageViewType::eCube, 6, mip_levels);
+}
+
 void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
                                         vk::Image  image,
                                         vk::Format image_format,
@@ -384,14 +458,14 @@ void VulkanUtil::GenerateTextureMipMaps(VulkanRHI* rhi,
         blit.srcSubresource.aspectMask     = vk::ImageAspectFlagBits::eColor;
         blit.srcSubresource.mipLevel       = i - 1;
         blit.srcSubresource.baseArrayLayer = 0;
-        blit.srcSubresource.layerCount     = 1;
+        blit.srcSubresource.layerCount     = layer_count;
 
         blit.dstOffsets[0]                 = vk::Offset3D {0, 0, 0};
         blit.dstOffsets[1]                 = vk::Offset3D {std::max(mip_width / 2, 1), std::max(mip_height / 2, 1), 1};
         blit.dstSubresource.aspectMask     = vk::ImageAspectFlagBits::eColor;
         blit.dstSubresource.mipLevel       = i;
         blit.dstSubresource.baseArrayLayer = 0;
-        blit.dstSubresource.layerCount     = 1;
+        blit.dstSubresource.layerCount     = layer_count;
 
         (*(VulkanCommandBuffer*)command_buffer)->blitImage(image,
                                  vk::ImageLayout::eTransferSrcOptimal,
@@ -440,7 +514,7 @@ void VulkanUtil::TransitionImageLayout(VulkanRHI*           rhi,
         .baseMipLevel   = 0,
         .levelCount     = mip_levels,
         .baseArrayLayer = 0,
-        .layerCount     = 1,
+        .layerCount     = layer_count,
     };
 
     vk::ImageMemoryBarrier barrier {

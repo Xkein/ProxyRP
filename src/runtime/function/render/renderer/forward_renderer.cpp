@@ -1,6 +1,5 @@
 #include "forward_renderer.h"
-#include "function/render/pipeline/forward_pipeline.h"
-#include "function/render/pipeline/deferred_pipeline.h"
+#include "function/render/render_pipeline.h"
 #include "function/render/passes/render_pass_common.h"
 
 void ForwardSceneRenderer::Render()
@@ -29,7 +28,8 @@ void ForwardSceneRenderer::Initialize(RendererInitInfo* init_info)
     ResourceManager = init_info->ResourceManager;
 
     RenderPipelineInitInfo pipeline_init_info;
-    Pipeline      = std::make_shared<ForwardPipeline>();
+    pipeline_init_info.ResourceManager = init_info->ResourceManager;
+    Pipeline      = std::make_shared<RenderPipeline>();
     Pipeline->RHI = RHI;
     Pipeline->Initialize(&pipeline_init_info);
 

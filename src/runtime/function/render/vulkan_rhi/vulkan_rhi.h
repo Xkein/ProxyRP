@@ -31,54 +31,45 @@ public:
     virtual RHIPipeline*            CreateGraphicsPipeline(RHIPipelineCache*                    pipeline_cache,
                                                            const RHIGraphicsPipelineCreateInfo* create_info) override;
     virtual RHIDescriptorPool*      CreateDescriptorPool(const RHIDescriptorPoolCreateInfo* create_info) override;
+    virtual RHISampler*             CreateSampler(const RHISamplerCreateInfo* create_info) override;
 
     virtual RHISampler* GetOrCreateDefaultSampler(RHIDefaultSamplerType type) override;
     virtual RHISampler* GetOrCreateMipmapSampler(uint32_t width, uint32_t height) override;
     virtual RHIShader* CreateShaderModule(const std::vector<byte>& shader_code) override;
 
-    virtual void CreateBuffer(RHIDeviceSize          size,
-                              RHIBufferUsageFlags    usage,
-                              RHIMemoryPropertyFlags properties,
-                              RHIBuffer*&             buffer,
-                              RHIDeviceMemory*&       buffer_memory) override;
+    virtual void CreateBuffer(RHIDeviceSize size, RHIBufferUsageFlags usage, RHIMemoryPropertyFlags properties, RHIBuffer*& buffer, RHIDeviceMemory*& buffer_memory) override;
     virtual void CreateBufferAndInitialize(RHIDeviceSize          size,
                                            RHIBufferUsageFlags    usage,
                                            RHIMemoryPropertyFlags properties,
-                                           RHIBuffer*&             buffer,
-                                           RHIDeviceMemory*&       buffer_memory,
-                                           void*                   data      = nullptr,
-                                           int                     data_size = 0) override;
-    virtual void CreateImage(uint32_t                width,
-                             uint32_t                height,
+                                           RHIBuffer*&            buffer,
+                                           RHIDeviceMemory*&      buffer_memory,
+                                           void*                  data      = nullptr,
+                                           int                    data_size = 0) override;
+    virtual void CreateImage(uint32_t               width,
+                             uint32_t               height,
                              RHIFormat              format,
                              RHIImageTiling         tiling,
                              RHIImageUsageFlags     usage,
                              RHIMemoryPropertyFlags properties,
-                             RHIImage*&              image,
-                             RHIDeviceMemory*&       image_memory,
+                             RHIImage*&             image,
+                             RHIDeviceMemory*&      image_memory,
                              RHIImageCreateFlags    create_flags = {},
-                             uint32_t                array_layers = 1,
-                             uint32_t                mip_levels   = 1,
+                             uint32_t               array_layers = 1,
+                             uint32_t               mip_levels   = 1,
                              RHISampleCountFlagBits sample_count = RHISampleCountFlagBits::e1) override;
 
-    virtual void CreateImageView(const RHIImage*      image,
+    virtual void CreateImageView(const RHIImage*     image,
                                  RHIFormat           format,
                                  RHIImageAspectFlags image_aspect_flags,
                                  RHIImageViewType    view_type,
-                                 uint32_t             layout_count,
-                                 uint32_t             miplevels,
-                                 RHIImageView*&       image_view) override;
+                                 uint32_t            layout_count,
+                                 uint32_t            miplevels,
+                                 RHIImageView*&      image_view) override;
 
-    virtual void CreateTextureImage(RHIImage*&         image,
-                                    RHIImageView*&     image_view,
-                                    RHIDeviceMemory*&  image_memory,
-                                    const TextureData* texure_data) override;
+    virtual void CreateTextureImage(RHIImage*& image, RHIImageView*& image_view, RHIDeviceMemory*& image_memory, const TextureData* texture_data) override;
+    virtual void CreateTextureCube(RHIImage*& image, RHIImageView*& image_view, RHIDeviceMemory*& image_memory, std::array<const TextureData*, 6> textures_data) override;
 
-    virtual void CopyBuffer(RHIBuffer*     src_buffer,
-                            RHIBuffer*     dst_buffer,
-                            RHIDeviceSize src_offset,
-                            RHIDeviceSize dst_offset,
-                            RHIDeviceSize size) override;
+    virtual void CopyBuffer(RHIBuffer* src_buffer, RHIBuffer* dst_buffer, RHIDeviceSize src_offset, RHIDeviceSize dst_offset, RHIDeviceSize size) override;
 
 
     // command
@@ -140,6 +131,7 @@ public:
     virtual void DestroyImageView(RHIImageView* image_view) override;
     virtual void DestroyShaderModule(RHIShader* shader) override;
     virtual void DestroyFramebuffer(RHIFramebuffer* framebuffer) override;
+    virtual void DestroySampler(RHISampler* sampler) override;
 
     // memory
     virtual void FreeMemory(RHIDeviceMemory* memory) override;

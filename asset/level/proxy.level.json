@@ -13,7 +13,58 @@
     {
       "Name": "MeshTestObject",
       "DefinitionUrl": "asset/objects/mesh_test.object.json",
-      "InstancedComponents": []
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [0, 0, -0.7],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "PointLight",
+      "DefinitionUrl": "asset/objects/light/point_light.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [0, 0, 0],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        },
+        {
+          "$type_name": "PointLightComponent",
+          "$context": {
+            "Color": [1, 0, 0],
+            "Intensity": 1,
+            "Radius": 8
+          }
+        }
+      ]
+    },
+    {
+      "Name": "FloorUp",
+      "DefinitionUrl": "asset/objects/basic/cube.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [0, 0, 1.2],
+              "Scale": [10, 10, 0.2],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
     },
     {
       "Name": "Floor",
