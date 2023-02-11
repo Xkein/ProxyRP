@@ -4,7 +4,19 @@
       "$type_name": "ProxyManagerComponent",
       "$context": {
         "Manager": {
-          "PipeName": "114514"
+          "Port": 1919
+        }
+      }
+    },
+    {
+      "$type_name": "CameraComponent",
+      "$context": {
+        "Parameter": {
+          "$type_name": "FreeCameraParameter",
+          "$context": {
+            "Speed": 0.6,
+            "UseGlobalCameraConfig": true
+          }
         }
       }
     }

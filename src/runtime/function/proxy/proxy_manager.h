@@ -2,6 +2,7 @@
 
 #include "core/reflection/reflection.h"
 #include "platform/string.h"
+#include "proxy_rpc.h"
 
 CLASS(ProxyManager)
 {
@@ -12,7 +13,9 @@ public:
 
 
     PROPERTY()
-    String PipeName;
+    String Port;
+
+    ProxyRPC RPC;
 
     std::vector<std::shared_ptr<GameObject>> ProxyGObjects;
 };
