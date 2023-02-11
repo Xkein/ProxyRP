@@ -1,6 +1,10 @@
 
 set(TARGET_NAME HeaderTool)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    add_compile_options("/MP")
+endif()
+
 file(GLOB_RECURSE HEADERS "*.h")
 file(GLOB_RECURSE SOURCES "*.cpp")
 

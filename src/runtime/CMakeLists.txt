@@ -44,12 +44,8 @@ target_link_libraries(${TARGET_NAME} PUBLIC eigen)
 target_link_libraries(${TARGET_NAME} PUBLIC glm)
 target_link_libraries(${TARGET_NAME} PUBLIC shader_conductor)
 target_link_libraries(${TARGET_NAME} PUBLIC taskflow)
-target_link_libraries(${TARGET_NAME}
-    PUBLIC
-        Boost::asio
-        Boost::interprocess
-        Boost::process
-)
+target_link_libraries(${TARGET_NAME} PUBLIC boost)
+target_link_libraries(${TARGET_NAME} PUBLIC rpclib)
 
 if (CMAKE_HOST_WIN32)
 	set(SHADER_CONDUCTOR_LIB_PATH ${SHADER_CONDUCTOR_BIN_DIR}/ShaderConductor.dll)
