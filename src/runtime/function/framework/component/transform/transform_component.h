@@ -19,16 +19,14 @@ public:
     void SetScale(const Vector3f& scale);
     void SetRotation(const Quaternionf& rotation);
 
-    Transformf& GetTransform() {
-        return Transform;
-    }
-    const Transformf& GetTransform() const {
-        return Transform;
-    }
+    Vector3f    GetPosition() const;
+    Vector3f    GetScale() const;
+    Quaternionf GetRotation() const;
 
-    Matrix4x4 GetMatrix() const {
-        return Transform.GetMatrix();
-    }
+    void              SetTransform(const Transformf& transform);
+    const Transformf& GetTransform() const;
+
+    Matrix4x4 GetMatrix() const;
 
     bool IsDirty() const {
         return DirtyFlag;

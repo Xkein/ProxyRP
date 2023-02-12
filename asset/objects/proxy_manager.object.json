@@ -3,9 +3,7 @@
     {
       "$type_name": "ProxyManagerComponent",
       "$context": {
-        "Manager": {
-          "Port": 1919
-        }
+        "Port": 1919
       }
     },
     {

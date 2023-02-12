@@ -52,7 +52,8 @@ public:
     TComponent* AddComponent()
     {
         Instance<Component> instance(rttr::type::get<TComponent>(), new TComponent());
-        Components.emplace_back(std::move(instance));
+        Components.emplace_back(instance);
+        return instance;
     }
 
     void RemoveComponent(const rttr::type& type);

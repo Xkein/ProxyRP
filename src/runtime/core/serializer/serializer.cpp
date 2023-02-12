@@ -36,6 +36,39 @@ bool Serializer::Write(const char& instance, json& context)
 }
 
 template<>
+bool Serializer::Read(const json& context, unsigned char& instance)
+{
+    return ReadPrimitive(context, instance);
+}
+template<>
+bool Serializer::Write(const unsigned char& instance, json& context)
+{
+    return WritePrimitive(instance, context);
+}
+
+template<>
+bool Serializer::Read(const json& context, short& instance)
+{
+    return ReadPrimitive(context, instance);
+}
+template<>
+bool Serializer::Write(const short& instance, json& context)
+{
+    return WritePrimitive(instance, context);
+}
+
+template<>
+bool Serializer::Read(const json& context, unsigned short& instance)
+{
+    return ReadPrimitive(context, instance);
+}
+template<>
+bool Serializer::Write(const unsigned short& instance, json& context)
+{
+    return WritePrimitive(instance, context);
+}
+
+template<>
 bool Serializer::Read(const json& context, int& instance)
 {
     return ReadPrimitive(context, instance);

@@ -42,3 +42,34 @@ void TransformComponent::SetRotation(const Quaternionf& rotation)
     Transform.Rotation = rotation;
     SetDirtyFlag(true);
 }
+
+Vector3f TransformComponent::GetPosition() const
+{
+    return Transform.Position;
+}
+
+Vector3f TransformComponent::GetScale() const
+{
+    return Transform.Scale;
+}
+
+Quaternionf TransformComponent::GetRotation() const
+{
+    return Transform.Rotation;
+}
+
+void TransformComponent::SetTransform(const Transformf& transform)
+{
+    Transform = transform;
+    SetDirtyFlag(true);
+}
+
+const Transformf& TransformComponent::GetTransform() const
+{
+    return Transform;
+}
+
+Matrix4x4 TransformComponent::GetMatrix() const
+{
+    return Transform.GetMatrix();
+}

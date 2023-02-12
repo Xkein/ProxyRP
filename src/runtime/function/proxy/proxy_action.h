@@ -10,12 +10,15 @@
 // Object
 #define PA_CREATE_OBJECT "CreateObject"
 #define PA_DESTROY_OBJECT "DestroyObject"
-#define PA_UPDATE_OBJECT "UpdateObject"
+#define PA_UPDATE_OBJECT_TRANSFORM "UpdateObjectTransform"
 
 // Input
 #define PA_KEY_EVENT "KeyEvent"
 #define PA_CURSOR_EVENT "CursorEvent"
-
-// Misc
 #define PA_SHOW_WINDOW "ShowWindow"
 #define PA_HIDE_WINDOW "HideWindow"
+
+// LowLevel
+#define PA_FETCH_LEVEL_HANDLE "_FetchLevelHandle"
+#define PA_REFLECTION_CALL "_RelectionCall"
+

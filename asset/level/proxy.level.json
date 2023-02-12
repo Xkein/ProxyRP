@@ -6,11 +6,6 @@
       "InstancedComponents": []
     },
     {
-      "Name": "ProxyCamera",
-      "DefinitionUrl": "asset/objects/proxy_camera.object.json",
-      "InstancedComponents": []
-    },
-    {
       "Name": "MeshTestObject",
       "DefinitionUrl": "asset/objects/mesh_test.object.json",
       "InstancedComponents": [

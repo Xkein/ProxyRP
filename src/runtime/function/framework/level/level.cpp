@@ -41,11 +41,20 @@ void Level::Unload()
 
 void Level::Tick(float delta_time)
 {
+    for (auto& game_object : ExpiredObjects)
+    {
+        GameObjects.erase(game_object->GetID());
+    }
+
+    for (auto& game_object : NewObjects)
+    {
+        GameObjects.emplace(game_object->GetID(), game_object);
+    }
+
     for (const auto& [id, game_object] : GameObjects)
     {
         game_object->Tick(delta_time);
     }
-
 }
 
 std::weak_ptr<GameObject> Level::GetGObjectByID(GameObjectID id) const
@@ -58,13 +67,17 @@ std::weak_ptr<GameObject> Level::GetGObjectByID(GameObjectID id) const
     return std::weak_ptr<GameObject>();
 }
 
-GameObjectID Level::CreateGObject()
+GameObjectID Level::CreateGObject(std::shared_ptr<GameObject>* out_game_object)
 {
     GameObjectID object_id = ObjectIDAllocator::Alloc();
     ASSERT(object_id != InvalidGObjectID);
 
     std::shared_ptr<GameObject> game_object = std::make_shared<GameObject>(object_id);
-    GameObjects.emplace(object_id, game_object);
+    if (out_game_object)
+    {
+        *out_game_object = game_object;
+    }
+    PushGObjectToAdd(std::move(game_object));
 
     return object_id;
 }
@@ -82,7 +95,7 @@ GameObjectID Level::CreateGObject(const ObjectInstanceResource& object_instance_
         return InvalidGObjectID;
     }
 
-    GameObjects.emplace(object_id, game_object);
+    PushGObjectToAdd(game_object);
 
     return object_id;
 }
@@ -91,13 +104,24 @@ void Level::DeleteGObjectByID(GameObjectID id)
 {
     if (auto iter = GameObjects.find(id); iter != GameObjects.end())
     {
-
-
-        GameObjects.erase(iter);
+        PushGObjectToRemove(iter->second);
     }
+}
+
+void Level::PushGObjectToAdd(std::shared_ptr<GameObject> game_object)
+{
+    NewObjects.emplace_back(std::move(game_object));
+}
+
+void Level::PushGObjectToRemove(std::shared_ptr<GameObject> game_object)
+{
+    ExpiredObjects.emplace_back(std::move(game_object));
 }
 
 void Level::Clear()
 {
     GameObjects.clear();
+
+    NewObjects.clear();
+    ExpiredObjects.clear();
 }
