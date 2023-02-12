@@ -70,7 +70,7 @@ if(NOT TARGET boost)
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-        -DCMAKE_INSTALL_PREFIX=${STAGING_DIR}
+        -DCMAKE_INSTALL_PREFIX=${THIRD_PARTY_DIR}/boost/build
         BUILD_COMMAND ${CMAKE_COMMAND} --build ${THIRD_PARTY_DIR}/boost/build --config Release
     )
     add_dependencies(boost Boost)
