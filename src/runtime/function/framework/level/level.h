@@ -42,7 +42,7 @@ public:
      * \param object_instance_res
      * \return
      */
-    GameObjectID CreateGObject(const ObjectInstanceResource& object_instance_res);
+    GameObjectID CreateGObject(const ObjectInstanceResource& object_instance_res, std::shared_ptr<GameObject>* out_game_object = nullptr);
     /**
      * Remove game object next frame.
      *

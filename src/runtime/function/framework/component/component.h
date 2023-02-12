@@ -9,6 +9,8 @@ class GameObject;
 CLASS(Component)
 {
     REFLECTION_CLASS_BODY(Component)
+    friend class GameObject;
+
 public:
     Component() = default;
     virtual ~Component() {}

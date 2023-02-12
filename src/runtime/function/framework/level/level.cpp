@@ -45,11 +45,13 @@ void Level::Tick(float delta_time)
     {
         GameObjects.erase(game_object->GetID());
     }
+    ExpiredObjects.clear();
 
     for (auto& game_object : NewObjects)
     {
         GameObjects.emplace(game_object->GetID(), game_object);
     }
+    NewObjects.clear();
 
     for (const auto& [id, game_object] : GameObjects)
     {
@@ -82,7 +84,7 @@ GameObjectID Level::CreateGObject(std::shared_ptr<GameObject>* out_game_object)
     return object_id;
 }
 
-GameObjectID Level::CreateGObject(const ObjectInstanceResource& object_instance_res)
+GameObjectID Level::CreateGObject(const ObjectInstanceResource& object_instance_res, std::shared_ptr<GameObject>* out_game_object)
 {
     GameObjectID object_id = ObjectIDAllocator::Alloc();
     ASSERT(object_id != InvalidGObjectID);
@@ -94,8 +96,12 @@ GameObjectID Level::CreateGObject(const ObjectInstanceResource& object_instance_
         LOG_ERROR("loading object {} failed", object_instance_res.Name);
         return InvalidGObjectID;
     }
+    if (out_game_object)
+    {
+        *out_game_object = game_object;
+    }
 
-    PushGObjectToAdd(game_object);
+    PushGObjectToAdd(std::move(game_object));
 
     return object_id;
 }

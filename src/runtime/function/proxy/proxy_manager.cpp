@@ -2,6 +2,9 @@
 #include "proxy_component.h"
 #include "function/global/global_context.h"
 #include "function/framework/world/world_manager.h"
+#include "resource/res_type/common/object.h"
+#include <mutex>
+std::mutex proxy_manager_mutex;
 
 ProxyManager::~ProxyManager()
 {
@@ -36,6 +39,8 @@ void ProxyManager::Clear()
 
 void ProxyManager::Tick(float delta_time)
 {
+    std::lock_guard<std::mutex> guard(proxy_manager_mutex);
+
     ProcessActions();
 }
 
@@ -44,7 +49,12 @@ void ProxyManager::CreateProxyGameObject(const ProxyObjectCreateDesc& create_des
     std::shared_ptr<Level> level = GWorldManager->GetCurrentLevel().lock();
 
     std::shared_ptr<GameObject> game_object;
-    uint64_t                    server_handle = level->CreateGObject(&game_object);
+    uint64_t                    server_handle = HandleMap[create_desc.ClientHandle];
+
+    ObjectInstanceResource object_instance_res;
+    object_instance_res.Name          = create_desc.ObjectName;
+    object_instance_res.DefinitionUrl = create_desc.ObjectDefinitionUrl;
+    level->CreateGObject(object_instance_res, &game_object);
 
     ProxyComponent* proxy_component = game_object->AddComponent<ProxyComponent>();
 
@@ -63,7 +73,12 @@ void ProxyManager::DestroyProxyGameObject(const ProxyObjectDestroyDesc& destroy_
 
     std::shared_ptr<Level> level = GWorldManager->GetCurrentLevel().lock();
 
-    std::shared_ptr<GameObject> game_object = iter->second;
+    std::shared_ptr<GameObject> game_object     = iter->second;
+    ProxyComponent*             proxy_component = game_object->GetComponent<ProxyComponent>();
+    if (proxy_component)
+    {
+        HandleMap.erase(proxy_component->Desc.ClientHandle);
+    }
 
     level->DeleteGObjectByID(game_object->GetID());
 
@@ -93,20 +108,28 @@ void ProxyManager::UpdateProxyGameObject(const ProxyObjectUpdateDesc& update_des
     }
 }
 
-void ProxyManager::AddAction(StringView action, const ProxyActionDesc& action_desc)
+void ProxyManager::AddAction(StringView action, const ProxyActionDesc& action_desc, ProxyActionResponse& response)
 {
+    std::lock_guard<std::mutex> guard(proxy_manager_mutex);
+
     if (action == PA_CREATE_OBJECT)
     {
+        if (HandleMap.contains(action_desc.CreateDesc.ClientHandle))
+        {
+            response.ServerHandle = HandleMap[action_desc.CreateDesc.ClientHandle];
+            return;
+        }
         CreateDescs.push_back(action_desc.CreateDesc);
+        HandleMap[action_desc.CreateDesc.ClientHandle] = response.ServerHandle = action_desc.CreateDesc.ClientHandle;
     }
-    if (action == PA_DESTROY_OBJECT)
+    else if (action == PA_DESTROY_OBJECT)
     {
         DestroyDescs.push_back(action_desc.DestroyDesc);
     }
     
     // update object
 
-    if (action == PA_UPDATE_OBJECT_TRANSFORM)
+    else if (action == PA_UPDATE_OBJECT_TRANSFORM)
     {
         ProxyObjectUpdateDesc desc;
         desc.Type = ProxyObjectUpdateDesc::UpdateType::Transform;
@@ -122,12 +145,17 @@ void ProxyManager::ProcessActions()
     {
         DestroyProxyGameObject(desc);
     }
+    DestroyDescs.clear();
+
     for (const ProxyObjectCreateDesc& desc : CreateDescs)
     {
         CreateProxyGameObject(desc);
     }
+    CreateDescs.clear();
+
     for (const ProxyObjectUpdateDesc& desc : UpdateDescs)
     {
         UpdateProxyGameObject(desc);
     }
+    UpdateDescs.clear();
 }

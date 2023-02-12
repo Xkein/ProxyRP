@@ -26,12 +26,14 @@ struct ProxyObjectUpdateDesc
 
 struct ProxyActionDesc
 {
-    union
-    {
-        ProxyObjectCreateDesc  CreateDesc;
-        ProxyObjectDestroyDesc DestroyDesc;
-        ProxyTransformDesc     TransformDesc;
-    };
+    ProxyObjectCreateDesc  CreateDesc;
+    ProxyObjectDestroyDesc DestroyDesc;
+    ProxyTransformDesc     TransformDesc;
+};
+
+struct ProxyActionResponse
+{
+    uint64_t ServerHandle;
 };
 
 struct ProxyManagerInitInfo
@@ -48,7 +50,7 @@ public:
     void Clear();
     void Tick(float delta_time);
 
-    void AddAction(StringView action, const ProxyActionDesc& action_desc);
+    void AddAction(StringView action, const ProxyActionDesc& action_desc, ProxyActionResponse& response);
 
 private:
     void CreateProxyGameObject(const ProxyObjectCreateDesc & create_desc);
@@ -64,6 +66,7 @@ private:
     ProxyRPC RPC;
 
     std::map<int, std::shared_ptr<GameObject>> ProxyGObjects;
+    std::map<int, int>                         HandleMap;
 
     std::vector<ProxyObjectCreateDesc>  CreateDescs;
     std::vector<ProxyObjectDestroyDesc> DestroyDescs;

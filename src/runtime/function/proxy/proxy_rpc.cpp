@@ -39,26 +39,30 @@ void ProxyRPC::Clear()
 
 #define PROXY_DEBUG_LOG(...) LOG_INFO(__VA_ARGS__)
 
+ProxyActionResponse GNoResponse;
+
 void ProxyRPC::BindProxyManager(ProxyManager* manager)
 {
     Server->bind(PA_CREATE_OBJECT, [manager](ProxyObjectCreateDesc desc) {
         PROXY_DEBUG_LOG("ProxyAction: {}({})", PA_CREATE_OBJECT, desc.ClientHandle);
         ProxyActionDesc action_desc;
         action_desc.CreateDesc = desc;
-        manager->AddAction(PA_CREATE_OBJECT, action_desc);
+        ProxyActionResponse response;
+        manager->AddAction(PA_CREATE_OBJECT, action_desc, response);
+        return response.ServerHandle;
     });
 
     Server->bind(PA_DESTROY_OBJECT, [manager](ProxyObjectDestroyDesc desc) {
         PROXY_DEBUG_LOG("ProxyAction: {}({})", PA_DESTROY_OBJECT, desc.ServerHandle);
         ProxyActionDesc action_desc;
         action_desc.DestroyDesc = desc;
-        manager->AddAction(PA_DESTROY_OBJECT, action_desc);
+        manager->AddAction(PA_DESTROY_OBJECT, action_desc, GNoResponse);
     });
 
     Server->bind(PA_UPDATE_OBJECT_TRANSFORM, [manager](ProxyTransformDesc desc) {
         PROXY_DEBUG_LOG("ProxyAction: {}({})", PA_UPDATE_OBJECT_TRANSFORM, desc.ServerHandle);
         ProxyActionDesc action_desc;
         action_desc.TransformDesc = desc;
-        manager->AddAction(PA_UPDATE_OBJECT_TRANSFORM, action_desc);
+        manager->AddAction(PA_UPDATE_OBJECT_TRANSFORM, action_desc, GNoResponse);
     });
 }

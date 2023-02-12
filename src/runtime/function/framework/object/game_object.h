@@ -8,7 +8,7 @@
 #include <vector>
 
 class Component;
-class ObjectInstanceResource;
+struct ObjectInstanceResource;
 
 class GameObject : public std::enable_shared_from_this<GameObject>
 {
@@ -52,7 +52,7 @@ public:
     TComponent* AddComponent()
     {
         Instance<Component> instance(rttr::type::get<TComponent>(), new TComponent());
-        Components.emplace_back(instance);
+        AddComponentInternal(instance);
         return instance;
     }
 
@@ -65,6 +65,8 @@ public:
 
 
 private:
+    void AddComponentInternal(Instance<Component> component);
+
     void Clear();
 
     String Name;

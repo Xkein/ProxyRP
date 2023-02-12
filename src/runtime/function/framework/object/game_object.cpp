@@ -88,6 +88,12 @@ void GameObject::RemoveComponent(const rttr::type& type)
     Components.erase(iter);
 }
 
+void GameObject::AddComponentInternal(Instance<Component> component)
+{
+    Components.emplace_back(component);
+    component->ParentObject = weak_from_this();
+}
+
 void GameObject::Clear()
 {
     for (auto& component : Components)
