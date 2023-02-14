@@ -1,0 +1,68 @@
+#pragma once
+{{#include_headfiles}}
+#include "{{headfile_name}}"
+{{/include_headfiles}}
+
+{{#class_defines}}
+class __ReflectionType{{class_name}}
+{
+public:
+	static void* ConstructWithJson(const json& context)
+	{
+{{#class_is_abstract}}
+		return nullptr;
+{{/class_is_abstract}}{{^class_is_abstract}}
+		{{class_name}}* instance = new {{class_name}}();
+		Serializer::Read(context, *instance);
+		return instance;
+{{/class_is_abstract}}
+	}
+	static bool WriteJson(void* instance, json& context)
+	{
+		return Serializer::Write(*(const {{class_name}}*)instance, context);
+	}
+	
+	static void Register()
+	{
+		using namespace rttr;
+
+		//registration::class_<__ReflectionType{{class_name}}>("__ReflectionType{{class_name}}")
+		//	.method("ConstructWithJson", &__ReflectionType{{class_name}}::ConstructWithJson)
+		//	.method("WriteJson", &__ReflectionType{{class_name}}::WriteJson);
+		TypeMetaRegister::__RegisterSerializerMethods("{{class_name}}", {ConstructWithJson, WriteJson});
+
+		registration::class_<{{class_name}}>("{{class_name}}")
+		{{^class_is_abstract}}
+			.constructor<>()
+		{{/class_is_abstract}}{{#class_method_defines}}
+			.method("{{class_method_name}}", &{{class_name}}::{{class_method_name}})
+		{{/class_method_defines}}{{#class_field_defines}}
+			.property("{{class_field_name}}", &{{class_name}}::{{class_field_name}})
+		{{/class_field_defines}};
+	}
+	static void Unregister()
+	{}
+};
+
+{{/class_defines}}
+
+{{#enum_defines}}
+class __ReflectionType{{enum_name}}
+{
+public:
+	static void Register()
+	{
+		using namespace rttr;
+
+		registration::enumeration<{{enum_name}}>("{{enum_name}}")
+		(
+		{{#enum_const_defines}}
+			value("{{enum_const_name}}", {{enum_name}}::{{enum_const_name}}),
+		{{/enum_const_defines}}
+			metadata("__PlaceHolder", "place holder")
+		);
+	}
+	static void Unregister()
+	{}
+};
+{{/enum_defines}}

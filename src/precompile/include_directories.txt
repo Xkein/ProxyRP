@@ -1,0 +1,1 @@
+${ENGINE_ROOT_DIR}/src;${ENGINE_ROOT_DIR}/src/runtime;$ENV{VULKAN_SDK}/Include;${THIRD_PARTY_DIR}/eigen

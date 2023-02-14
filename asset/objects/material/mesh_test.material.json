@@ -1,0 +1,7 @@
+{
+    "BaseColorFile" : "asset/resource/viking_room.png",
+    "NormalFile" : "asset/resource/texture/normal.png",
+    "MetallicRoughnessFile" : "asset/resource/texture/metallic_roughness.png",
+    "OcclusionFile" : "",
+    "EmissiveFile" : ""
+}

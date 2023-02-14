@@ -1,0 +1,42 @@
+[submodule "3rdparty/eigen"]
+	path = 3rdparty/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "3rdparty/glfw"]
+	path = 3rdparty/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "3rdparty/json"]
+	path = 3rdparty/json
+	url = https://github.com/nlohmann/json.git
+[submodule "3rdparty/imgui"]
+	path = 3rdparty/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "3rdparty/spdlog"]
+	path = 3rdparty/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "3rdparty/boost"]
+	path = 3rdparty/boost
+	url = https://github.com/boostorg/boost.git
+[submodule "3rdparty/assimp"]
+	path = 3rdparty/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "3rdparty/ShaderConductor"]
+	path = 3rdparty/ShaderConductor
+	url = https://github.com/microsoft/ShaderConductor.git
+[submodule "3rdparty/stb"]
+	path = 3rdparty/stb
+	url = https://github.com/nothings/stb.git
+[submodule "3rdparty/taskflow"]
+	path = 3rdparty/taskflow
+	url = https://github.com/taskflow/taskflow.git
+[submodule "3rdparty/llvm-project"]
+	path = 3rdparty/llvm-project
+	url = https://github.com/llvm/llvm-project.git
+[submodule "3rdparty/Mustache"]
+	path = 3rdparty/Mustache
+	url = https://github.com/kainjow/Mustache.git
+[submodule "3rdparty/rpclib"]
+	path = 3rdparty/rpclib
+	url = https://github.com/rpclib/rpclib.git
+[submodule "3rdparty/rttr"]
+	path = 3rdparty/rttr
+	url = https://github.com/rttrorg/rttr.git

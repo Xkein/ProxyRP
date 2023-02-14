@@ -1,0 +1,129 @@
+{
+  "Objects": [
+    {
+      "Name": "ProxyManager",
+      "DefinitionUrl": "asset/objects/proxy_manager.object.json",
+      "InstancedComponents": []
+    },
+    {
+      "Name": "MeshTestObject",
+      "DefinitionUrl": "asset/objects/mesh_test.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [0, 0, -0.7],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "PointLight",
+      "DefinitionUrl": "asset/objects/light/point_light.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [0, 0, 0],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        },
+        {
+          "$type_name": "PointLightComponent",
+          "$context": {
+            "Color": [1, 0, 0],
+            "Intensity": 1,
+            "Radius": 8
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Floor",
+      "DefinitionUrl": "asset/objects/basic/cube.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [0, 0, -1],
+              "Scale": [10, 10, 0.2],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Cube",
+      "DefinitionUrl": "asset/objects/basic/cube.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [-2, 0, 0.2],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Sphere",
+      "DefinitionUrl": "asset/objects/basic/sphere.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [-1, -2, 0.2],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "Cylinder",
+      "DefinitionUrl": "asset/objects/basic/cylinder.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [1, 2, 0.2],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "ConvexMesh",
+      "DefinitionUrl": "asset/objects/basic/convexmesh.object.json",
+      "InstancedComponents": [
+        {
+          "$type_name": "TransformComponent",
+          "$context": {
+            "Transform": {
+              "Position": [-2, 2, 0],
+              "Scale": [1, 1, 1],
+              "Quaternionf": [0, 0, 0, 1]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

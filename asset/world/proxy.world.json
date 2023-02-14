@@ -1,0 +1,5 @@
+{
+  "Name": "Proxy World",
+  "DefaultLevelUrl": "asset/level/proxy.level.json",
+  "LevelUrls": ["asset/level/proxy.level.json"]
+}
