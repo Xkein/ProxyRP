@@ -1,5 +1,6 @@
 
 #include "common/constants.hlsl"
+#include "common/math.hlsl"
 #include "common/light.hlsl"
 #include "common/structures.hlsl"
 #include "common/mesh_shading.hlsl"
@@ -59,9 +60,7 @@ float GetDirectionalShadow(float2 uv, float cur_depth, float NoL)
 float GetPointLightShadow(float3 dir, float light_index, float cur_depth)
 {
     float bias = 0.00075;
-    // same as skybox
-    float3 uvw = float3(dir.x, dir.z, -dir.y);
-    float depth = PointLightShadowMap.Sample(PointLightShadowMapSampler, float4(uvw, light_index)).r + bias;
+    float depth = SampleCubeMapArrayWithAdjustedUVW(PointLightShadowMap, PointLightShadowMapSampler, float4(dir, light_index)).r + bias;
     return depth >= cur_depth ? 1.0 : -1.0;
 }
 
@@ -99,10 +98,10 @@ float4 frag(VS_OUTPUT input) : SV_Target0
         {
             float3 position_view_space = input.PositionWorldSpace - point_light_position;
             
-            float shadow = GetPointLightShadow(position_view_space, light_index, length(position_view_space) / point_light_radius);
-            if (shadow > 0.0)
+            float visibility = GetPointLightShadow(position_view_space, light_index, length(position_view_space) / point_light_radius);
+            if (visibility > 0.0)
             {
-                Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * MeshPerframeBuffer.PointLights[light_index].Intensity * light_attenuation * shadow;
+                Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * MeshPerframeBuffer.PointLights[light_index].Intensity * light_attenuation * visibility;
             }
         }
 
@@ -120,10 +119,10 @@ float4 frag(VS_OUTPUT input) : SV_Target0
 
             float2 shadow_uv = NDC2UV(position_ndc.xy);
             
-            float shadow = GetDirectionalShadow(shadow_uv, position_ndc.z, NoL);
-            if (shadow > 0.0)
+            float visibility = GetDirectionalShadow(shadow_uv, position_ndc.z, NoL);
+            if (visibility > 0.0)
             {
-                Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * directional_color * NoL * shadow;
+                Lo += BRDF(N, V, L, F0, base_color, metallic, roughness) * directional_color * NoL * visibility;
             }
         }
     }

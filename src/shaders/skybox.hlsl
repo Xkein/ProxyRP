@@ -1,5 +1,6 @@
 
 #include "common/constants.hlsl"
+#include "common/math.hlsl"
 
 struct SceneDirectionalLight
 {
@@ -59,13 +60,7 @@ float4 vert(uint vertex_index : SV_VertexID, out float3 UVW : TEXCOORD0) : SV_Po
 
 void frag(float3 UVW : TEXCOORD0, out float4 out_color : SV_Target)
 {
-    // the skybox we use is:
-    //    +y
-    // -x +z +x -z
-    //    -y
-    // so rotate 90 around X axis
-    float3 uvw = float3(UVW.x, UVW.z, -UVW.y);
-    float3 color = SkyboxTextureCube.SampleLevel(SkyboxTextureCubeSampler, uvw, 0).rgb;
+    float3 color = SampleCubeMapWithAdjustedUVW(SkyboxTextureCube, SkyboxTextureCubeSampler, UVW, 0).rgb;
     //out_color = float4(color, 1);
     out_color = float4(pow(color, 2.2), 1.0);
 }
